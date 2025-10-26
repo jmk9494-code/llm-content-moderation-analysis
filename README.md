@@ -4,6 +4,8 @@
 
 **Team Members:**
 * Jacob Kandel (jmkandel@uchicago.edu)
+* Google Gemini
+
 
 ---
 
