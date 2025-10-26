@@ -3,7 +3,7 @@
 **Project for the University of Chicago's Censorship Course**
 
 **Team Members:**
-* Jacob Kandel (JMKANDEL)
+* Jacob Kandel (jmkandel@uchicago.edu)
 * Google Gemini
 
 ---
