@@ -21,12 +21,12 @@ client = openai.OpenAI(
 # 3. Define the list of models you want to test
 # Get the exact model names from OpenRouter's documentation.
 models_to_test = [
-    "google/gemini-pro-1.5-flash",
-    "openai/gpt-4o",
+    "google/gemini-2.5-flash",
+    "openai/gpt-4o-mini",
     "anthropic/claude-3-haiku",
-    "meta-llama/llama-3-8b-instruct",
-    "xai/grok-1",
-    "mistralai/mistral-7b-instruct",
+    "meta-llama/llama-3.1-8b-instruct",
+    "x-ai/grok-4-fast",
+    "mistralai/ministral-3b",
 ]
 
 # --- DATA COLLECTION ---
