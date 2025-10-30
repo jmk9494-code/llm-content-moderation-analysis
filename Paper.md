@@ -6,7 +6,6 @@
 *jmkandel@uchicago.edu*
 
 **Google Gemini**<br/>
-*Google*
 ---
 
 ## **ABSTRACT**
