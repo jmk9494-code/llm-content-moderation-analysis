@@ -44,7 +44,7 @@ These findings illustrate that the "censorship" applied by an LLM is not uniform
 ## 4. Final Deliverables
 
 *   **[Final Paper](./Paper.md)**: Our complete project write-up in Markdown format, detailing our methodology, findings, and conclusions.
-*   **Video Presentation**: [LINK TO BE ADDED AFTER UPLOADING TO YOUTUBE] - A brief video summarizing our project and main findings.
+*   **Video Presentation**: **[Video](https://youtu.be/ttGX3sD6rUE)** - A brief video summarizing our project and main findings.
 
 ## 5. How to Run This Project
 
