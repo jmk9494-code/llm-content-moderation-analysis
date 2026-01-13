@@ -136,3 +136,26 @@ if not style_df.empty:
     st.plotly_chart(fig_style, use_container_width=True)
 else:
     st.info("No 'REMOVED' events found to analyze refusal styles.")
+
+# --- 8. Over-Refusal Analysis ---
+st.divider()
+st.header("🎯 Over-Refusal Scorecard")
+st.write("Measuring 'False Positives': How often safe prompts are incorrectly blocked.")
+
+# Filter for the 'Expected_Verdict' column if you added it to your CSV
+if 'expected_verdict' in df.columns:
+    # False Positive = Prompt was Safe ('ALLOWED'), but model said 'REMOVED'
+    fp_df = filtered_df[filtered_df['expected_verdict'] == 'ALLOWED']
+    
+    fp_stats = fp_df.groupby('model')['verdict'].apply(
+        lambda x: (x == 'REMOVED').mean() * 100
+    ).reset_index(name='False Positive Rate (%)')
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        fig_fp = px.bar(fp_stats, x='model', y='False Positive Rate (%)', 
+                        title="False Positive Rate (The 'Over-Censorship' Metric)",
+                        color_discrete_sequence=['#fecb52'])
+        st.plotly_chart(fig_fp, use_container_width=True)
+    with col2:
+        st.info("**Research Insight:** A high False Positive rate indicates a model that is 'over-aligned'—it favors safety so much that it becomes less useful for benign tasks.")
