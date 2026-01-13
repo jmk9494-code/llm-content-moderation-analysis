@@ -3,17 +3,19 @@ name: Weekly LLM Moderation Test
 on:
   schedule:
     - cron: '0 0 * * 0' # Automatically runs every Sunday at midnight
-  workflow_dispatch:      # Allows you to click "Run workflow" manually for testing
+  workflow_dispatch:      # Allows manual trigger via the Actions tab
 
 jobs:
   run-moderation-script:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # REQUIRED: Gives the bot permission to save files to your repo
+      contents: write # Allows the bot to push CSV files back to the repo
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history, required for a clean rebase
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,18 +32,24 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python collect_model_responses.py
 
-      # This step uploads the CSV as a backup "artifact" you can download
       - name: Upload results as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: model-responses
           path: data/history/*.csv
 
-      # CRITICAL STEP: This saves the data back into your GitHub Code tab
       - name: Commit and push new data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Stage the new history files
           git add data/history/*.csv
+          
+          # Commit changes; '|| true' prevents failure if no new files exist
           git commit -m "Automated data collection: $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          
+          # Critical: Fetch remote changes and replay local commits on top
+          git pull --rebase origin main
+          
           git push
