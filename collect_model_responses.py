@@ -22,11 +22,7 @@ client = openai.OpenAI(
 # Your target models
 models_to_test = [
     "google/gemini-2.5-flash",
-    "openai/gpt-4o-mini",
-    "anthropic/claude-3-haiku",
-    "meta-llama/llama-3.1-8b-instruct",
-    "x-ai/grok-4-fast",
-    "mistralai/ministral-3b",
+   
 ]
 
 # --- 2. DATA LOADING ---
