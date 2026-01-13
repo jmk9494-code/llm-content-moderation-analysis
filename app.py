@@ -114,3 +114,25 @@ with st.expander("🔍 Filterable Raw Data Log"):
             filtered_df['response_text'].str.contains(search, case=False, na=False)
         ]
     st.dataframe(display_df[['test_date', 'model', 'category', 'verdict', 'judge_reasoning', 'response_text']], use_container_width=True)
+
+# --- 7. Refusal Personalities (Add this to your app.py) ---
+st.divider()
+st.header("🎭 Refusal Personalities")
+st.write("Does the model refuse bluntly (HARD) or lecture the user (PREACHED)?")
+
+# Filter for only removals to analyze styles
+style_df = filtered_df[filtered_df['verdict'] == 'REMOVED']
+
+if not style_df.empty:
+    # Bar chart showing style distribution per model
+    fig_style = px.histogram(
+        style_df, 
+        x="model", 
+        color="refusal_style", 
+        barmode="group",
+        color_discrete_map={"HARD": "#ef553b", "SOFT": "#fecb52", "PREACHED": "#636efa"},
+        labels={"refusal_style": "Style of Refusal"}
+    )
+    st.plotly_chart(fig_style, use_container_width=True)
+else:
+    st.info("No 'REMOVED' events found to analyze refusal styles.")
