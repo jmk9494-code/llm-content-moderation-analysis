@@ -18,7 +18,10 @@ client = openai.OpenAI(
 )
 
 # Testing just one model for now to refine the "Judge" process
-models_to_test = ["openai/gpt-4o-mini"] 
+models_to_test = [
+    "openai/gpt-4o-mini",
+    "xiaomi/mimo-v2-flash:free"
+] 
 
 # --- 2. THE NEW JUDGE (Gemini 2.5 Flash) ---
 def get_judge_verdict(prompt_text, model_response):
