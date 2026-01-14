@@ -1,42 +1,40 @@
-name: Weekly LLM Moderation Test
+name: LLM Moderation Analysis Run
 
 on:
+  workflow_dispatch: # Allows manual trigger from the "Actions" tab
   schedule:
-    - cron: '0 0 * * 0'
-  workflow_dispatch:
+    - cron: '0 0 * * 1' # Runs automatically every Monday at midnight UTC
 
 jobs:
-  run-moderation-script:
+  run-analysis:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    
+      contents: write # Essential for saving the CSV back to the repo
+
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required for a clean rebase
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run data collection script
+      - name: Run Model Collection
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python collect_model_responses.py
 
-      - name: Commit and push new data
+      - name: Commit and Push Results
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add data/history/*.csv
-          git commit -m "Automated data collection: $(date +'%Y-%m-%d')" || echo "No changes to commit"
-          git pull --rebase origin main 
+          git commit -m "Auto-update: LLM responses for $(date +'%Y-%m-%d')" || echo "No changes to commit"
           git push
