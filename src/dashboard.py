@@ -52,6 +52,30 @@ def render_detailed_analysis(df):
         fig_refusal = px.line(trend_data, x='Date', y='Refusal Rate (%)', color='Model', markers=True, title="Strictness Trend")
         st.plotly_chart(fig_refusal, use_container_width=True)
 
+
+# src/dashboard.py snippet
+def render_style_analysis(df):
+    st.header("🎭 Refusal Style Distribution")
+    st.markdown("Analyzes *how* models refuse: **Hard** (Direct), **Soft** (Hesitant), or **Preached** (Lecturing).")
+    
+    # Filter for only removals to analyze the style of the refusal
+    refusal_df = df[df['verdict'] == 'REMOVED']
+    
+    if not refusal_df.empty:
+        fig = px.histogram(
+            refusal_df, 
+            x="model", 
+            color="refusal_style", 
+            barmode="group",
+            title="Refusal Style by Model",
+            labels={'refusal_style': 'Style', 'model': 'Model'}
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+    
     # --- 3. PROMPT INSPECTOR ---
     st.divider()
     st.header("🔍 Deep Dive: Prompt Inspector")
