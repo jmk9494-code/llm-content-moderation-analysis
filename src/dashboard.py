@@ -4,8 +4,7 @@ import plotly.express as px
 
 def render_detailed_analysis(df):
     """
-    This function is called by app.py and receives the 
-    already-loaded dataframe.
+    Receives the dataframe from app.py and renders the charts.
     """
     st.header("🤖 Detailed Model Comparison")
     
@@ -16,7 +15,7 @@ def render_detailed_analysis(df):
     # --- METRICS SECTION ---
     col1, col2 = st.columns(2)
     with col1:
-        # Check for 'verdict' (lowercase, as saved by your collection script)
+        # Use lowercase 'verdict' and 'model' as per your collection script
         if 'verdict' in df.columns:
             refusal_counts = df[df['verdict'] == 'REMOVED'].groupby('model').size().reset_index(name='Count')
             fig = px.bar(refusal_counts, x='model', y='Count', title="Total Content Removals", color='model')
@@ -29,11 +28,11 @@ def render_detailed_analysis(df):
     if 'prompt_id' in df.columns:
         prompt_id = st.selectbox("Select Prompt ID", df['prompt_id'].unique())
         
-        # Get the text for this prompt
+        # Filter for the specific prompt
         prompt_data = df[df['prompt_id'] == prompt_id].iloc[0]
-        st.info(f"**Prompt Text:** {prompt_data['response_text'][:200]}...") # Example snippet
+        st.info(f"**Prompt Text:** {prompt_data['response_text'][:500]}...") 
 
-        # Dynamic Grid for Models
+        # Create columns for each model tested for that prompt
         models = df[df['prompt_id'] == prompt_id]['model'].unique()
         cols = st.columns(len(models))
 
