@@ -30,26 +30,25 @@ jobs:
       - name: Run data collection script
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python collect_model_responses.py
+        # FIX: Point to the src directory
+        run: python src/collect_model_responses.py
 
       - name: Upload results as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: model-responses
-          path: data/history/*.csv
+          # Ensure this path matches where your script actually saves data
+          path: data/*.csv
 
       - name: Commit and push new data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Stage the new history files
-          git add data/history/*.csv
+          # Stage the new files (updated path to catch the v3 file)
+          git add data/*.csv
           
-          # Commit changes; '|| true' prevents failure if no new files exist
           git commit -m "Automated data collection: $(date +'%Y-%m-%d')" || echo "No changes to commit"
           
-          # Critical: Fetch remote changes and replay local commits on top
           git pull --rebase origin main
-          
           git push
