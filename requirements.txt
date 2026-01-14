@@ -3,3 +3,4 @@ openai
 streamlit
 plotly
 tenacity
+scikit-learn
