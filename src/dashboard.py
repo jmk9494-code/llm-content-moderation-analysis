@@ -2,10 +2,34 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-def render_detailed_analysis(df):
-    st.header("Inter-Model Divergence")
+def render_persona_profiles(df):
+    """Summarizes model 'personalities' based on audit data."""
+    st.header("Model Moderation Personalities")
+    cols = st.columns(len(df['model'].unique()))
     
-    # 1. Heatmap with Custom Tooltips
+    for i, model in enumerate(sorted(df['model'].unique())):
+        m_data = df[df['model'] == model]
+        top_tone = m_data['tone'].mode()[0] if not m_data['tone'].empty else "N/A"
+        avg_preachy = m_data['preachy_score'].mean()
+        
+        with cols[i]:
+            st.markdown(f"### {model.split('/')[-1]}")
+            st.write(f"**Dominant Tone:** {top_tone}")
+            st.write(f"**Preachiness:** {avg_preachy:.1f}/10")
+            
+            # Heuristic-based persona profiles
+            if avg_preachy > 6:
+                st.warning("Profile: The Moralizer")
+            elif "historical" in str(m_data['judge_reasoning']).lower():
+                st.info("Profile: The Contextualist")
+            else:
+                st.success("Profile: The Auditor")
+
+def render_detailed_analysis(df):
+    """Renders heatmaps and detailed comparison metrics."""
+    st.header("🤖 Detailed Model Comparison")
+    
+    # 1. Inter-Model Disagreement Heatmap
     pivot_df = df.pivot_table(index='prompt_id', columns='model', values='verdict', aggfunc='first').dropna()
     if not pivot_df.empty:
         models = pivot_df.columns
@@ -18,20 +42,38 @@ def render_detailed_analysis(df):
         fig_heat = px.imshow(
             matrix, 
             text_auto=".1f", 
-            color_continuous_scale='Blues',
-            labels=dict(x="Model B", y="Model A", color="Disagreement %")
+            color_continuous_scale='Blues', 
+            title="Inter-Model Disagreement (%)"
         )
-        # Update hover template for clarity
-        fig_heat.update_traces(hovertemplate="Model A: %{y}<br>Model B: %{x}<br>Disagreement: %{z:.1f}%<extra></extra>")
         st.plotly_chart(fig_heat, use_container_width=True)
 
-    # 2. Box Plots with Help Text
-    st.subheader("Moralizing Intensity (Preachy Score)")
-    st.caption("Hover over the chart to see quartiles and outliers.")
-    fig_box = px.box(
-        df, x="model", y="preachy_score", color="model",
-        points="all",
-        title="Distribution of Moralizing Behavior (1-10 Scale)"
-    )
-    fig_box.update_layout(hovermode="closest")
-    st.plotly_chart(fig_box, use_container_width=True)
+    # 2. Score Distributions
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(px.box(df, x="model", y="preachy_score", color="model", title="Moralizing Intensity"), use_container_width=True)
+    with col2:
+        tone_counts = df.groupby(['model', 'tone']).size().reset_index(name='count')
+        st.plotly_chart(px.bar(tone_counts, x="model", y="count", color="tone", title="Tone Distribution", barmode="stack"), use_container_width=True)
+
+def render_longitudinal_tracking(df):
+    """Line charts showing model behavior stability over time."""
+    st.header("Safety Stability (Drift)")
+    history = []
+    for (date, model), group in df.groupby(['test_date', 'model']):
+        # Accuracy: % of harmful prompts correctly blocked
+        safety_group = group[group['category'] != 'False Positive Control']
+        safety = (safety_group['verdict'] == 'REMOVED').mean() * 100 if not safety_group.empty else 0
+        history.append({"Date": date, "Model": model.split('/')[-1], "Safety": safety})
+    
+    if history:
+        fig_drift = px.line(
+            pd.DataFrame(history), 
+            x="Date", 
+            y="Safety", 
+            color="Model", 
+            markers=True, 
+            title="Evolution of Safety Layers"
+        )
+        st.plotly_chart(fig_drift, use_container_width=True)
+    else:
+        st.info("Insufficient historical data for drift tracking.")
