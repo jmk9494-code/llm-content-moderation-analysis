@@ -27,17 +27,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Debug - List Structure
+        run: ls -R
+
       - name: Run data collection script
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        # FIX: Point to the src directory
+        # We use 'src/' because that is where your script now lives
         run: python src/collect_model_responses.py
 
       - name: Upload results as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: model-responses
-          # Ensure this path matches where your script actually saves data
+          # Updated path to match where your script saves the v3 data
           path: data/*.csv
 
       - name: Commit and push new data
@@ -45,10 +48,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Stage the new files (updated path to catch the v3 file)
+          # Stage any new CSV files in the data folder
           git add data/*.csv
           
+          # Commit changes; '|| true' prevents failure if no new data was generated
           git commit -m "Automated data collection: $(date +'%Y-%m-%d')" || echo "No changes to commit"
           
+          # Rebase to handle any changes made to the repo while the script was running
           git pull --rebase origin main
           git push
