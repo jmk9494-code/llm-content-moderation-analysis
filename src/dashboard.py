@@ -32,7 +32,7 @@ def apply_material_3_styling():
 
         /* M3 Iconography Utility */
         .m3-icon { 
-            font-family: 'Material Symbols Outlined'; 
+            family: 'Material Symbols Outlined'; 
             vertical-align: middle; 
             font-size: 24px;
             margin-right: 10px;
@@ -48,7 +48,11 @@ def render_persona_profiles(df):
     
     for i, model in enumerate(sorted(df['model'].unique())):
         m_data = df[df['model'] == model]
-        top_tone = m_data['tone'].mode()[0] if not m_data['tone'].empty else "N/A"
+        
+        # FIX: Check if mode series has any results to avoid KeyError: 0
+        modes = m_data['tone'].mode()
+        top_tone = modes[0] if not modes.empty else "N/A"
+        
         avg_preachy = m_data['preachy_score'].mean()
         
         with cols[i]:
