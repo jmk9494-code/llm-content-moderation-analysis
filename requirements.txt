@@ -7,3 +7,4 @@ streamlit      # For the Dashboard
 plotly         # For interactive charts (Zoom/Hover)
 tenacity       # For auto-retrying failed API calls (CRITICAL)
 scikit-learn   # For calculating "Cohen's Kappa" (Inter-rater agreement)
+tqdm
