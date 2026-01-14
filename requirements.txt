@@ -1,6 +1,9 @@
 pandas
+requests
+python-dotenv
 openai
-streamlit
-plotly
-tenacity
-scikit-learn
+google-generativeai
+streamlit      # For the Dashboard
+plotly         # For interactive charts (Zoom/Hover)
+tenacity       # For auto-retrying failed API calls (CRITICAL)
+scikit-learn   # For calculating "Cohen's Kappa" (Inter-rater agreement)
