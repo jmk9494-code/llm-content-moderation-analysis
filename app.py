@@ -1,3 +1,10 @@
+import sys
+import os
+
+# Add the project root to the Python path
+# This allows Streamlit Cloud to find the 'src' folder
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import streamlit as st
 import pandas as pd
 import glob
