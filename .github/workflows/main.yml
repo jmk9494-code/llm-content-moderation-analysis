@@ -1,19 +1,28 @@
 name: LLM Moderation Analysis Run
 
 on:
-  workflow_dispatch: # Allows manual trigger from the "Actions" tab
+  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 1' # Runs automatically every Monday at midnight UTC
+    - cron: '0 0 * * 1' # Every Monday at midnight UTC
+
+# Prevents multiple runs from conflicting if a new one starts before the 2-hour job finishes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-analysis:
     runs-on: ubuntu-latest
+    timeout-minutes: 240 # Safety net for the 2+ hour runtime
     permissions:
-      contents: write # Essential for saving the CSV back to the repo
+      contents: write 
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Fetches all history so rebase has the context it needs
+          fetch-depth: 0 
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,7 +47,18 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add data/history/*.csv
-          git add data/analysis/*.csv
-          git commit -m "Auto-update: Consensus moderation results for $(date +'%Y-%m-%d')" || echo "No changes to commit"
-          git push
+          
+          # Stage all changes (CSVs, JSONs, etc.)
+          git add .
+          
+          # Only commit if there are changes to avoid erroring out
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-update: LLM responses for $(date +%Y-%m-%d)"
+            
+            # Pull latest changes from remote and rebase your new data on top
+            git pull --rebase origin main
+            
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
