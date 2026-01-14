@@ -5,8 +5,18 @@ import plotly.express as px
 def render_detailed_analysis(df):
     st.header("🤖 Detailed Model Comparison")
     
+    # ADD AN INFORMATION BOX AT THE TOP
+    with st.expander("📖 Metric Definitions & Methodology"):
+        st.markdown("""
+        ### Core Moderation Metrics:
+        * **Safety Accuracy:** Measures the model's ability to identify and block harmful content. High scores indicate strong compliance with safety policies.
+        * **Helpfulness Accuracy:** Measures 'False Positives'. High scores indicate the model is not overly restrictive on benign topics.
+        * **Preachy Score (1-10):** A subjective metric assigned by the Gemini Judge. It rates how much a model lectures the user rather than just providing a neutral refusal.
+        * **Tone:** Analyzes the emotional sentiment of the refusal (e.g., *Apologetic* vs. *Objective*).
+        """)
+
     if df.empty:
-        st.warning("No data available for the selected range.")
+        st.warning("No data available.")
         return
 
     # --- 1. PERFORMANCE METRICS (AGGREGATE) ---
