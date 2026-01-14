@@ -1,39 +1,30 @@
 import sys
 import os
 
-# MANDATORY: Add the project root to the Python path for Streamlit Cloud compatibility
+# MANDATORY: Add the project root to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 import pandas as pd
 import glob
 from datetime import datetime
-from src.dashboard import render_detailed_analysis, render_persona_profiles, render_longitudinal_tracking
+from src.dashboard import (
+    render_detailed_analysis, 
+    render_persona_profiles, 
+    render_longitudinal_tracking,
+    render_cost_efficiency,
+    apply_material_3_styling
+)
 
+# Initialize Material 3 App Config
 st.set_page_config(
-    page_title="Algorithmic Arbiters Dashboard",
+    page_title="Algorithmic Arbiters",
     page_icon="⚖️",
     layout="wide"
 )
 
-# --- 1. CUSTOM CSS FOR NAVIGATION & METRICS ---
-st.markdown("""
-    <style>
-    /* Metric Card Styling */
-    [data-testid="stMetric"] {
-        background-color: #1f2937;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        border: 1px solid #374151;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    /* Sidebar Polish */
-    section[data-testid="stSidebar"] {
-        background-color: #111827;
-        border-right: 1px solid #1f2937;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Apply M3 styling (Injected from src/dashboard.py)
+apply_material_3_styling()
 
 @st.cache_data(ttl=3600)
 def load_data():
@@ -45,10 +36,9 @@ def load_data():
 
 df = load_data()
 
-# --- 2. ENHANCED SIDEBAR NAVIGATION ---
+# --- 1. SIDEBAR NAVIGATION ---
 st.sidebar.title("⚖️ Arbiters Navigation")
 
-# Glossary Popover to explain technical terms without cluttering the UI
 with st.sidebar.popover("📖 View Terminology Glossary"):
     st.markdown("""
     **Safety Accuracy:** Percentage of harmful prompts correctly blocked.  
@@ -59,24 +49,22 @@ with st.sidebar.popover("📖 View Terminology Glossary"):
 
 st.sidebar.markdown("---")
 
-# Multiselect with Tooltips (using the 'help' parameter)
 selected_models = st.sidebar.multiselect(
     "Select Providers", 
     df['model'].unique(), 
     default=df['model'].unique(),
-    help="Choose the LLM endpoints you want to compare in this audit session."
+    help="Choose the LLM endpoints you want to compare."
 )
 
 selected_cats = st.sidebar.multiselect(
     "Select Categories", 
     df['category'].unique(), 
     default=df['category'].unique(),
-    help="Filter results by the safety boundary tested (e.g., Hate Speech, Misinformation)."
+    help="Filter results by the safety boundary tested."
 )
 
 f_df = df[df['model'].isin(selected_models) & df['category'].isin(selected_cats)]
 
-# Footer branding in sidebar
 st.sidebar.markdown("---")
 st.sidebar.info(f"""
 **Project:** Algorithmic Arbiters  
@@ -84,22 +72,32 @@ st.sidebar.info(f"""
 **Institution:** University of Chicago (MLA)
 """)
 
-# --- 3. MAIN INTERFACE ---
+# --- 2. MAIN INTERFACE ---
 st.title("Algorithmic Arbiters: Moderation Personality Tracker")
 
 # Tabs for content organization
-tab1, tab2, tab3, tab4 = st.tabs(["🎯 Personalities", "📊 Divergence", "📈 Drift", "📥 Export"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🎯 Personalities", 
+    "📊 Divergence", 
+    "💰 Cost", 
+    "📈 Drift", 
+    "📥 Export"
+])
 
 with tab1:
-    render_persona_profiles(f_df) # Determined by Preachy scores and Judge Reasoning
+    render_persona_profiles(f_df)
 
 with tab2:
-    render_detailed_analysis(f_df) # Includes Disagreement Matrix and Prompt Inspector
+    render_detailed_analysis(f_df)
 
 with tab3:
-    render_longitudinal_tracking(f_df) # Visualizes stability over time
+    render_cost_efficiency(f_df)
 
 with tab4:
+    # FIXED: No argument passed here to match the new M3 function signature
+    render_longitudinal_tracking() 
+
+with tab5:
     st.header("Data Repository")
     csv_data = f_df.to_csv(index=False).encode('utf-8')
     st.download_button("📥 Download Filtered Audit Log (CSV)", csv_data, "audit_log.csv", "text/csv")
