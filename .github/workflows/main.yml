@@ -26,15 +26,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Model Collection
+      - name: Run Model Collection (Consensus Jury & Parallel)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python collect_model_responses.py
+
+      - name: Run Automated Analysis
+        run: python src/analyze_results.py
 
       - name: Commit and Push Results
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add data/history/*.csv
-          git commit -m "Auto-update: LLM responses for $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          git add data/analysis/*.csv
+          git commit -m "Auto-update: Consensus moderation results for $(date +'%Y-%m-%d')" || echo "No changes to commit"
           git push
