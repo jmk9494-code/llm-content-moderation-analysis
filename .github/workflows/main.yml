@@ -2,20 +2,20 @@ name: Weekly LLM Moderation Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Automatically runs every Sunday at midnight
-  workflow_dispatch:      # Allows manual trigger via the Actions tab
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
 
 jobs:
   run-moderation-script:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Allows the bot to push CSV files back to the repo
+      contents: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history, required for a clean rebase
+          fetch-depth: 0 # Required for a clean rebase
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,33 +27,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Debug - List Structure
-        run: ls -R
-
       - name: Run data collection script
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        # We use 'src/' because that is where your script now lives
-        run: python src/collect_model_responses.py
-
-      - name: Upload results as an artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: model-responses
-          # Updated path to match where your script saves the v3 data
-          path: data/*.csv
+        run: python collect_model_responses.py
 
       - name: Commit and push new data
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          # Stage any new CSV files in the data folder
-          git add data/*.csv
-          
-          # Commit changes; '|| true' prevents failure if no new data was generated
+          git add data/history/*.csv
           git commit -m "Automated data collection: $(date +'%Y-%m-%d')" || echo "No changes to commit"
-          
-          # Rebase to handle any changes made to the repo while the script was running
-          git pull --rebase origin main
+          git pull --rebase origin main 
           git push
