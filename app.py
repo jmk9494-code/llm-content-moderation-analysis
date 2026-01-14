@@ -1,61 +1,108 @@
+import sys
+import os
+
+# MANDATORY: Add the project root to the Python path for Streamlit Cloud compatibility
+# This ensures that 'from src.dashboard import ...' works correctly.
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import glob
+from datetime import datetime
 
-def render_persona_profiles(df):
-    """Summarizes model 'personalities' using audit data."""
-    st.header("Model Moderation Personalities")
-    cols = st.columns(len(df['model'].unique()))
-    
-    for i, model in enumerate(sorted(df['model'].unique())):
-        m_data = df[df['model'] == model]
-        top_tone = m_data['tone'].mode()[0] if not m_data['tone'].empty else "N/A"
-        avg_preachy = m_data['preachy_score'].mean()
+# Import dashboard functions from the src directory
+try:
+    from src.dashboard import render_detailed_analysis, render_persona_profiles, render_longitudinal_tracking
+except ImportError as e:
+    st.error(f"Failed to import dashboard functions: {e}")
+    st.stop()
+
+st.set_page_config(
+    page_title="Algorithmic Arbiters Dashboard",
+    page_icon="⚖️",
+    layout="wide"
+)
+
+# Custom CSS for modern Metric Cards
+st.markdown("""
+    <style>
+    [data-testid="stMetric"] {
+        background-color: #1f2937;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid #374151;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+@st.cache_data(ttl=3600)
+def load_data():
+    """Combines historical CSV results from the data/history directory."""
+    files = glob.glob("data/history/*.csv")
+    if not files: 
+        return pd.DataFrame()
+    df = pd.concat([pd.read_csv(f) for f in files])
+    df['test_date'] = pd.to_datetime(df['test_date'])
+    return df.sort_values('test_date', ascending=True)
+
+df = load_data()
+
+if df.empty:
+    st.warning("No data found in 'data/history/'. Ensure your GitHub Action has run.")
+    st.stop()
+
+# --- SIDEBAR CONTROLS ---
+st.sidebar.title("⚖️ Navigation")
+
+selected_models = st.sidebar.multiselect(
+    "Select Providers", 
+    df['model'].unique(), 
+    default=df['model'].unique(),
+    help="Filter the view to specific LLM endpoints."
+)
+
+selected_cats = st.sidebar.multiselect(
+    "Select Categories", 
+    df['category'].unique(), 
+    default=df['category'].unique(),
+    help="Filter by safety boundary tested."
+)
+
+f_df = df[df['model'].isin(selected_models) & df['category'].isin(selected_cats)]
+
+# --- MAIN INTERFACE ---
+st.title("Algorithmic Arbiters: Moderation Personality Tracker")
+
+# 1. Executive Scorecard
+if not f_df.empty:
+    m_cols = st.columns(len(selected_models))
+    for i, model in enumerate(selected_models):
+        m_data = f_df[f_df['model'] == model]
+        # Safety: % of harmful prompts blocked
+        safety_subset = m_data[m_data['category'] != 'False Positive Control']
+        safety = (safety_subset['verdict'] == 'REMOVED').mean() * 100 if not safety_subset.empty else 0
         
-        with cols[i]:
-            st.markdown(f"### {model.split('/')[-1]}")
-            st.write(f"**Dominant Tone:** {top_tone}")
-            st.write(f"**Preachiness:** {avg_preachy:.1f}/10")
-            
-            if avg_preachy > 6:
-                st.warning("Profile: The Moralizer")
-            elif "historical" in str(m_data['judge_reasoning']).lower():
-                st.info("Profile: The Contextualist")
-            else:
-                st.success("Profile: The Auditor")
+        m_cols[i].metric(
+            label=f"{model.split('/')[-1]} Safety", 
+            value=f"{safety:.1f}%",
+            help="Percentage of harmful prompts correctly blocked."
+        )
 
-def render_detailed_analysis(df):
-    """Renders heatmaps and detailed comparison metrics."""
-    st.header("🤖 Detailed Model Comparison")
-    
-    # 1. Disagreement Matrix
-    pivot_df = df.pivot_table(index='prompt_id', columns='model', values='verdict', aggfunc='first').dropna()
-    if not pivot_df.empty:
-        models = pivot_df.columns
-        matrix = pd.DataFrame(index=models, columns=models, dtype=float)
-        for m1 in models:
-            for m2 in models:
-                rate = (pivot_df[m1] != pivot_df[m2]).mean() * 100
-                matrix.loc[m1, m2] = rate
-        
-        fig_heat = px.imshow(matrix, text_auto=".1f", color_continuous_scale='Blues', title="Inter-Model Disagreement (%)")
-        st.plotly_chart(fig_heat, use_container_width=True)
+# 2. Navigation Tabs
+tab1, tab2, tab3, tab4 = st.tabs(["🎯 Personalities", "📊 Divergence", "📈 Drift", "📥 Export"])
 
-    # 2. Score Distributions
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(px.box(df, x="model", y="preachy_score", color="model", title="Moralizing Intensity"), use_container_width=True)
-    with col2:
-        tone_counts = df.groupby(['model', 'tone']).size().reset_index(name='count')
-        st.plotly_chart(px.bar(tone_counts, x="model", y="count", color="tone", title="Tone Distribution"), use_container_width=True)
+with tab1:
+    render_persona_profiles(f_df)
 
-def render_longitudinal_tracking(df):
-    """Line charts showing model behavior stability over time."""
-    st.header("Safety Stability (Drift)")
-    history = []
-    for (date, model), group in df.groupby(['test_date', 'model']):
-        safety = (group[group['category'] != 'False Positive Control']['verdict'] == 'REMOVED').mean() * 100
-        history.append({"Date": date, "Model": model.split('/')[-1], "Safety": safety})
-    
-    fig_drift = px.line(pd.DataFrame(history), x="Date", y="Safety", color="Model", markers=True, title="Evolution of Safety Layers")
-    st.plotly_chart(fig_drift, use_container_width=True)
+with tab2:
+    render_detailed_analysis(f_df)
+
+with tab3:
+    render_longitudinal_tracking(f_df)
+
+with tab4:
+    st.header("Data Repository")
+    csv_data = f_df.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Download Filtered Audit Log (CSV)", csv_data, "audit_log.csv", "text/csv")
+    st.dataframe(f_df, use_container_width=True)
