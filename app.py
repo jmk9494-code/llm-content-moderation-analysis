@@ -6,7 +6,7 @@ import os
 # Import the new modules you created in the src folder
 try:
     from src.dashboard import render_detailed_analysis
-    from src.model_selector import get_model_metrics
+    from src.model_selector import get_latest_efficiency_models
 except ImportError:
     st.error("Could not find modules in 'src'. Ensure 'src/__init__.py' exists.")
 
