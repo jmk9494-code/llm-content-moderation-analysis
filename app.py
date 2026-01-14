@@ -185,3 +185,17 @@ if 'expected_verdict' in df.columns:
         st.plotly_chart(fig_fp, use_container_width=True)
     with col2:
         st.info("**Research Insight:** A high False Positive rate indicates a model that is 'over-aligned'—it favors safety so much that it becomes less useful for benign tasks.")
+
+# --- 9. Refusal Tone Sentiment ---
+st.divider()
+st.header("🎭 Refusal Sentiment & Tone")
+st.write("Does the model apologize for refusing, or is it authoritative?")
+
+tone_data = filtered_df[filtered_df['verdict'] == 'REMOVED'].groupby(['model', 'tone']).size().reset_index(name='count')
+fig_tone = px.bar(tone_data, x="tone", y="count", color="model", barmode="group",
+                 title="Sentiment of Refusal Responses")
+st.plotly_chart(fig_tone, use_container_width=True)
+
+# --- 10. Efficiency Metrics ---
+total_cost = filtered_df['total_run_cost'].sum()
+st.sidebar.metric("Total Project Cost (Est.)", f"${total_cost:.4f}")
