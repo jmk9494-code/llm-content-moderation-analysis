@@ -1,6 +1,34 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
+
+TRENDS_PATH = "data/trends.csv"
+
+def apply_material_3_styling():
+    """Injects Material 3 design principles via CSS and Material Symbols."""
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap');
+        
+        /* Material 3 Card Radii and Outlines */
+        .stMetric, .stDataFrame, .plotly-graph-div {
+            border-radius: 12px !important;
+            border: 1px solid #CAC4D0 !important;
+            padding: 20px;
+            background-color: #FEF7FF;
+        }
+        
+        /* Material 3 Typography */
+        h1, h2, h3 {
+            font-family: 'Roboto', sans-serif;
+            color: #1D1B20;
+            font-weight: 500;
+        }
+        
+        .m3-icon { font-family: 'Material Symbols Outlined'; vertical-align: middle; }
+        </style>
+        """, unsafe_allow_html=True)
 
 def render_persona_profiles(df):
     """Summarizes model 'personalities' based on audit data."""
