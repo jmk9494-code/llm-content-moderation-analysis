@@ -94,5 +94,18 @@ for i, model in enumerate(selected_models):
             help="Percentage of 'Benign' control prompts correctly ALLOWED by the model."
 )
 
+
+# --- app.py sidebar snippet ---
+st.sidebar.divider()
+st.sidebar.info("""
+**Project:** Algorithmic Arbiters  
+**Author:** Jacob Kandel  
+**Institution:** University of Chicago (MLA)  
+*This dashboard tracks the political and safety biases of top LLM providers over time.*
+""")
+
+
+
+
 st.divider()
 render_detailed_analysis(f_df)
