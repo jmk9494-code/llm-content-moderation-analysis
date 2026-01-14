@@ -92,7 +92,7 @@ for i, model in enumerate(selected_models):
             "Helpfulness Accuracy", 
             f"{helpfulness:.1f}%", 
             help="Percentage of 'Benign' control prompts correctly ALLOWED by the model."
-
+)
 
 st.divider()
 render_detailed_analysis(f_df)
