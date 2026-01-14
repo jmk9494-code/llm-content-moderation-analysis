@@ -32,10 +32,19 @@ if df.empty:
 
 # --- 1. SIDEBAR CONTROLS ---
 st.sidebar.header("🔬 Analysis Filters")
+
+# Model Selection
 selected_models = st.sidebar.multiselect(
     "Select Models to Compare", 
     df['model'].unique(), 
     default=df['model'].unique()
+)
+
+# Category Selection
+selected_categories = st.sidebar.multiselect(
+    "Select Categories", 
+    df['category'].unique(), 
+    default=df['category'].unique()
 )
 
 # Date Range Filter
@@ -48,13 +57,20 @@ date_range = st.sidebar.date_input(
     max_value=max_date
 )
 
-# Filter the data based on sidebar selections
+# Apply Filter Logic
 if len(date_range) == 2:
     start_date, end_date = date_range
-    mask = (df['test_date'].dt.date >= start_date) & (df['test_date'].dt.date <= end_date)
-    f_df = df[mask & df['model'].isin(selected_models)]
+    date_mask = (df['test_date'].dt.date >= start_date) & (df['test_date'].dt.date <= end_date)
+    f_df = df[
+        date_mask & 
+        df['model'].isin(selected_models) & 
+        df['category'].isin(selected_categories)
+    ]
 else:
-    f_df = df[df['model'].isin(selected_models)]
+    f_df = df[
+        df['model'].isin(selected_models) & 
+        df['category'].isin(selected_categories)
+    ]
 
 # --- 2. EXECUTIVE SUMMARY SCORECARD ---
 st.title("Algorithmic Arbiters: Moderation Tracker")
@@ -65,37 +81,28 @@ if not f_df.empty:
     for i, model in enumerate(selected_models):
         m_data = f_df[f_df['model'] == model]
         if not m_data.empty:
-            safety = (m_data[m_data['category'] != 'False Positive Control']['verdict'] == 'REMOVED').mean() * 100
-            helpfulness = (m_data[m_data['category'] == 'False Positive Control']['verdict'] == 'ALLOWED').mean() * 100
+            # Logic for Safety Accuracy: Percentage of harmful prompts correctly REJECTED
+            safety_subset = m_data[m_data['category'] != 'False Positive Control']
+            safety = (safety_subset['verdict'] == 'REMOVED').mean() * 100 if not safety_subset.empty else 0
+            
+            # Logic for Helpfulness Accuracy: Percentage of benign control prompts correctly ALLOWED
+            help_subset = m_data[m_data['category'] == 'False Positive Control']
+            helpfulness = (help_subset['verdict'] == 'ALLOWED').mean() * 100 if not help_subset.empty else 0
+            
             with m_cols[i]:
                 st.subheader(model.split('/')[-1])
-                st.metric("Safety Accuracy", f"{safety:.1f}%")
-                st.metric("Helpfulness Accuracy", f"{helpfulness:.1f}%")
+                st.metric(
+                    "Safety Accuracy", 
+                    f"{safety:.1f}%", 
+                    help="Percentage of 'Harmful' prompts correctly REJECTED by the model."
+                )
+                st.metric(
+                    "Helpfulness Accuracy", 
+                    f"{helpfulness:.1f}%", 
+                    help="Percentage of 'Benign' control prompts correctly ALLOWED by the model."
+                )
 
-# --- app.py snippet ---
-for i, model in enumerate(selected_models):
-    m_data = f_df[f_df['model'] == model]
-    
-    # Logic for Safety vs Helpfulness Accuracy
-    safety = (m_data[m_data['category'] != 'False Positive Control']['verdict'] == 'REMOVED').mean() * 100
-    helpfulness = (m_data[m_data['category'] == 'False Positive Control']['verdict'] == 'ALLOWED').mean() * 100
-    
-    with m_cols[i]:
-        st.subheader(model.split('/')[-1])
-        # ADD 'help' PARAMETERS HERE
-        st.metric(
-            "Safety Accuracy", 
-            f"{safety:.1f}%", 
-            help="Percentage of 'Harmful' prompts correctly REJECTED by the model."
-        )
-        st.metric(
-            "Helpfulness Accuracy", 
-            f"{helpfulness:.1f}%", 
-            help="Percentage of 'Benign' control prompts correctly ALLOWED by the model."
-)
-
-
-# --- app.py sidebar snippet ---
+# --- SIDEBAR INFO ---
 st.sidebar.divider()
 st.sidebar.info("""
 **Project:** Algorithmic Arbiters  
@@ -104,8 +111,7 @@ st.sidebar.info("""
 *This dashboard tracks the political and safety biases of top LLM providers over time.*
 """)
 
-
-
-
 st.divider()
+
+# --- 3. DETAILED ANALYSIS ---
 render_detailed_analysis(f_df)
