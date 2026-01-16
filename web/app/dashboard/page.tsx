@@ -452,13 +452,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Time-Travel Chart */}
-          <ChartErrorBoundary fallbackMessage="Could not load trends timeline.">
-            <div className="mb-8">
-              <TimeLapseChart data={trends} />
-            </div>
-          </ChartErrorBoundary>
-
           {/* Filter Bar */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
 
@@ -523,18 +516,8 @@ export default function Home() {
           </div>
         </header>
 
-        <a
-          href="/audit_log.csv"
-          download="audit_log.csv"
-          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
-        >
-          <Download className="h-4 w-4" />
-          Download CSV
-        </a>
-
-
         {/* AI Weekly Report Section */}
-        <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
+        <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden mb-8">
           <div className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center">
             <div
               className="flex items-center gap-2 text-indigo-900 font-semibold cursor-pointer"
@@ -564,6 +547,22 @@ export default function Home() {
             </div>
           )}
         </section>
+
+        <a
+          href="/audit_log.csv"
+          download="audit_log.csv"
+          className="flex w-fit items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm mb-8"
+        >
+          <Download className="h-4 w-4" />
+          Download CSV
+        </a>
+
+        {/* Time-Travel Chart */}
+        <ChartErrorBoundary fallbackMessage="Could not load trends timeline.">
+          <div className="mb-8">
+            <TimeLapseChart data={trends} />
+          </div>
+        </ChartErrorBoundary>
 
         {/* Bias Analysis Chart */}
         <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
