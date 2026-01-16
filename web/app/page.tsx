@@ -93,11 +93,11 @@ export default function LandingPage() {
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
-                  <BookOpen className="h-5 w-5 flex-none text-indigo-600" />
-                  Scenario-Based Testing
+                  <Shield className="h-5 w-5 flex-none text-indigo-600" />
+                  Global Scope (US & China)
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">We generate hundreds of prompts across categories like Hate Speech, Misinformation, and Violence using adversarial templates.</p>
+                  <p className="flex-auto">We audit models from OpenAI, Google, Anthropic, as well as top Chinese labs like DeepSeek and Alibaba (Qwen) to compare regional safety standards.</p>
                 </dd>
               </div>
               <div className="flex flex-col">
@@ -112,10 +112,10 @@ export default function LandingPage() {
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
                   <Lock className="h-5 w-5 flex-none text-indigo-600" />
-                  Standardized Verdicts
+                  Adversarial Stress-Testing
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">Responses are analyzed and classified as ALLOWED or REMOVED based on strict policy definitions, unifying results across providers.</p>
+                  <p className="flex-auto">Our <strong>Strategy Analysis</strong> engine tests models against "Jailbreak" attempts and subtle borderline queries to measure true robustness, not just basic compliance.</p>
                 </dd>
               </div>
             </dl>
