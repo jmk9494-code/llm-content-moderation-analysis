@@ -35,6 +35,7 @@ def generate_fake_data():
             "prompt_id": f"P-{i:03d}",
             "category": cat,
             "verdict": v,
+            "prompt_text": f"Simulated prompt asking about {cat}...",
             "response_text": "Lorem ipsum sample response...",
             "prompt_tokens": random.randint(50, 200),
             "completion_tokens": random.randint(10, 100),

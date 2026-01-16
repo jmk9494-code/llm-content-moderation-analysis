@@ -30,6 +30,7 @@ type AuditRow = {
   category: string;
   verdict: string;
   run_cost: number;
+  prompt_text: string;
   response_text: string;
 };
 
