@@ -83,7 +83,7 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         ⏳ Time-Travel Trends
                     </h3>
-                    <p className="text-sm text-slate-500">Watch how model strictness evolves over time.</p>
+                    <p className="text-sm text-slate-500">Watch how model censorship levels evolve over time.</p>
                 </div>
 
                 {/* Controls */}

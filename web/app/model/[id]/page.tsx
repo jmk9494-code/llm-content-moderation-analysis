@@ -161,7 +161,7 @@ export default function ModelPage({ params }: { params: Promise<{ id: string }> 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <div className="text-sm font-medium text-slate-500 uppercase">Strictness Score</div>
+                            <div className="text-sm font-medium text-slate-500 uppercase">Censorship Score</div>
                             <div className={cn("text-3xl font-bold", refusalRate > 50 ? "text-red-600" : "text-emerald-600")}>
                                 {refusalRate.toFixed(1)}%
                             </div>

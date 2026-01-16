@@ -26,6 +26,8 @@ import PriceChart from './PriceChart';
 import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
+import { generateReport } from '@/lib/analyst';
+import { RefreshCw } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -180,11 +182,9 @@ export default function Home() {
       });
     });
 
-    // 4. Fetch AI Report
-    const p4 = fetch('/latest_report.md')
-      .then(r => r.text())
-      .then(text => setReport(text))
-      .catch(e => console.log("No report found", e));
+    // 4. Fetch AI Report (Initially empty/placeholder, or generated on load)
+    // Removed static fetch logic for dynamic generation
+    // fetch('/latest_report.md')...
 
 
 
@@ -534,28 +534,36 @@ export default function Home() {
 
 
         {/* AI Weekly Report Section */}
-        {
-          report && (
-            <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
-              <div
-                className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
-                onClick={() => setShowReport(!showReport)}
-              >
-                <div className="flex items-center gap-2 text-indigo-900 font-semibold">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                  Latest AI Analyst Report
-                </div>
-                <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform", showReport ? "" : "rotate-180")} />
-              </div>
+        <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
+          <div className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center">
+            <div
+              className="flex items-center gap-2 text-indigo-900 font-semibold cursor-pointer"
+              onClick={() => setShowReport(!showReport)}
+            >
+              <FileText className="h-5 w-5 text-indigo-600" />
+              Live Analyst Report
+              <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform ml-2", showReport ? "" : "rotate-180")} />
+            </div>
 
-              {showReport && (
-                <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
-                  <ReactMarkdown>{report}</ReactMarkdown>
+            <button
+              onClick={() => setReport(generateReport(filteredData, { region: regionFilter, tier: tierFilter }))}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Generate Analysis
+            </button>
+          </div>
+
+          {showReport && (
+            <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
+              {report ? <ReactMarkdown>{report}</ReactMarkdown> : (
+                <div className="text-center text-slate-400 italic py-4">
+                  Click "Generate Analysis" to analyze the currently filtered dataset.
                 </div>
               )}
-            </section>
-          )
-        }
+            </div>
+          )}
+        </section>
 
         {/* Bias Analysis Chart */}
         <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
@@ -613,8 +621,8 @@ export default function Home() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Shield className="h-5 w-5 text-indigo-600" />
-              Model Strictness Comparison
-              <InfoTooltip text="Comparison of refusal rates across different models. Higher means more strict." />
+              Model Stringency Comparison
+              <InfoTooltip text="Comparison of refusal rates across different models. Higher means more restricted/censored." />
             </h3>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -689,7 +697,7 @@ export default function Home() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Activity className="h-5 w-5 text-indigo-600" />
-            Safety Profile (Refusal by Category)
+            Censorship Profile (Refusal by Category)
             <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model." />
           </h3>
           <div className="h-80 w-full text-xs">

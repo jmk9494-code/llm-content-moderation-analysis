@@ -41,6 +41,7 @@ export default function ComparePage() {
     // Selection State
     const [modelA, setModelA] = useState<string>('');
     const [modelB, setModelB] = useState<string>('');
+    const [selectedDivergence, setSelectedDivergence] = useState<any | null>(null);
 
     useEffect(() => {
         // Load Models Metadata
@@ -125,17 +126,19 @@ export default function ComparePage() {
         // We should compare the LATEST run for each prompt.
         // Simplify: Find prompts present in both.
 
-        // Create map of Prompt Text -> Verdict for A
-        const mapA = new Map<string, string>();
-        statsA.subset.forEach(r => mapA.set(r.prompt_text, r.verdict));
+        // Create map of Prompt Text -> {Verdict, Response} for A
+        const mapA = new Map<string, { verdict: string, response: string }>();
+        statsA.subset.forEach(r => mapA.set(r.prompt_text, { verdict: r.verdict, response: r.response_text }));
 
         for (const rowB of statsB.subset) {
             const verA = mapA.get(rowB.prompt_text);
-            if (verA && verA !== rowB.verdict) {
+            if (verA && verA.verdict !== rowB.verdict) {
                 diffs.push({
                     prompt: rowB.prompt_text,
-                    verdictA: verA,
+                    verdictA: verA.verdict,
                     verdictB: rowB.verdict,
+                    responseA: verA.response,
+                    responseB: rowB.response_text,
                     category: rowB.category
                 });
             }
@@ -231,7 +234,7 @@ export default function ComparePage() {
 
                 {/* Comparison Radar */}
                 <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 className="text-lg font-semibold mb-6">Side-by-Side Safety Profile</h3>
+                    <h3 className="text-lg font-semibold mb-6">Side-by-Side Censorship Profile</h3>
                     <div className="h-96 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
@@ -259,11 +262,16 @@ export default function ComparePage() {
 
                     <div className="space-y-4">
                         {divergences.slice(0, 50).map((d, idx) => (
-                            <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                key={idx}
+                                onClick={() => setSelectedDivergence(d)}
+                                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                            >
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{d.category}</span>
+                                    <span className="text-xs text-indigo-600 opacity-0 group-hover:opacity-100 font-semibold transition-opacity">View Details →</span>
                                 </div>
-                                <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm font-mono text-slate-700 whitespace-pre-wrap">
+                                <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
                                     {d.prompt}
                                 </div>
 
@@ -286,6 +294,57 @@ export default function ComparePage() {
                     </div>
                 </section>
 
+                {/* Modal */}
+                {selectedDivergence && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={() => setSelectedDivergence(null)}>
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">Disagreement Detail</h3>
+                                    <p className="text-sm text-slate-500">{selectedDivergence.category}</p>
+                                </div>
+                                <button onClick={() => setSelectedDivergence(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                                    <XIcon className="h-5 w-5 text-slate-500" />
+                                </button>
+                            </div>
+
+                            <div className="p-6 overflow-y-auto">
+                                <div className="mb-8">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">User Prompt</h4>
+                                    <div className="bg-slate-100 p-4 rounded-xl text-slate-800 font-mono text-sm whitespace-pre-wrap border border-slate-200">
+                                        {selectedDivergence.prompt}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-slate-900">{metaA?.name}</span>
+                                            <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictA === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                                                {selectedDivergence.verdictA}
+                                            </span>
+                                        </div>
+                                        <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
+                                            {selectedDivergence.responseA || <span className="italic text-slate-400">No response text available.</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-slate-900">{metaB?.name}</span>
+                                            <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictB === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                                                {selectedDivergence.verdictB}
+                                            </span>
+                                        </div>
+                                        <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
+                                            {selectedDivergence.responseB || <span className="italic text-slate-400">No response text available.</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </main>
     );

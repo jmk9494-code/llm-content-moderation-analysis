@@ -156,7 +156,7 @@ export default function StrategyPage() {
                 <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-emerald-600" />
-                        False Positive Rates (Benign Checks)
+                        Over-Censorship (Benign Checks)
                         <InfoTooltip text="Percentage of safe, benign prompts that were incorrectly refused. Lower is better." />
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -187,7 +187,7 @@ export default function StrategyPage() {
                             <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                                     <div>
-                                        <h3 className="font-bold text-lg text-slate-800">False Positive Analysis</h3>
+                                        <h3 className="font-bold text-lg text-slate-800">Over-Censorship Analysis</h3>
                                         <p className="text-sm text-slate-500">
                                             Benign prompts refused by <span className="font-semibold text-indigo-600">{selectedBenignModel.model.split('/')[1]}</span>
                                         </p>
