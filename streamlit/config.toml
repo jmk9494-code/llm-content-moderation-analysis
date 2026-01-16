@@ -1,6 +1,0 @@
-[theme]
-primaryColor = "#6750A4" # Material 3 Baseline Primary (Deep Purple)
-backgroundColor = "#FEF7FF" # M3 Surface
-secondaryBackgroundColor = "#F3EDF7" # M3 Surface Container
-textColor = "#1D1B20" # M3 On-Surface
-font = "sans serif"
