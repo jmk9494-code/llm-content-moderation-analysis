@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
@@ -70,6 +70,11 @@ export default function Home() {
   // Table States
   const [summarySorting, setSummarySorting] = useState<SortingState>([{ id: 'refusal_rate', desc: true }]);
   const [auditSorting, setAuditSorting] = useState<SortingState>([{ id: 'test_date', desc: true }]);
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     // 1. Fetch Audit Log
@@ -206,6 +211,15 @@ export default function Home() {
   // --- Audit Config ---
   const auditHelper = createColumnHelper<AuditRow>();
   const auditColumns = [
+    auditHelper.display({
+      id: 'expander',
+      header: () => null,
+      cell: ({ row }) => (
+        <button onClick={() => toggleRow(row.id)} className="p-1 hover:bg-slate-100 rounded">
+          {expandedRows[row.id] ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+        </button>
+      ),
+    }),
     auditHelper.accessor('test_date', {
       header: 'Date',
       cell: info => <span className="text-slate-500 whitespace-nowrap">{info.getValue()}</span>,
@@ -477,13 +491,37 @@ export default function Home() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {auditTable.getRowModel().rows.map(row => (
-                    <tr key={row.id} className="hover:bg-slate-50">
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id} className="px-6 py-3">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
+                    <>
+                      <tr key={row.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => toggleRow(row.id)}>
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className="px-6 py-3">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                      {/* Expanded Q&A Row */}
+                      {expandedRows[row.id] && (
+                        <tr className="bg-slate-50/50">
+                          <td colSpan={auditColumns.length} className="px-6 py-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                              <div>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Prompt (User)</div>
+                                <div className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm font-mono whitespace-pre-wrap">
+                                  {row.original.prompt_text}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Response (AI)</div>
+                                <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
+                                  row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" : "bg-emerald-50 border-emerald-100 text-emerald-800")}>
+                                  {row.original.response_text}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>

@@ -193,8 +193,8 @@ async def process_prompt(sem, p, model_name):
                 "prompt_id": p['id'],
                 "category": p['category'],
                 "verdict": verdict,
-                "prompt_text": prompt_text,
-                "response_text": response_text,
+                "prompt_text": p['text'],
+                "response_text": content,
                 'prompt_tokens': p_tokens,
                 'completion_tokens': c_tokens,
                 'total_tokens': t_tokens,
@@ -207,7 +207,7 @@ async def process_prompt(sem, p, model_name):
 async def run_audit_async(prompts, model_names, output_file):
     """Main async runner for multiple models."""
     headers = ['test_date', 'model', 'prompt_id', 'category', 'verdict', 
-               'response_text', 'prompt_tokens', 'completion_tokens', 'total_tokens', 'run_cost']
+               'prompt_text', 'response_text', 'prompt_tokens', 'completion_tokens', 'total_tokens', 'run_cost']
     
     file_exists = os.path.isfile(output_file)
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
