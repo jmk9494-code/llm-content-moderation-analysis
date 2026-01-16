@@ -131,6 +131,14 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Footer / Attribution */}
+      <footer className="py-12 text-center text-slate-500 text-sm">
+        <p>Created & Maintained by <span className="font-semibold text-slate-900">Jacob Kandel</span></p>
+        <p className="mt-1">Student at the <span className="font-semibold text-slate-900">University of Chicago</span> 🎓</p>
+        <div className="mt-8 pt-8 border-t border-slate-200 max-w-xs mx-auto">
+          <p>© {new Date().getFullYear()} Algorithmic Arbiters</p>
+        </div>
+      </footer>
     </main>
   );
 }

@@ -120,29 +120,51 @@ export default function Home() {
     Promise.all([p1, p2, p3]).then(() => setLoading(false));
   }, []);
 
-  // --- Heatmap Calculation ---
+  // --- Date Filtering Config ---
+  const [selectedDate, setSelectedDate] = useState<string>('all');
+
+  const uniqueDates = useMemo(() => {
+    return Array.from(new Set(data.map(r => r.test_date))).sort().reverse();
+  }, [data]);
+
+  const filteredData = useMemo(() => {
+    if (selectedDate === 'all') return data;
+    return data.filter(r => r.test_date === selectedDate);
+  }, [data, selectedDate]);
+
+  // Recalculate summary based on filtered data
+  const filteredSummary = useMemo(() => {
+    const agg: Record<string, ModelSummary> = {};
+    filteredData.forEach(r => {
+      if (!agg[r.model]) agg[r.model] = { model: r.model, total: 0, refusals: 0, refusal_rate: 0, avg_len: 0 };
+      agg[r.model].total++;
+      if (r.verdict === 'REMOVED') agg[r.model].refusals++;
+      agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
+    });
+    return Object.values(agg).map(s => ({
+      ...s,
+      refusal_rate: (s.refusals / s.total) * 100,
+      avg_len: Math.round(s.avg_len / s.total)
+    }));
+  }, [filteredData]);
+
+  // Use filtered data for heatmaps and charts
   const heatmapData = useMemo(() => {
-    if (data.length === 0) return { categories: [], models: [], grid: [] as HeatmapCell[] };
-
-    // Get unique categories and models
-    const categories = Array.from(new Set(data.map(r => r.category))).sort();
-    const models = Array.from(new Set(data.map(r => r.model)));
-
+    if (filteredData.length === 0) return { categories: [], models: [], grid: [] as HeatmapCell[] };
+    const categories = Array.from(new Set(filteredData.map(r => r.category))).sort();
+    const models = Array.from(new Set(filteredData.map(r => r.model)));
     const grid: HeatmapCell[] = [];
-
     models.forEach(m => {
       categories.forEach(c => {
-        const subset = data.filter(r => r.model === m && r.category === c);
+        const subset = filteredData.filter(r => r.model === m && r.category === c);
         const total = subset.length;
         const refusals = subset.filter(r => r.verdict === 'REMOVED').length;
         const rate = total > 0 ? (refusals / total) * 100 : 0;
         grid.push({ model: m, category: c, rate, count: total });
       });
     });
-
     return { categories, models, grid };
-  }, [data]);
-
+  }, [filteredData]);
 
   // --- Helper for Heatmap Color ---
   const getRateColor = (rate: number) => {
@@ -155,7 +177,7 @@ export default function Home() {
 
 
   // --- Charts Prep ---
-  const chartData = [...summary].sort((a, b) => b.refusal_rate - a.refusal_rate);
+  const chartData = [...filteredSummary].sort((a, b) => b.refusal_rate - a.refusal_rate);
 
   // --- Summary Table Config ---
   const summaryHelper = createColumnHelper<ModelSummary>();
@@ -200,7 +222,7 @@ export default function Home() {
   ];
 
   const summaryTable = useReactTable({
-    data: summary,
+    data: filteredSummary,
     columns: summaryColumns,
     state: { sorting: summarySorting },
     onSortingChange: setSummarySorting,
@@ -244,7 +266,7 @@ export default function Home() {
   ];
 
   const auditTable = useReactTable({
-    data,
+    data: filteredData,
     columns: auditColumns,
     state: { sorting: auditSorting },
     onSortingChange: setAuditSorting,
@@ -268,15 +290,32 @@ export default function Home() {
               <Shield className="h-8 w-8 text-indigo-600" />
               Live Dashboard
             </h1>
+            {uniqueDates.length > 0 && (
+              <p className="text-sm text-slate-500 mt-1">
+                Audit Started: <span className="font-semibold text-slate-700">{uniqueDates[uniqueDates.length - 1]}</span> • Latest Run: <span className="font-semibold text-slate-700">{uniqueDates[0]}</span>
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3">
+            {/* Date Filter Dropdown */}
+            <select
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">All Time (Trends)</option>
+              {uniqueDates.map(date => (
+                <option key={date} value={date}>Week of {date}</option>
+              ))}
+            </select>
+
             <a
               href="/audit_log.csv"
               download="audit_log.csv"
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
             >
               <Download className="h-4 w-4" />
-              Download Data
+              Download CSV
             </a>
           </div>
         </div>

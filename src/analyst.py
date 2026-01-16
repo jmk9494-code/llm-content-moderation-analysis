@@ -60,6 +60,7 @@ def generate_weekly_report(audit_file="audit_log.csv", report_file="data/latest_
         3. A concluding sentence on the "Safety Vibe" of the week.
         
         Use formatting (bolding, lists) to make it readable. Title it "🛡️ Weekly Executive Summary".
+        Ensure there are BLANK LINES between paragraphs for readability.
         """
 
         client = OpenAI(
