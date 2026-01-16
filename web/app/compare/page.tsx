@@ -10,6 +10,7 @@ import {
 import { Shield, ArrowRight, ArrowLeftRight, Check, X as XIcon, Minimize2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ModelLogo } from '@/components/ui/ModelLogo';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -154,42 +155,40 @@ export default function ComparePage() {
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">← Back to Dashboard</Link>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-                            <ArrowLeftRight className="h-8 w-8 text-indigo-600" />
-                            Model Comparison
-                        </h1>
-                    </div>
-
-                    {/* Selectors */}
-                    <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                        <select
-                            value={modelA}
-                            onChange={e => setModelA(e.target.value)}
-                            className="p-2 bg-indigo-50/50 rounded-lg text-indigo-900 font-semibold border-indigo-100 focus:ring-0 cursor-pointer"
-                        >
-                            {models.map(m => <option key={m.id} value={m.id}>{m.name} ({m.region})</option>)}
-                        </select>
-                        <span className="text-slate-400 font-bold">VS</span>
-                        <select
-                            value={modelB}
-                            onChange={e => setModelB(e.target.value)}
-                            className="p-2 bg-emerald-50/50 rounded-lg text-emerald-900 font-semibold border-emerald-100 focus:ring-0 cursor-pointer"
-                        >
-                            {models.map(m => <option key={m.id} value={m.id}>{m.name} ({m.region})</option>)}
-                        </select>
-                    </div>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+                        <ArrowLeftRight className="h-8 w-8 text-indigo-600" />
+                        Model Comparison
+                    </h1>
                 </div>
+
+                {/* Selectors */}
+                <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                    <select
+                        value={modelA}
+                        onChange={e => setModelA(e.target.value)}
+                        className="p-2 bg-indigo-50/50 rounded-lg text-indigo-900 font-semibold border-indigo-100 focus:ring-0 cursor-pointer"
+                    >
+                        {models.map(m => <option key={m.id} value={m.id}>{m.name} ({m.region})</option>)}
+                    </select>
+                    <span className="text-slate-400 font-bold">VS</span>
+                    <select
+                        value={modelB}
+                        onChange={e => setModelB(e.target.value)}
+                        className="p-2 bg-emerald-50/50 rounded-lg text-emerald-900 font-semibold border-emerald-100 focus:ring-0 cursor-pointer"
+                    >
+                        {models.map(m => <option key={m.id} value={m.id}>{m.name} ({m.region})</option>)}
+                    </select>
+                </div>
+
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Model A Card */}
                     <div className="bg-white p-6 rounded-2xl border-t-4 border-t-indigo-500 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10"><Shield className="h-32 w-32 text-indigo-600" /></div>
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <ModelLogo modelId={modelA} className="h-32 w-32 text-6xl" />
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-1">{metaA?.name || modelA}</h2>
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6">
                             <span className="bg-slate-100 px-2 py-1 rounded">{metaA?.provider}</span>
@@ -211,7 +210,9 @@ export default function ComparePage() {
 
                     {/* Model B Card */}
                     <div className="bg-white p-6 rounded-2xl border-t-4 border-t-emerald-500 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10"><Shield className="h-32 w-32 text-emerald-600" /></div>
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <ModelLogo modelId={modelB} className="h-32 w-32 text-6xl" />
+                        </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-1">{metaB?.name || modelB}</h2>
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6">
                             <span className="bg-slate-100 px-2 py-1 rounded">{metaB?.provider}</span>
@@ -346,6 +347,6 @@ export default function ComparePage() {
                     </div>
                 )}
             </div>
-        </main>
+        </main >
     );
 }

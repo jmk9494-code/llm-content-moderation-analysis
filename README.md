@@ -42,8 +42,17 @@ We define safety not by *quality* but by **Refusal**.
 ## 🔮 Future Roadmap & Recommendations
 
 To further improve this audit, we recommend:
-1.  **LLM-as-a-Judge**: Replace regex parsing with a GPT-4o grader for higher accuracy.
-2.  **Adversarial "Jailbreaks"**: Add Base64 encoded prompts or "Roleplay" attacks to test robustness, not just policy.
+### 6. ⚖️ Axis of Bias (LLM Judge)
+We implemented an **LLM-as-a-Judge** system. Instead of simple regex, we use a neutral model to read the reasoning behind every refusal and classify the underlying value system (e.g., "Left-Libertarian", "Right-Authoritarian").
+
+### 7. 🔍 Disagreement Drill-Down
+A new specialized view allows researchers to find exact prompts where two models disagree (one allows, one bans), enabling granular side-by-side comparison of specific policy triggers.
+
+## 🔮 Future Roadmap & Recommendations
+
+To further improve this audit, we recommend:
+1.  **Media Analysis**: Expand beyond text to test Image Generation censorship (Midjourney, DALL-E 3).
+2.  **Multilingual Attacks**: Test if models are more permissive when prompted in non-English languages.
 3.  **New Categories**: Add "Medical Misinformation" and "Legal Liability" domains.
 
 ## 📅 Project Timeline

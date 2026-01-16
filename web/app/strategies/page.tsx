@@ -114,9 +114,6 @@ export default function StrategyPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">← Back to Main Dashboard</Link>
-                        </div>
                         <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
                             <Shield className="h-8 w-8 text-indigo-600" />
                             Strategy Analysis

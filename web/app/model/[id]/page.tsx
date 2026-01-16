@@ -142,10 +142,7 @@ export default function ModelPage({ params }: { params: Promise<{ id: string }> 
         <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
             <div className="max-w-5xl mx-auto space-y-8">
 
-                {/* Nav */}
-                <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors">
-                    <ArrowLeft className="h-4 w-4" /> Back to Leaderboard
-                </Link>
+
 
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center font-bold text-xl text-indigo-600">

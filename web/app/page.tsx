@@ -85,7 +85,7 @@ export default function LandingPage() {
               How we audit the AI ecosystem
             </p>
             <p className="mt-6 text-lg leading-8 text-slate-600">
-              We move beyond simple benchmarks. By simulating real-world, adversarial user prompts, we uncover how models truly behave when faced with policy boundaries.
+              We move beyond simple benchmarks. By simulating real-world, adversarial user prompts, we uncover how models truly behave when faced with free speech boundaries.
             </p>
           </div>
 
@@ -93,11 +93,11 @@ export default function LandingPage() {
             <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
               <div className="flex flex-col">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
-                  <Shield className="h-5 w-5 flex-none text-indigo-600" />
-                  Global Scope (US & China)
+                  <BookOpen className="h-5 w-5 flex-none text-indigo-600" />
+                  Free Speech & Censorship
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">We audit models from OpenAI, Google, Anthropic, as well as top Chinese labs like DeepSeek and Alibaba (Qwen) to compare regional safety standards.</p>
+                  <p className="flex-auto">We identify "Over-Censorship" where models refuse benign, safe requests. We track how policies restrict information access across regions.</p>
                 </dd>
               </div>
               <div className="flex flex-col">
