@@ -9,6 +9,7 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
+from src.analyst import generate_weekly_report
 
 load_dotenv()
 
@@ -302,5 +303,8 @@ if __name__ == "__main__":
     # Update trends file for the dashboard
     print("\n📈 Updating longitudinal trends...")
     update_trends(args.output, "data/trends.csv")
+    
+    print("\n🧠 Running AI Analyst...")
+    generate_weekly_report(args.output, "data/latest_report.md")
     
     print(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")

@@ -67,6 +67,13 @@ if f_df.empty:
 # Render Top-Level Metrics
 render_summary_metrics(f_df)
 
+# AI Analyst Report Section
+report_path = "data/latest_report.md"
+if os.path.exists(report_path):
+    with st.expander("📝 Latest Executive Summary", expanded=True):
+        with open(report_path, "r") as f:
+            st.markdown(f.read())
+
 st.markdown("---")
 
 # Tab Layout

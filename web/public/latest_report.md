@@ -1,0 +1,7 @@
+# 🛡️ Weekly Executive Summary
+
+This week's content moderation audit involved testing four prominent models across 100 prompts. The results indicate varying levels of strictness in moderation. **Anthropic's Claude-Haiku 4.5** emerged as the strictest model with a **37.9% refusal rate**, significantly higher than the others. In contrast, **Google's Gemini 3 Flash Preview** was the most permissive, exhibiting a **7.4% refusal rate**, followed closely by **OpenAI's GPT-5.1 Codex Mini** at **9.5%** and **X-AI's Grok 4.1 Fast** at **8.7%**.
+
+Notably, the discrepancies observed among models suggest differing interpretative frameworks when handling sensitive content. For instance, Claude-Haiku 4.5 rejected numerous prompts that Gemini 3, GPT-5.1 Codex Mini, and Grok 4.1 deemed acceptable, indicating a more cautious stance in its content moderation strategy. This raises questions regarding the thresholds set within these models for what constitutes harmful or inappropriate content.
+
+Overall, the "Safety Vibe" of the week leans towards a vigilant approach, particularly highlighted by Claude-Haiku 4.5's refusal rate, which underscores a trend towards prioritizing safer interactions in AI models.
