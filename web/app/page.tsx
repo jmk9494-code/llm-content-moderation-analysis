@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import {
   createColumnHelper,
@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -44,7 +44,14 @@ type ModelSummary = {
   total: number;
   refusals: number;
   refusal_rate: number;
-  avg_len: number; // New metric: Response Verbosity
+  avg_len: number;
+};
+
+type HeatmapCell = {
+  model: string;
+  category: string;
+  rate: number;
+  count: number;
 };
 
 // --- Components ---
@@ -90,16 +97,47 @@ export default function Home() {
       .then(r => r.text())
       .then(csv => {
         const parsed = Papa.parse<TrendRow>(csv, { header: true, dynamicTyping: true });
-        // Transform for Recharts: Group by date
-        // Note: keeping it flat for now, or just filtering valid rows
         setTrends(parsed.data.filter(r => r.date && r.model));
       }).catch(err => console.log("Trends not found", err));
 
     Promise.all([p1, p2]).then(() => setLoading(false));
   }, []);
 
+  // --- Heatmap Calculation ---
+  const heatmapData = useMemo(() => {
+    if (data.length === 0) return { categories: [], models: [], grid: [] as HeatmapCell[] };
+
+    // Get unique categories and models
+    const categories = Array.from(new Set(data.map(r => r.category))).sort();
+    const models = Array.from(new Set(data.map(r => r.model)));
+
+    const grid: HeatmapCell[] = [];
+
+    models.forEach(m => {
+      categories.forEach(c => {
+        const subset = data.filter(r => r.model === m && r.category === c);
+        const total = subset.length;
+        const refusals = subset.filter(r => r.verdict === 'REMOVED').length;
+        const rate = total > 0 ? (refusals / total) * 100 : 0;
+        grid.push({ model: m, category: c, rate, count: total });
+      });
+    });
+
+    return { categories, models, grid };
+  }, [data]);
+
+
+  // --- Helper for Heatmap Color ---
+  const getRateColor = (rate: number) => {
+    if (rate === 0) return 'bg-emerald-50 text-emerald-600';
+    if (rate < 20) return 'bg-emerald-100 text-emerald-800';
+    if (rate < 50) return 'bg-yellow-100 text-yellow-800';
+    if (rate < 80) return 'bg-orange-100 text-orange-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+
   // --- Charts Prep ---
-  // Bar Chart Data (Top 5 Models by Refusal Rate)
   const chartData = [...summary].sort((a, b) => b.refusal_rate - a.refusal_rate);
 
   // --- Summary Table Config ---
@@ -112,7 +150,7 @@ export default function Home() {
     summaryHelper.accessor('refusal_rate', {
       header: ({ column }) => (
         <button className="flex items-center gap-1" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Strictness (Refusal %) <ArrowUpDown className="h-4 w-4" />
+          Strictness <ArrowUpDown className="h-4 w-4" />
         </button>
       ),
       cell: info => {
@@ -132,7 +170,7 @@ export default function Home() {
       cell: info => <span className="text-slate-500 font-mono">{info.getValue()} chars</span>,
     }),
     summaryHelper.accessor('total', {
-      header: 'Prompts Tested',
+      header: 'Prompts',
       cell: info => <span className="text-slate-500">{info.getValue()}</span>,
     }),
   ];
@@ -185,7 +223,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -236,7 +274,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Charts Section */}
+        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bar Chart: Strictness */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -277,7 +315,6 @@ export default function Home() {
                     <YAxis unit="%" />
                     <Tooltip />
                     <Legend />
-                    {/* Create a Line for each unique model found in trends */}
                     {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
                       <Line
                         key={model}
@@ -285,9 +322,9 @@ export default function Home() {
                         dataKey="refusal_rate"
                         data={trends.filter(t => t.model === model)}
                         name={model.split('/')[1] || model}
-                        stroke={`hsl(${i * 60}, 70%, 50%)`}
+                        stroke={`hsl(${i * 90}, 70%, 50%)`}
                         strokeWidth={2}
-                        dot={false}
+                        dot={true}
                       />
                     ))}
                   </LineChart>
@@ -299,6 +336,47 @@ export default function Home() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Heatmap Section */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Grid3X3 className="h-5 w-5 text-slate-600" />
+            Category Sensitivity Heatmap
+          </h3>
+          {heatmapData.categories.length > 0 ? (
+            <div className="min-w-max">
+              <div className="grid gap-1" style={{ gridTemplateColumns: `auto repeat(${heatmapData.categories.length}, 1fr)` }}>
+                {/* Header Row */}
+                <div className="p-2 font-medium text-slate-500 text-sm"></div>
+                {heatmapData.categories.map(c => (
+                  <div key={c} className="p-2 font-medium text-slate-500 text-xs text-center break-words w-24">
+                    {c}
+                  </div>
+                ))}
+
+                {/* Rows */}
+                {heatmapData.models.map(m => (
+                  <>
+                    <div key={m} className="p-2 text-sm font-medium text-slate-700 flex items-center">
+                      {m.split('/')[1] || m}
+                    </div>
+                    {heatmapData.categories.map(c => {
+                      const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
+                      const rate = cell ? cell.rate : 0;
+                      return (
+                        <div key={`${m}-${c}`} className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105", getRateColor(rate))} title={`${rate.toFixed(1)}% Refusal`}>
+                          {rate.toFixed(0)}%
+                        </div>
+                      );
+                    })}
+                  </>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-slate-400 p-8">Loading heatmap...</div>
+          )}
         </div>
 
         {/* Improved Leaderboard */}
@@ -334,13 +412,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Audit Log (Simplified) */}
+        {/* Audit Log */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">📋 Latest Audits</h2>
+            <h2 className="text-xl font-bold text-slate-800">📋 Audit Log</h2>
           </div>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            {/* ... reuse audit table logic ... */}
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
@@ -367,7 +444,6 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
-            {/* Pagination */}
             <div className="border-t border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
               <div className="text-sm text-slate-500">
                 Page {auditTable.getState().pagination.pageIndex + 1} of {auditTable.getPageCount()}
