@@ -4,40 +4,78 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import streamlit as st
 import pandas as pd
 import glob
+from src.ui import inject_m3_style
 from src.dashboard import (
-    render_cost_efficiency, apply_material_3_styling,
+    render_summary_metrics, render_cost_efficiency,
     render_detailed_analysis, render_longitudinal_tracking
 )
 
 # Mandatory App Config
 st.set_page_config(page_title="Algorithmic Arbiters", page_icon="⚖️", layout="wide")
-apply_material_3_styling()
+
+# Inject Global Material 3 CSS
+inject_m3_style()
 
 @st.cache_data(ttl=3600)
 def load_data():
     files = glob.glob("data/history/*.csv")
+    # Also include the latest batch if available
+    if os.path.exists("audit_log.csv"):
+        files.append("audit_log.csv")
+        
     if not files: return pd.DataFrame()
-    df = pd.concat([pd.read_csv(f) for f in files])
-    df['test_date'] = pd.to_datetime(df['test_date'])
-    return df.sort_values('test_date')
+    
+    dfs = []
+    for f in files:
+        try:
+            df_temp = pd.read_csv(f)
+            if not df_temp.empty:
+                dfs.append(df_temp)
+        except: pass
+        
+    if not dfs: return pd.DataFrame()
+    
+    df = pd.concat(dfs)
+    if 'test_date' in df.columns:
+        df['test_date'] = pd.to_datetime(df['test_date'])
+        return df.sort_values('test_date', ascending=False)
+    return df
 
-df = load_data()
+try:
+    df = load_data()
+except Exception as e:
+    st.error(f"Error loading data: {e}")
+    df = pd.DataFrame()
 
 # Navigation Rail (Sidebar)
-st.sidebar.title("⚖️ Arbiters")
-selected_models = st.sidebar.multiselect("Models", df['model'].unique(), default=df['model'].unique())
-selected_cats = st.sidebar.multiselect("Categories", df['category'].unique(), default=df['category'].unique())
-f_df = df[df['model'].isin(selected_models) & df['category'].isin(selected_cats)]
+st.sidebar.markdown("## ⚖️ Config")
+if not df.empty:
+    selected_models = st.sidebar.multiselect("Models", df['model'].unique(), default=df['model'].unique())
+    selected_cats = st.sidebar.multiselect("Categories", df['category'].unique(), default=df['category'].unique())
+    f_df = df[df['model'].isin(selected_models) & df['category'].isin(selected_cats)]
+else:
+    f_df = pd.DataFrame()
 
-# Main Viewport Tabs
-# Main Viewport Tabs
+# Main Viewport
 st.title("Algorithmic Arbiters")
-tab2, tab3, tab4, tab5 = st.tabs(["📊 Audit", "💰 Cost", "📈 Drift", "📥 Data"])
+st.markdown("##### Longitudinal Analysis of AI Content Moderation")
 
+if f_df.empty:
+    st.info("No data available. Run an audit to populate.")
+    st.stop()
+
+# Render Top-Level Metrics
+render_summary_metrics(f_df)
+
+st.markdown("---")
+
+# Tab Layout
+tab1, tab2, tab3, tab4 = st.tabs(["📈 Drift", "📊 Analysis", "💰 Efficiency", "📥 Raw Data"])
+
+with tab1: render_longitudinal_tracking()
 with tab2: render_detailed_analysis(f_df)
 with tab3: render_cost_efficiency(f_df)
-with tab4: render_longitudinal_tracking() 
-with tab5:
-    st.header("Raw Audit Log")
+with tab4:
     st.dataframe(f_df, use_container_width=True)
-    st.download_button("Export Results (CSV)", f_df.to_csv(index=False).encode('utf-8'), "audit_log.csv")
+    csv = f_df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", csv, "audit_data.csv", "text/csv")
