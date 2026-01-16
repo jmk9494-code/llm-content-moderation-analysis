@@ -16,15 +16,11 @@ function cn(...inputs: ClassValue[]) {
 }
 
 // --- Types ---
-type StrategyRow = {
-    test_date: string;
-    model: string;
-    category: string;
-    type: string; // 'Direct', 'Adversarial', 'Benign'
-    verdict: string;
-    prompt_text: string;
-    response_text: string;
-};
+import { StrategyRowSchema, StrategyRow } from '@/lib/schemas';
+
+// --- Types ---
+// Removed manual type definition, using Zod inferred type instead
+// StrategyRow is now imported from @/lib/schemas
 
 function InfoTooltip({ text }: { text: string }) {
     const [show, setShow] = useState(false);
@@ -54,8 +50,19 @@ export default function StrategyPage() {
         fetch('/strategy_log.csv')
             .then(r => r.text())
             .then(csv => {
-                const parsed = Papa.parse<StrategyRow>(csv, { header: true, dynamicTyping: true });
-                setData(parsed.data.filter(r => r.model && r.type));
+                const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+                // Validate with Zod
+                const validRows: StrategyRow[] = [];
+                parsed.data.forEach((row: any) => {
+                    const result = StrategyRowSchema.safeParse(row);
+                    if (result.success) {
+                        validRows.push(result.data);
+                    } else {
+                        console.warn("Skipping invalid strategy row:", result.error);
+                    }
+                });
+
+                setData(validRows.filter(r => r.model && r.type));
                 setLoading(false);
             })
             .catch(err => {

@@ -22,23 +22,20 @@ import Link from 'next/link';
 import TimeLapseChart from './TimeLapseChart';
 import BiasChart from './BiasChart';
 import PriceChart from './PriceChart';
+
 import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
+import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+import { AuditRowSchema, AuditRow } from '@/lib/schemas';
+
 // --- Types ---
-type AuditRow = {
-  test_date: string;
-  model: string;
-  category: string;
-  verdict: string;
-  run_cost: number;
-  prompt_text: string;
-  response_text: string;
-};
+// Removed manual type def, now using Zod inferred type
+
 
 type TrendRow = {
   date: string;
@@ -120,8 +117,18 @@ export default function Home() {
     const p1 = fetch('/audit_log.csv')
       .then(r => r.text())
       .then(csv => {
-        const parsed = Papa.parse<AuditRow>(csv, { header: true, dynamicTyping: true });
-        const rows = parsed.data.filter(r => r.model);
+        const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+        // Validate with Zod
+        const validRows: AuditRow[] = [];
+        parsed.data.forEach((row: any) => {
+          const result = AuditRowSchema.safeParse(row);
+          if (result.success) {
+            validRows.push(result.data);
+          } else {
+            console.warn("Skipping invalid audit row:", result.error);
+          }
+        });
+        const rows = validRows.filter(r => r.model);
         setData(rows);
 
         // Aggregate for Leaderboard
@@ -445,6 +452,13 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Time-Travel Chart */}
+          <ChartErrorBoundary fallbackMessage="Could not load trends timeline.">
+            <div className="mb-8">
+              <TimeLapseChart data={trends} />
+            </div>
+          </ChartErrorBoundary>
+
           {/* Filter Bar */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
 
@@ -543,11 +557,17 @@ export default function Home() {
           )
         }
 
-        {/* Time Travel Trends */}
-        <TimeLapseChart data={trends} />
-
-        {/* Bias Chart */}
-        <BiasChart data={biasData} />
+        {/* Bias Analysis Chart */}
+        <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Grid3X3 className="h-5 w-5 text-indigo-600" />
+              Axis of Bias Analysis
+              <InfoTooltip text="Political compass analysis of refusal reasoning (LLM Judge)" />
+            </h3>
+            <BiasChart data={biasData} />
+          </div>
+        </ChartErrorBoundary>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -614,8 +634,17 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Price Chart */}
-          <PriceChart data={filteredData} />
+          {/* Price Analysis Chart */}
+          <ChartErrorBoundary fallbackMessage="Price analysis unavailable.">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-amber-500" />
+                Price of Censorship
+                <InfoTooltip text="Does paying more guarantee less censorship?" />
+              </h3>
+              <PriceChart data={filteredData} />
+            </div>
+          </ChartErrorBoundary>
 
           {/* Line Chart: Trends */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
