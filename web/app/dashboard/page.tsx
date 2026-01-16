@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
@@ -57,6 +57,28 @@ type HeatmapCell = {
   count: number;
 };
 
+// --- Sub-components ---
+
+function InfoTooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative inline-block ml-2">
+      <Info
+        className="h-4 w-4 text-slate-400 hover:text-indigo-600 cursor-help transition-colors"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      />
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none">
+          {text}
+          <div className="absolute top-100 left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // --- Components ---
 
 export default function Home() {
@@ -71,6 +93,8 @@ export default function Home() {
   const [summarySorting, setSummarySorting] = useState<SortingState>([{ id: 'refusal_rate', desc: true }]);
   const [auditSorting, setAuditSorting] = useState<SortingState>([{ id: 'test_date', desc: true }]);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [selectedDrillDown, setSelectedDrillDown] = useState<HeatmapCell | null>(null);
+
 
   const toggleRow = (id: string) => {
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
@@ -404,14 +428,20 @@ export default function Home() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
             <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Total Audits</div>
+              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                Total Audits
+                <InfoTooltip text="Total number of test cases run across all selected models." />
+              </div>
               <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
             </div>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
             <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Avg Refusal Rate</div>
+              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                Avg Refusal Rate
+                <InfoTooltip text="Percentage of prompts that were refused by the models." />
+              </div>
               <div className="text-2xl font-bold text-slate-900">
                 {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
               </div>
@@ -420,7 +450,10 @@ export default function Home() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
             <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Avg Verbosity</div>
+              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                Avg Verbosity
+                <InfoTooltip text="Average length of model responses in characters." />
+              </div>
               <div className="text-2xl font-bold text-slate-900">
                 {filteredSummary.length ? Math.round(filteredSummary.reduce((a, b) => a + b.avg_len, 0) / filteredSummary.length) : 0} chars
               </div>
@@ -435,6 +468,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Shield className="h-5 w-5 text-indigo-600" />
               Model Strictness Comparison
+              <InfoTooltip text="Comparison of refusal rates across different models. Higher means more strict." />
             </h3>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -459,6 +493,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Activity className="h-5 w-5 text-emerald-600" />
               Refusal Rate Trends (History)
+              <InfoTooltip text="Historical view of refusal rates over time for each model." />
             </h3>
             <div className="h-64 w-full">
               {trends.length > 0 ? (
@@ -498,6 +533,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Activity className="h-5 w-5 text-indigo-600" />
               Safety Profile (Refusal by Category)
+              <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model." />
             </h3>
             <div className="h-80 w-full text-xs">
               <ResponsiveContainer width="100%" height="100%">
@@ -527,6 +563,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Grid3X3 className="h-5 w-5 text-slate-600" />
               Category Sensitivity Heatmap
+              <InfoTooltip text="Heatmap showing refusal rates for specific model-category pairs. Click a cell to drill down." />
             </h3>
             {heatmapData.categories.length > 0 ? (
               <div className="min-w-max">
@@ -549,7 +586,12 @@ export default function Home() {
                         const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
                         const rate = cell ? cell.rate : 0;
                         return (
-                          <div key={`${m}-${c}`} className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105", getRateColor(rate))} title={`${rate.toFixed(1)}% Refusal`}>
+                          <div
+                            key={`${m}-${c}`}
+                            className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 relative", getRateColor(rate))}
+                            title={`Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count || 0} audits)`}
+                            onClick={() => cell && setSelectedDrillDown(cell)}
+                          >
                             {rate.toFixed(0)}%
                           </div>
                         );
@@ -664,6 +706,56 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+
+
+        {/* Drill Down Modal */}
+        {selectedDrillDown && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedDrillDown(null)}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Drill Down Analysis</h3>
+                  <p className="text-sm text-slate-500">
+                    Viewing <span className="font-semibold text-slate-700">{selectedDrillDown.model}</span> on <span className="font-semibold text-slate-700">{selectedDrillDown.category}</span>
+                  </p>
+                </div>
+                <button onClick={() => setSelectedDrillDown(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                  <X className="h-5 w-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-4">
+                  {filteredData
+                    .filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category)
+                    .map((row, idx) => (
+                      <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-mono text-slate-400">{row.test_date}</span>
+                          <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                            row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                            {row.verdict}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono whitespace-pre-wrap">
+                            {row.prompt_text}
+                          </div>
+                          <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
+                            row.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-900" : "bg-emerald-50 border-emerald-100 text-emerald-900")}>
+                            {row.response_text}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
+                    <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </main>
