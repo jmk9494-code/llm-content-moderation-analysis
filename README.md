@@ -13,52 +13,6 @@ Unlike static benchmarks, this tool is designed for **Perpetual Auditing**. It a
 ## 🚀 Key Features
 
 ### 🔄 Dynamic Model Resolution
-The system does not rely on hardcoded model IDs. At runtime, it queries the OpenRouter API to identify the newest released models in specific families:
-*   **OpenAI**: Finds the latest `gpt-*-mini`
-*   **Google**: Finds the latest `gemini-*-flash`
-*   **Anthropic**: Finds the latest `claude-*-haiku`
-*   **xAI**: Finds the latest `grok-*`
-
-This ensures the audit always reflects the current state of the art (e.g., automatically upgrading from `gemini-1.5` to `gemini-2.0` or `gemini-3.0` as soon as they are released).
-
-### ⚡ High-Performance Async Engine
-*   **Parallel Execution**: Processes 10+ prompts concurrently using Python's `asyncio`.
-*   **Robustness**: Features automatic retries (`tenacity`) and adaptive JSON parsing to handle API instability and varying output formats.
-*   **Real-Time Cost Tracking**: Dynamically updates pricing based on OpenRouter metadata to calculate the exact cost of each audit run.
-
-## 🛠️ Usage
-
-### Setup
-1.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-2.  Set your API Key in `.env`:
-    ```
-    OPENROUTER_API_KEY=sk-or-...
-    ```
-
-### Running an Audit
-To run the standard "Efficiency Suite" audit using the **latest** available models:
-
-```bash
-python collect_model_responses.py --preset efficiency --resolve-latest
-```
-
-This command will:
-1.  Fetch the list of all models from OpenRouter.
-2.  Resolve the newest version for each provider (GPT, Gemini, Claude, Grok).
-3.  Audit them against the prompt library (`data/prompts.csv`).
-4.  Save results to `audit_log.csv`.
-
-### Interactive Dashboard
-Visualize the results, including model refusal rates and longitudinal drift:
-```bash
-streamlit run app.py
-```
-
-## 📂 Project Components
-*   **`collect_model_responses.py`**: The core auditing engine. Handles API communication, dynamic resolution, and data collection.
 *   **`data/prompts.csv`**: A curated library of **96 prompts** categorized into Hate Speech, Misinformation, Incitement to Violence, and simple Tests.
 *   **`app.py` / `src/dashboard.py`**: A Streamlit frontend for exploring the data.
 
