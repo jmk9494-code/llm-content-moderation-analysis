@@ -11,7 +11,11 @@ import {
   getPaginationRowModel,
   SortingState
 } from '@tanstack/react-table';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart, Line
+} from 'recharts';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -29,12 +33,18 @@ type AuditRow = {
   response_text: string;
 };
 
+type TrendRow = {
+  date: string;
+  model: string;
+  refusal_rate: number;
+};
+
 type ModelSummary = {
   model: string;
   total: number;
   refusals: number;
   refusal_rate: number;
-  avg_cost: number;
+  avg_len: number; // New metric: Response Verbosity
 };
 
 // --- Components ---
@@ -42,6 +52,7 @@ type ModelSummary = {
 export default function Home() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [summary, setSummary] = useState<ModelSummary[]>([]);
+  const [trends, setTrends] = useState<TrendRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Table States
@@ -49,7 +60,8 @@ export default function Home() {
   const [auditSorting, setAuditSorting] = useState<SortingState>([{ id: 'test_date', desc: true }]);
 
   useEffect(() => {
-    fetch('/audit_log.csv')
+    // 1. Fetch Audit Log
+    const p1 = fetch('/audit_log.csv')
       .then(r => r.text())
       .then(csv => {
         const parsed = Papa.parse<AuditRow>(csv, { header: true, dynamicTyping: true });
@@ -59,21 +71,36 @@ export default function Home() {
         // Aggregate for Leaderboard
         const agg: Record<string, ModelSummary> = {};
         rows.forEach(r => {
-          if (!agg[r.model]) agg[r.model] = { model: r.model, total: 0, refusals: 0, refusal_rate: 0, avg_cost: 0 };
+          if (!agg[r.model]) agg[r.model] = { model: r.model, total: 0, refusals: 0, refusal_rate: 0, avg_len: 0 };
           agg[r.model].total++;
           if (r.verdict === 'REMOVED') agg[r.model].refusals++;
-          agg[r.model].avg_cost += r.run_cost || 0;
+          agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
         });
 
         const summaryList = Object.values(agg).map(s => ({
           ...s,
           refusal_rate: (s.refusals / s.total) * 100,
-          avg_cost: s.avg_cost / s.total
+          avg_len: Math.round(s.avg_len / s.total)
         }));
         setSummary(summaryList);
-        setLoading(false);
       });
+
+    // 2. Fetch Trends
+    const p2 = fetch('/trends.csv')
+      .then(r => r.text())
+      .then(csv => {
+        const parsed = Papa.parse<TrendRow>(csv, { header: true, dynamicTyping: true });
+        // Transform for Recharts: Group by date
+        // Note: keeping it flat for now, or just filtering valid rows
+        setTrends(parsed.data.filter(r => r.date && r.model));
+      }).catch(err => console.log("Trends not found", err));
+
+    Promise.all([p1, p2]).then(() => setLoading(false));
   }, []);
+
+  // --- Charts Prep ---
+  // Bar Chart Data (Top 5 Models by Refusal Rate)
+  const chartData = [...summary].sort((a, b) => b.refusal_rate - a.refusal_rate);
 
   // --- Summary Table Config ---
   const summaryHelper = createColumnHelper<ModelSummary>();
@@ -85,14 +112,14 @@ export default function Home() {
     summaryHelper.accessor('refusal_rate', {
       header: ({ column }) => (
         <button className="flex items-center gap-1" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Refusal Rate <ArrowUpDown className="h-4 w-4" />
+          Strictness (Refusal %) <ArrowUpDown className="h-4 w-4" />
         </button>
       ),
       cell: info => {
         const val = info.getValue();
         return (
           <div className="flex items-center gap-2">
-            <div className="h-2 w-16 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
               <div className={cn("h-full rounded-full", val > 50 ? "bg-red-500" : "bg-emerald-500")} style={{ width: `${val}%` }} />
             </div>
             <span className={cn("font-bold", val > 50 ? "text-red-600" : "text-emerald-600")}>{val.toFixed(1)}%</span>
@@ -100,12 +127,12 @@ export default function Home() {
         );
       },
     }),
-    summaryHelper.accessor('avg_cost', {
-      header: 'Avg Cost',
-      cell: info => <span className="text-slate-500 font-mono">${(info.getValue() || 0).toFixed(6)}</span>,
+    summaryHelper.accessor('avg_len', {
+      header: 'Avg Response Length',
+      cell: info => <span className="text-slate-500 font-mono">{info.getValue()} chars</span>,
     }),
     summaryHelper.accessor('total', {
-      header: 'Prompts',
+      header: 'Prompts Tested',
       cell: info => <span className="text-slate-500">{info.getValue()}</span>,
     }),
   ];
@@ -119,7 +146,7 @@ export default function Home() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // --- Audit Log Table Config ---
+  // --- Audit Config ---
   const auditHelper = createColumnHelper<AuditRow>();
   const auditColumns = [
     auditHelper.accessor('test_date', {
@@ -143,10 +170,6 @@ export default function Home() {
         </span>
       ),
     }),
-    auditHelper.accessor('response_text', {
-      header: 'Response Snippet',
-      cell: info => <span className="text-slate-400 text-sm italic truncate block max-w-xs" title={info.getValue()}>{info.getValue()}</span>,
-    }),
   ];
 
   const auditTable = useReactTable({
@@ -162,7 +185,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-12">
+      <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -171,7 +194,6 @@ export default function Home() {
               <Shield className="h-8 w-8 text-indigo-600" />
               Algorithmic Arbiters
             </h1>
-            <p className="text-slate-500 mt-2 text-lg">Longitudinal analysis of AI content moderation biases.</p>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -180,118 +202,179 @@ export default function Home() {
               className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
             >
               <Download className="h-4 w-4" />
-              Download CSV
+              Download Data
             </a>
-            <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 flex items-center gap-2 text-emerald-600 font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
+            <div>
+              <div className="text-sm text-slate-500 font-medium uppercase">Total Audits</div>
+              <div className="text-2xl font-bold text-slate-900">{data.length}</div>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
+            <div>
+              <div className="text-sm text-slate-500 font-medium uppercase">Avg Refusal Rate</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {summary.length ? (summary.reduce((a, b) => a + b.refusal_rate, 0) / summary.length).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
+            <div>
+              <div className="text-sm text-slate-500 font-medium uppercase">Avg Verbosity</div>
+              <div className="text-2xl font-bold text-slate-900">
+                {summary.length ? Math.round(summary.reduce((a, b) => a + b.avg_len, 0) / summary.length) : 0} chars
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Leaderboard Section */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">🏆 Safety Leaderboard</h2>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold">
-                  {summaryTable.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map(header => (
-                        <th key={header.id} className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors">
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
-                  {loading ? (
-                    <tr><td colSpan={4} className="p-8 text-center text-slate-400">Loading metrics...</td></tr>
-                  ) : (
-                    summaryTable.getRowModel().rows.map(row => (
-                      <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Bar Chart: Strictness */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-indigo-600" />
+              Model Strictness Comparison
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical" margin={{ left: 40, right: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" unit="%" domain={[0, 100]} hide />
+                  <YAxis type="category" dataKey="model" width={100} tick={{ fontSize: 12 }} interval={0}
+                    tickFormatter={(val) => val.split('/')[1] || val}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f1f5f9' }}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Bar dataKey="refusal_rate" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Line Chart: Trends */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-emerald-600" />
+              Refusal Rate Trends (History)
+            </h3>
+            <div className="h-64 w-full">
+              {trends.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trends}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                    <YAxis unit="%" />
+                    <Tooltip />
+                    <Legend />
+                    {/* Create a Line for each unique model found in trends */}
+                    {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
+                      <Line
+                        key={model}
+                        type="monotone"
+                        dataKey="refusal_rate"
+                        data={trends.filter(t => t.model === model)}
+                        name={model.split('/')[1] || model}
+                        stroke={`hsl(${i * 60}, 70%, 50%)`}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 italic">
+                  No historical data available yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Improved Leaderboard */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-6 border-b border-slate-100">
+            <h2 className="text-xl font-semibold">🏆 Detailed Leaderboard</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold">
+                {summaryTable.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {summaryTable.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="hover:bg-slate-50">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
-        {/* Full Audit Log Section */}
+        {/* Audit Log (Simplified) */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">📋 Full Audit Log</h2>
-            <span className="text-sm text-slate-500">{data.length} records</span>
+            <h2 className="text-xl font-bold text-slate-800">📋 Latest Audits</h2>
           </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-            <div className="overflow-x-auto flex-1">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* ... reuse audit table logic ... */}
+            <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
                   {auditTable.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map(header => (
-                        <th key={header.id} className="px-6 py-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        <th key={header.id} className="px-6 py-3">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                         </th>
                       ))}
                     </tr>
                   ))}
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
-                  {loading ? (
-                    <tr><td colSpan={5} className="p-12 text-center text-slate-400">Loading log data...</td></tr>
-                  ) : auditTable.getRowModel().rows.length === 0 ? (
-                    <tr><td colSpan={5} className="p-12 text-center text-slate-400">No records found</td></tr>
-                  ) : (
-                    auditTable.getRowModel().rows.map(row => (
-                      <tr key={row.id} className="hover:bg-slate-50 group">
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="px-6 py-3">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
+                  {auditTable.getRowModel().rows.map(row => (
+                    <tr key={row.id} className="hover:bg-slate-50">
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="px-6 py-3">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
-
             {/* Pagination */}
             <div className="border-t border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
               <div className="text-sm text-slate-500">
                 Page {auditTable.getState().pagination.pageIndex + 1} of {auditTable.getPageCount()}
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => auditTable.previousPage()}
-                  disabled={!auditTable.getCanPreviousPage()}
-                  className="p-2 border border-slate-300 rounded hover:bg-white disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => auditTable.nextPage()}
-                  disabled={!auditTable.getCanNextPage()}
-                  className="p-2 border border-slate-300 rounded hover:bg-white disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                <button onClick={() => auditTable.previousPage()} disabled={!auditTable.getCanPreviousPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={() => auditTable.nextPage()} disabled={!auditTable.getCanNextPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button>
               </div>
             </div>
           </div>
