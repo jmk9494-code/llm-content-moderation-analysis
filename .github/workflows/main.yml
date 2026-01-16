@@ -35,13 +35,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Model Collection (Consensus Jury & Parallel)
+      - name: Run Model Collection (Efficiency Suite with dynamic resolution)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python collect_model_responses.py
+        run: python collect_model_responses.py --preset efficiency --resolve-latest
 
-      - name: Run Automated Analysis
-        run: python src/analyze_results.py
+      # Logic for analysis is now embedded or we just commit the raw audit log for the dashboard
+      # - name: Run Automated Analysis
+      #   run: python src/analyze_results.py
 
       - name: Commit and Push Results
         run: |
