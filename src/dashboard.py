@@ -41,32 +41,7 @@ def apply_material_3_styling():
         </style>
         """, unsafe_allow_html=True)
 
-def render_persona_profiles(df):
-    """M3 Persona Cards using tonal containers for profile status."""
-    st.markdown("## <span class='m3-icon'>face</span> Moderation Personalities", unsafe_allow_html=True)
-    cols = st.columns(len(df['model'].unique()))
-    
-    for i, model in enumerate(sorted(df['model'].unique())):
-        m_data = df[df['model'] == model]
-        
-        # FIX: Check if mode series has any results to avoid KeyError: 0
-        modes = m_data['tone'].mode()
-        top_tone = modes[0] if not modes.empty else "N/A"
-        
-        avg_preachy = m_data['preachy_score'].mean()
-        
-        with cols[i]:
-            st.markdown(f"### {model.split('/')[-1]}")
-            st.write(f"**Tone:** {top_tone}")
-            st.write(f"**Preachiness:** {avg_preachy:.1f}/10")
-            
-            # M3 Status Labels
-            if avg_preachy > 6:
-                st.markdown("<div style='background-color:#FFDAD6; color:#410002; padding:8px; border-radius:8px;'><b>The Moralizer</b></div>", unsafe_allow_html=True)
-            elif "historical" in str(m_data['judge_reasoning']).lower():
-                st.markdown("<div style='background-color:#D0E4FF; color:#001D34; padding:8px; border-radius:8px;'><b>The Contextualist</b></div>", unsafe_allow_html=True)
-            else:
-                st.markdown("<div style='background-color:#E8DEF8; color:#1D192B; padding:8px; border-radius:8px;'><b>The Auditor</b></div>", unsafe_allow_html=True)
+
 
 def render_cost_efficiency(df):
     """M3-styled Price of Safety chart."""

@@ -5,8 +5,8 @@ import streamlit as st
 import pandas as pd
 import glob
 from src.dashboard import (
-    render_detailed_analysis, render_persona_profiles, render_longitudinal_tracking,
-    render_cost_efficiency, apply_material_3_styling
+    render_cost_efficiency, apply_material_3_styling,
+    render_detailed_analysis, render_longitudinal_tracking
 )
 
 # Mandatory App Config
@@ -30,10 +30,10 @@ selected_cats = st.sidebar.multiselect("Categories", df['category'].unique(), de
 f_df = df[df['model'].isin(selected_models) & df['category'].isin(selected_cats)]
 
 # Main Viewport Tabs
+# Main Viewport Tabs
 st.title("Algorithmic Arbiters")
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🎯 Persona", "📊 Audit", "💰 Cost", "📈 Drift", "📥 Data"])
+tab2, tab3, tab4, tab5 = st.tabs(["📊 Audit", "💰 Cost", "📈 Drift", "📥 Data"])
 
-with tab1: render_persona_profiles(f_df)
 with tab2: render_detailed_analysis(f_df)
 with tab3: render_cost_efficiency(f_df)
 with tab4: render_longitudinal_tracking() 
