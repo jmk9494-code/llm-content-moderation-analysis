@@ -14,14 +14,6 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 py-24 sm:py-32 lg:flex lg:items-center lg:gap-x-10 lg:px-8 relative">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
             <div className="flex">
-              <div className="relative flex items-center gap-x-4 rounded-full px-4 py-1 text-sm leading-6 ring-1 ring-slate-900/10 hover:ring-slate-900/20 bg-white shadow-sm">
-                <span className="font-semibold text-indigo-600">Latest analysis</span>
-                <span className="h-4 w-px bg-slate-900/10" aria-hidden="true" />
-                <a href="/dashboard" className="flex items-center gap-x-1 text-slate-600">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  View the new report <span aria-hidden="true">&rarr;</span>
-                </a>
-              </div>
             </div>
 
             <h1 className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl font-display">

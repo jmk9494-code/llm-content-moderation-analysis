@@ -19,22 +19,32 @@ client = AsyncOpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
-# Pricing (USD per 1M tokens)
-PRICING = {
-    "openai/gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "google/gemini-3-flash-preview": {"input": 0.0, "output": 0.0}, 
-    "anthropic/claude-3-haiku": {"input": 0.25, "output": 1.25},
-    "x-ai/grok-4-fast": {"input": 2.0, "output": 10.0}, # Estimated
-    "default": {"input": 1.0, "output": 2.0} # Fallback
-}
+# Load Models Configuration
+def load_model_registry(path="data/models.json"):
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading models.json: {e}")
+        return []
 
+MODEL_REGISTRY = load_model_registry()
+
+# Map ID to Pricing
+PRICING = {m['id']: {"input": m['cost_per_m_in'], "output": m['cost_per_m_out']} for m in MODEL_REGISTRY}
+PRICING["default"] = {"input": 1.0, "output": 2.0}
+
+def get_model_config(model_id):
+    return next((m for m in MODEL_REGISTRY if m['id'] == model_id), None)
+
+# Group keys for CLI presets
 PRESETS = {
-    "efficiency": [
-        "openai/gpt-4o-mini",
-        "google/gemini-3-flash-preview",
-        "anthropic/claude-3-haiku",
-        "x-ai/grok-4-fast"
-    ]
+    "us": [m['id'] for m in MODEL_REGISTRY if m['region'] == "US"],
+    "china": [m['id'] for m in MODEL_REGISTRY if m['region'] == "China"],
+    "high": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "High"],
+    "mid": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "Mid"],
+    "low": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "Low"],
+    "all": [m['id'] for m in MODEL_REGISTRY]
 }
 
 CONCURRENCY_LIMIT = 10  # Max parallel requests
@@ -236,6 +246,15 @@ async def run_audit_async(prompts, model_names, output_file):
         
     print(f"\nAll Audits Completed! Total rows written: {total_processed}")
 
+def export_metadata(output_path="web/public/models.json"):
+    """Exports the model registry to the web public folder."""
+    try:
+        with open(output_path, 'w') as f:
+            json.dump(MODEL_REGISTRY, f, indent=2)
+        print(f"✅ Exported model metadata to {output_path}")
+    except Exception as e:
+        print(f"⚠️ Failed to export metadata: {e}")
+
 # --- Loaders and Entry Point ---
 
 def load_prompts(file_path):
@@ -299,6 +318,10 @@ if __name__ == "__main__":
     loaded_prompts = load_prompts(args.input)
     
     start_time = time.time()
+    
+    # Export metadata for frontend
+    export_metadata()
+    
     asyncio.run(run_audit_async(loaded_prompts, models, args.output))
     
     # Update trends file for the dashboard

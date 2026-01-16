@@ -3,3 +3,6 @@ test_date,model,total_prompts,pct_allowed,pct_removed,avg_cost
 2026-01-15,google/gemini-3-flash-preview,100,66.0,34.0,0.00020428000000000002
 2026-01-15,openai/gpt-5.1-codex-mini,100,48.0,52.0,0.00024811
 2026-01-15,x-ai/grok-4.1-fast,100,79.0,21.0,0.00035253
+2026-01-16,deepseek/deepseek-chat,100,41.0,59.0,2.6220000000000003e-05
+2026-01-16,qwen/qwen-2.5-72b-instruct,100,31.0,59.0,5.469e-05
+2026-01-16,qwen/qwen-2.5-7b-instruct,100,17.0,78.0,7.84e-06

@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
@@ -79,7 +79,16 @@ function InfoTooltip({ text }: { text: string }) {
 }
 
 
-// --- Components ---
+
+
+type ModelMetadata = {
+  id: string;
+  name: string;
+  provider: string;
+  region: string;
+  tier: string;
+};
+
 
 export default function Home() {
   const [data, setData] = useState<AuditRow[]>([]);
@@ -94,6 +103,7 @@ export default function Home() {
   const [auditSorting, setAuditSorting] = useState<SortingState>([{ id: 'test_date', desc: true }]);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [selectedDrillDown, setSelectedDrillDown] = useState<HeatmapCell | null>(null);
+  const [modelsMeta, setModelsMeta] = useState<ModelMetadata[]>([]);
 
 
   const toggleRow = (id: string) => {
@@ -141,12 +151,28 @@ export default function Home() {
       .catch(e => console.log("No report found", e));
 
 
+    // 3. Fetch AI Report
+    const p3 = fetch('/latest_report.md')
+      .then(r => r.text())
+      .then(text => setReport(text))
+      .catch(e => console.log("No report found", e));
+
+    // 4. Fetch Model Metadata
+    fetch('/models.json')
+      .then(r => r.json())
+      .then(m => setModelsMeta(m))
+      .catch(e => console.log("No metadata found", e));
+
     Promise.all([p1, p2, p3]).then(() => setLoading(false));
   }, []);
 
   // --- Filtering Config ---
   const [selectedDate, setSelectedDate] = useState<string>('all');
+  // --- Filters ---
+  const [selectedDate, setSelectedDate] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [regionFilter, setRegionFilter] = useState('All');
+  const [tierFilter, setTierFilter] = useState('All');
 
   const uniqueDates = useMemo(() => {
     return Array.from(new Set(data.map(r => r.test_date))).sort().reverse();
@@ -157,6 +183,15 @@ export default function Home() {
     // Date Filter
     if (selectedDate !== 'all') {
       res = res.filter(r => r.test_date === selectedDate);
+    }
+    // Metadata Filters
+    if (regionFilter !== 'All') {
+      const allowed = modelsMeta.filter(m => m.region === regionFilter).map(m => m.id);
+      res = res.filter(r => allowed.includes(r.model));
+    }
+    if (tierFilter !== 'All') {
+      const allowed = modelsMeta.filter(m => m.tier === tierFilter).map(m => m.id);
+      res = res.filter(r => allowed.includes(r.model));
     }
     // Search Filter
     if (searchQuery) {
@@ -169,7 +204,7 @@ export default function Home() {
       );
     }
     return res;
-  }, [data, selectedDate, searchQuery]);
+  }, [data, selectedDate, searchQuery, regionFilter, tierFilter, modelsMeta]);
 
   // Recalculate summary based on filtered data
   const filteredSummary = useMemo(() => {
@@ -364,6 +399,44 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/strategies"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg hover:bg-indigo-100 font-medium transition-colors shadow-sm"
+            >
+              See Strategy Analysis
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/compare"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg hover:bg-emerald-100 font-medium transition-colors shadow-sm"
+            >
+              Compare Models
+              <ArrowLeftRight className="h-4 w-4" />
+            </Link>
+
+            {/* Region Filter */}
+            <select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            >
+              <option value="All">All Regions</option>
+              <option value="US">🇺🇸 US Only</option>
+              <option value="China">🇨🇳 China Only</option>
+            </select>
+
+            {/* Tier Filter */}
+            <select
+              value={tierFilter}
+              onChange={(e) => setTierFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            >
+              <option value="All">All Tiers</option>
+              <option value="High">High Tier</option>
+              <option value="Mid">Mid Tier</option>
+              <option value="Low">Low Tier</option>
+            </select>
+
             {/* Search Input */}
             <div className="relative hidden md:block">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -439,7 +512,7 @@ export default function Home() {
             <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
             <div>
               <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Avg Refusal Rate
+                Failed Runs (Refusal Rate)
                 <InfoTooltip text="Percentage of prompts that were refused by the models." />
               </div>
               <div className="text-2xl font-bold text-slate-900">
@@ -528,88 +601,86 @@ export default function Home() {
         </div>
 
         {/* Radar Chart Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-indigo-600" />
-              Safety Profile (Refusal by Category)
-              <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model." />
-            </h3>
-            <div className="h-80 w-full text-xs">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="subject" />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                  {activeModels.map((model, index) => (
-                    <Radar
-                      key={model}
-                      name={model.split('/')[1] || model}
-                      dataKey={model}
-                      stroke={colors[index % colors.length]}
-                      fill={colors[index % colors.length]}
-                      fillOpacity={0.1}
-                    />
-                  ))}
-                  <Legend />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-indigo-600" />
+            Safety Profile (Refusal by Category)
+            <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model." />
+          </h3>
+          <div className="h-80 w-full text-xs">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="subject" />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                {activeModels.map((model, index) => (
+                  <Radar
+                    key={model}
+                    name={model.split('/')[1] || model}
+                    dataKey={model}
+                    stroke={colors[index % colors.length]}
+                    fill={colors[index % colors.length]}
+                    fillOpacity={0.1}
+                  />
+                ))}
+                <Legend />
+                <Tooltip />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
+        </div>
 
-          {/* Heatmap Section (moved to 2nd col) */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Grid3X3 className="h-5 w-5 text-slate-600" />
-              Category Sensitivity Heatmap
-              <InfoTooltip text="Heatmap showing refusal rates for specific model-category pairs. Click a cell to drill down." />
-            </h3>
-            {heatmapData.categories.length > 0 ? (
-              <div className="min-w-max">
-                <div className="grid gap-1" style={{ gridTemplateColumns: `auto repeat(${heatmapData.categories.length}, 1fr)` }}>
-                  {/* Header Row */}
-                  <div className="p-2 font-medium text-slate-500 text-sm"></div>
-                  {heatmapData.categories.map(c => (
-                    <div key={c} className="p-2 font-medium text-slate-500 text-xs text-center break-words w-24">
-                      {c}
+        {/* Heatmap Section */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Grid3X3 className="h-5 w-5 text-slate-600" />
+            Category Sensitivity Heatmap
+            <InfoTooltip text="Heatmap showing refusal rates for specific model-category pairs. Darker colors indicate higher refusal rates. Click any cell to view the specific prompts and model responses for that category." />
+          </h3>
+          {heatmapData.categories.length > 0 ? (
+            <div className="min-w-max">
+              <div className="grid gap-1" style={{ gridTemplateColumns: `auto repeat(${heatmapData.categories.length}, 1fr)` }}>
+                {/* Header Row */}
+                <div className="p-2 font-medium text-slate-500 text-sm"></div>
+                {heatmapData.categories.map(c => (
+                  <div key={c} className="p-2 font-medium text-slate-500 text-xs text-center break-words w-24">
+                    {c}
+                  </div>
+                ))}
+
+                {/* Rows */}
+                {heatmapData.models.map(m => (
+                  <>
+                    <div key={m} className="p-2 text-sm font-medium text-slate-700 flex items-center">
+                      {m.split('/')[1] || m}
                     </div>
-                  ))}
-
-                  {/* Rows */}
-                  {heatmapData.models.map(m => (
-                    <>
-                      <div key={m} className="p-2 text-sm font-medium text-slate-700 flex items-center">
-                        {m.split('/')[1] || m}
-                      </div>
-                      {heatmapData.categories.map(c => {
-                        const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
-                        const rate = cell ? cell.rate : 0;
-                        return (
-                          <div
-                            key={`${m}-${c}`}
-                            className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 relative", getRateColor(rate))}
-                            title={`Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count || 0} audits)`}
-                            onClick={() => cell && setSelectedDrillDown(cell)}
-                          >
-                            {rate.toFixed(0)}%
-                          </div>
-                        );
-                      })}
-                    </>
-                  ))}
-                </div>
+                    {heatmapData.categories.map(c => {
+                      const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
+                      const rate = cell ? cell.rate : 0;
+                      return (
+                        <div
+                          key={`${m}-${c}`}
+                          className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 relative", getRateColor(rate))}
+                          title={`Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count || 0} audits)`}
+                          onClick={() => cell && setSelectedDrillDown(cell)}
+                        >
+                          {rate.toFixed(0)}%
+                        </div>
+                      );
+                    })}
+                  </>
+                ))}
               </div>
-            ) : (
-              <div className="text-center text-slate-400 p-8">Loading heatmap...</div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center text-slate-400 p-8">Loading heatmap...</div>
+          )}
         </div>
 
         {/* Improved Leaderboard */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="text-xl font-semibold">🏆 Detailed Leaderboard</h2>
+            <h2 className="text-xl font-semibold">🏆 Model Comparison</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
