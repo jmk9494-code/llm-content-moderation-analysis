@@ -191,7 +191,7 @@ async def process_prompt(sem, p, model_name):
                 'test_date': time.strftime("%Y-%m-%d"),
                 'model': model_name,
                 "prompt_id": p['id'],
-                "category": category,
+                "category": p['category'],
                 "verdict": verdict,
                 "prompt_text": prompt_text,
                 "response_text": response_text,
