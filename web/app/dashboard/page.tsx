@@ -151,11 +151,7 @@ export default function Home() {
       .catch(e => console.log("No report found", e));
 
 
-    // 3. Fetch AI Report
-    const p3 = fetch('/latest_report.md')
-      .then(r => r.text())
-      .then(text => setReport(text))
-      .catch(e => console.log("No report found", e));
+
 
     // 4. Fetch Model Metadata
     fetch('/models.json')
@@ -167,7 +163,7 @@ export default function Home() {
   }, []);
 
   // --- Filtering Config ---
-  const [selectedDate, setSelectedDate] = useState<string>('all');
+
   // --- Filters ---
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
