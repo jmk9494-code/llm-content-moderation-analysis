@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
@@ -378,63 +378,41 @@ export default function Home() {
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* Header with Navigation to Home */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link href="/" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">← Project Overview</Link>
+        {/* new Header Layout */}
+        <header className="space-y-6">
+          {/* Top Row: Branding & Navigation */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-200 pb-6">
+            <div>
+              <Link href="/" className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1 block">← Project Overview</Link>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                Algorithmic Arbiters
+              </h1>
+              <p className="text-lg text-slate-500 font-medium">Monitoring Digital Censorship & Bias</p>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-              <Shield className="h-8 w-8 text-indigo-600" />
-              Live Dashboard
-            </h1>
-            {uniqueDates.length > 0 && (
-              <p className="text-sm text-slate-500 mt-1">
-                Audit Started: <span className="font-semibold text-slate-700">{uniqueDates[uniqueDates.length - 1]}</span> • Latest Run: <span className="font-semibold text-slate-700">{uniqueDates[0]}</span>
-              </p>
-            )}
+
+            <div className="flex gap-2">
+              <Link
+                href="/strategies"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm text-sm"
+              >
+                <Activity className="h-4 w-4 text-indigo-500" />
+                Strategy Analysis
+              </Link>
+              <Link
+                href="/compare"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm text-sm"
+              >
+                <ArrowLeftRight className="h-4 w-4 text-emerald-500" />
+                Compare Models
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/strategies"
-              className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg hover:bg-indigo-100 font-medium transition-colors shadow-sm"
-            >
-              See Strategy Analysis
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/compare"
-              className="hidden md:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg hover:bg-emerald-100 font-medium transition-colors shadow-sm"
-            >
-              Compare Models
-              <ArrowLeftRight className="h-4 w-4" />
-            </Link>
 
-            {/* Region Filter */}
-            <select
-              value={regionFilter}
-              onChange={(e) => setRegionFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-            >
-              <option value="All">All Regions</option>
-              <option value="US">🇺🇸 US Only</option>
-              <option value="China">🇨🇳 China Only</option>
-            </select>
+          {/* Filter Bar */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
 
-            {/* Tier Filter */}
-            <select
-              value={tierFilter}
-              onChange={(e) => setTierFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-            >
-              <option value="All">All Tiers</option>
-              <option value="High">High Tier</option>
-              <option value="Mid">Mid Tier</option>
-              <option value="Low">Low Tier</option>
-            </select>
-
-            {/* Search Input */}
-            <div className="relative hidden md:block">
+            {/* Search */}
+            <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
               </div>
@@ -443,54 +421,89 @@ export default function Home() {
                 placeholder="Search prompts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64 shadow-sm"
+                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full bg-slate-50"
               />
             </div>
 
-            {/* Date Filter Dropdown */}
-            <select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
-            >
-              <option value="all">All Time (Trends)</option>
-              {uniqueDates.map(date => (
-                <option key={date} value={date}>Week of {date}</option>
-              ))}
-            </select>
+            {/* Dropdowns */}
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                <Filter className="h-4 w-4 text-slate-400" />
+                <span className="text-xs font-bold uppercase text-slate-500">Filter By:</span>
+              </div>
 
-            <a
-              href="/audit_log.csv"
-              download="audit_log.csv"
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
-            >
-              <Download className="h-4 w-4" />
-              Download CSV
-            </a>
+              <select
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+              >
+                <option value="All">🌍 All Regions</option>
+                <option value="US">🇺🇸 US Only</option>
+                <option value="China">🇨🇳 China Only</option>
+              </select>
+
+              <select
+                value={tierFilter}
+                onChange={(e) => setTierFilter(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+              >
+                <option value="All">💎 All Tiers</option>
+                <option value="High">High Tier</option>
+                <option value="Mid">Mid Tier</option>
+                <option value="Low">Low Tier</option>
+              </select>
+
+              {/* Date Filter */}
+              <select
+                id="date-filter"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:border-indigo-300 transition-colors"
+              >
+                <option value="all">📅 All Time (Aggregate)</option>
+                {uniqueDates.map(d => (
+                  <option key={d} value={d}>
+                    Run: {d}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        </header>
+
+        <a
+          href="/audit_log.csv"
+          download="audit_log.csv"
+          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
+        >
+          <Download className="h-4 w-4" />
+          Download CSV
+        </a>
+
 
         {/* AI Weekly Report Section */}
-        {report && (
-          <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
-            <div
-              className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
-              onClick={() => setShowReport(!showReport)}
-            >
-              <div className="flex items-center gap-2 text-indigo-900 font-semibold">
-                <FileText className="h-5 w-5 text-indigo-600" />
-                Latest AI Analyst Report
+        {
+          report && (
+            <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
+              <div
+                className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
+                onClick={() => setShowReport(!showReport)}
+              >
+                <div className="flex items-center gap-2 text-indigo-900 font-semibold">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                  Latest AI Analyst Report
+                </div>
+                <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform", showReport ? "" : "rotate-180")} />
               </div>
-              <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform", showReport ? "" : "rotate-180")} />
-            </div>
 
-            {showReport && (
-              <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
-                <ReactMarkdown>{report}</ReactMarkdown>
-              </div>
-            )}
-          </section>
-        )}
+              {showReport && (
+                <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
+                  <ReactMarkdown>{report}</ReactMarkdown>
+                </div>
+              )}
+            </section>
+          )
+        }
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -777,54 +790,56 @@ export default function Home() {
 
 
         {/* Drill Down Modal */}
-        {selectedDrillDown && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedDrillDown(null)}>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">Drill Down Analysis</h3>
-                  <p className="text-sm text-slate-500">
-                    Viewing <span className="font-semibold text-slate-700">{selectedDrillDown.model}</span> on <span className="font-semibold text-slate-700">{selectedDrillDown.category}</span>
-                  </p>
+        {
+          selectedDrillDown && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedDrillDown(null)}>
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Drill Down Analysis</h3>
+                    <p className="text-sm text-slate-500">
+                      Viewing <span className="font-semibold text-slate-700">{selectedDrillDown.model}</span> on <span className="font-semibold text-slate-700">{selectedDrillDown.category}</span>
+                    </p>
+                  </div>
+                  <button onClick={() => setSelectedDrillDown(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                    <X className="h-5 w-5 text-slate-500" />
+                  </button>
                 </div>
-                <button onClick={() => setSelectedDrillDown(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-                  <X className="h-5 w-5 text-slate-500" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-4">
-                  {filteredData
-                    .filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category)
-                    .map((row, idx) => (
-                      <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono text-slate-400">{row.test_date}</span>
-                          <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                            row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-                            {row.verdict}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono whitespace-pre-wrap">
-                            {row.prompt_text}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="space-y-4">
+                    {filteredData
+                      .filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category)
+                      .map((row, idx) => (
+                        <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-mono text-slate-400">{row.test_date}</span>
+                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                              row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                              {row.verdict}
+                            </span>
                           </div>
-                          <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
-                            row.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-900" : "bg-emerald-50 border-emerald-100 text-emerald-900")}>
-                            {row.response_text}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono whitespace-pre-wrap">
+                              {row.prompt_text}
+                            </div>
+                            <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
+                              row.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-900" : "bg-emerald-50 border-emerald-100 text-emerald-900")}>
+                              {row.response_text}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
-                    <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
-                  )}
+                      ))}
+                    {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
+                      <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
-      </div>
-    </main>
+      </div >
+    </main >
   );
 }
