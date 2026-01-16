@@ -4,6 +4,7 @@ import os
 import argparse
 import asyncio
 import json
+import pandas as pd # Required for aggregation
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import httpx
@@ -90,6 +91,27 @@ def calculate_cost(model_name, p_tokens, c_tokens):
     in_price, out_price = get_pricing(model_name)
     cost = (p_tokens / 1_000_000 * in_price) + (c_tokens / 1_000_000 * out_price)
     return round(cost, 6)
+
+def update_trends(audit_file='audit_log.csv', trends_file='data/trends.csv'):
+    """Recalculates trends from the full audit log."""
+    try:
+        if not os.path.exists(audit_file): return
+        
+        df = pd.read_csv(audit_file)
+        if df.empty: return
+        
+        # Group by Date and Model
+        trends = df.groupby(['test_date', 'model']).agg(
+            total_prompts=('prompt_id', 'count'),
+            pct_allowed=('verdict', lambda x: (x == 'ALLOWED').mean() * 100),
+            pct_removed=('verdict', lambda x: (x == 'REMOVED').mean() * 100),
+            avg_cost=('run_cost', 'mean')
+        ).reset_index()
+        
+        trends.to_csv(trends_file, index=False)
+        print(f"✅ Trends updated: {len(trends)} rows written to {trends_file}")
+    except Exception as e:
+        print(f"⚠️ Failed to update trends: {e}")
 
 # --- Core Logic ---
 
@@ -276,4 +298,9 @@ if __name__ == "__main__":
     
     start_time = time.time()
     asyncio.run(run_audit_async(loaded_prompts, models, args.output))
+    
+    # Update trends file for the dashboard
+    print("\n📈 Updating longitudinal trends...")
+    update_trends(args.output, "data/trends.csv")
+    
     print(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
