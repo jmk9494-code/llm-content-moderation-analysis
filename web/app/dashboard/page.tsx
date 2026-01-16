@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-table';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+  LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -272,170 +272,212 @@ export default function Home() {
     onSortingChange: setAuditSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 10 } },
+    // Default to 0 if no data
+    entry[mod] = total > 0 ? Math.round((refusals / total) * 100) : 0;
   });
+  return entry;
+});
+  }, [filteredData]);
 
-  return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+// Get list of models for dynamically iterating Radar components
+const activeModels = useMemo(() => {
+  if (filteredData.length === 0) return [];
+  return Array.from(new Set(filteredData.map(r => r.model)));
+}, [filteredData]);
 
-        {/* Header with Navigation to Home */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F'];
+
+
+return (
+  <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
+    <div className="max-w-7xl mx-auto space-y-8">
+
+      {/* Header with Navigation to Home */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Link href="/" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">← Project Overview</Link>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+            <Shield className="h-8 w-8 text-indigo-600" />
+            Live Dashboard
+          </h1>
+          {uniqueDates.length > 0 && (
+            <p className="text-sm text-slate-500 mt-1">
+              Audit Started: <span className="font-semibold text-slate-700">{uniqueDates[uniqueDates.length - 1]}</span> • Latest Run: <span className="font-semibold text-slate-700">{uniqueDates[0]}</span>
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Date Filter Dropdown */}
+          <select
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">All Time (Trends)</option>
+            {uniqueDates.map(date => (
+              <option key={date} value={date}>Week of {date}</option>
+            ))}
+          </select>
+
+          <a
+            href="/audit_log.csv"
+            download="audit_log.csv"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
+          >
+            <Download className="h-4 w-4" />
+            Download CSV
+          </a>
+        </div>
+      </div>
+
+      {/* AI Weekly Report Section */}
+      {report && (
+        <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
+          <div
+            className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
+            onClick={() => setShowReport(!showReport)}
+          >
+            <div className="flex items-center gap-2 text-indigo-900 font-semibold">
+              <FileText className="h-5 w-5 text-indigo-600" />
+              Latest AI Analyst Report
+            </div>
+            <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform", showReport ? "" : "rotate-180")} />
+          </div>
+
+          {showReport && (
+            <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
+              <ReactMarkdown>{report}</ReactMarkdown>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link href="/" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">← Project Overview</Link>
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-              <Shield className="h-8 w-8 text-indigo-600" />
-              Live Dashboard
-            </h1>
-            {uniqueDates.length > 0 && (
-              <p className="text-sm text-slate-500 mt-1">
-                Audit Started: <span className="font-semibold text-slate-700">{uniqueDates[uniqueDates.length - 1]}</span> • Latest Run: <span className="font-semibold text-slate-700">{uniqueDates[0]}</span>
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Date Filter Dropdown */}
-            <select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Time (Trends)</option>
-              {uniqueDates.map(date => (
-                <option key={date} value={date}>Week of {date}</option>
-              ))}
-            </select>
-
-            <a
-              href="/audit_log.csv"
-              download="audit_log.csv"
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm"
-            >
-              <Download className="h-4 w-4" />
-              Download CSV
-            </a>
+            <div className="text-sm text-slate-500 font-medium uppercase">Total Audits</div>
+            <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
           </div>
         </div>
-
-        {/* AI Weekly Report Section */}
-        {report && (
-          <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
-            <div
-              className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition-colors"
-              onClick={() => setShowReport(!showReport)}
-            >
-              <div className="flex items-center gap-2 text-indigo-900 font-semibold">
-                <FileText className="h-5 w-5 text-indigo-600" />
-                Latest AI Analyst Report
-              </div>
-              <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform", showReport ? "" : "rotate-180")} />
-            </div>
-
-            {showReport && (
-              <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
-                <ReactMarkdown>{report}</ReactMarkdown>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Total Audits</div>
-              <div className="text-2xl font-bold text-slate-900">{data.length}</div>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Avg Refusal Rate</div>
-              <div className="text-2xl font-bold text-slate-900">
-                {summary.length ? (summary.reduce((a, b) => a + b.refusal_rate, 0) / summary.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase">Avg Verbosity</div>
-              <div className="text-2xl font-bold text-slate-900">
-                {summary.length ? Math.round(summary.reduce((a, b) => a + b.avg_len, 0) / summary.length) : 0} chars
-              </div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
+          <div>
+            <div className="text-sm text-slate-500 font-medium uppercase">Avg Refusal Rate</div>
+            <div className="text-2xl font-bold text-slate-900">
+              {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
             </div>
           </div>
         </div>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
+          <div>
+            <div className="text-sm text-slate-500 font-medium uppercase">Avg Verbosity</div>
+            <div className="text-2xl font-bold text-slate-900">
+              {filteredSummary.length ? Math.round(filteredSummary.reduce((a, b) => a + b.avg_len, 0) / filteredSummary.length) : 0} chars
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Bar Chart: Strictness */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Shield className="h-5 w-5 text-indigo-600" />
-              Model Strictness Comparison
-            </h3>
-            <div className="h-64 w-full">
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bar Chart: Strictness */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-indigo-600" />
+            Model Strictness Comparison
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} layout="vertical" margin={{ left: 40, right: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                <XAxis type="number" unit="%" domain={[0, 100]} hide />
+                <YAxis type="category" dataKey="model" width={100} tick={{ fontSize: 12 }} interval={0}
+                  tickFormatter={(val) => val.split('/')[1] || val}
+                />
+                <Tooltip
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="refusal_rate" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Line Chart: Trends */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-600" />
+            Refusal Rate Trends (History)
+          </h3>
+          <div className="h-64 w-full">
+            {trends.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ left: 40, right: 30 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" unit="%" domain={[0, 100]} hide />
-                  <YAxis type="category" dataKey="model" width={100} tick={{ fontSize: 12 }} interval={0}
-                    tickFormatter={(val) => val.split('/')[1] || val}
-                  />
-                  <Tooltip
-                    cursor={{ fill: '#f1f5f9' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="refusal_rate" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
+                <LineChart data={trends}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                  <YAxis unit="%" />
+                  <Tooltip />
+                  <Legend />
+                  {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
+                    <Line
+                      key={model}
+                      type="monotone"
+                      dataKey="refusal_rate"
+                      data={trends.filter(t => t.model === model)}
+                      name={model.split('/')[1] || model}
+                      stroke={`hsl(${i * 90}, 70%, 50%)`}
+                      strokeWidth={2}
+                      dot={true}
+                    />
+                  ))}
+                </LineChart>
               </ResponsiveContainer>
-            </div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 italic">
+                No historical data available yet.
+              </div>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Line Chart: Trends */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-emerald-600" />
-              Refusal Rate Trends (History)
-            </h3>
-            <div className="h-64 w-full">
-              {trends.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trends}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis unit="%" />
-                    <Tooltip />
-                    <Legend />
-                    {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
-                      <Line
-                        key={model}
-                        type="monotone"
-                        dataKey="refusal_rate"
-                        data={trends.filter(t => t.model === model)}
-                        name={model.split('/')[1] || model}
-                        stroke={`hsl(${i * 90}, 70%, 50%)`}
-                        strokeWidth={2}
-                        dot={true}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 italic">
-                  No historical data available yet.
-                </div>
-              )}
-            </div>
+      {/* Radar Chart Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-indigo-600" />
+            Safety Profile (Refusal by Category)
+          </h3>
+          <div className="h-80 w-full text-xs">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="subject" />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                {activeModels.map((model, index) => (
+                  <Radar
+                    key={model}
+                    name={model.split('/')[1] || model}
+                    dataKey={model}
+                    stroke={colors[index % colors.length]}
+                    fill={colors[index % colors.length]}
+                    fillOpacity={0.1}
+                  />
+                ))}
+                <Legend />
+                <Tooltip />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Heatmap Section */}
+        {/* Heatmap Section (moved to 2nd col) */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Grid3X3 className="h-5 w-5 text-slate-600" />
@@ -475,19 +517,54 @@ export default function Home() {
             <div className="text-center text-slate-400 p-8">Loading heatmap...</div>
           )}
         </div>
+      </div>
 
-        {/* Improved Leaderboard */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h2 className="text-xl font-semibold">🏆 Detailed Leaderboard</h2>
-          </div>
+      {/* Improved Leaderboard */}
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100">
+          <h2 className="text-xl font-semibold">🏆 Detailed Leaderboard</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold">
+              {summaryTable.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {summaryTable.getRowModel().rows.map(row => (
+                <tr key={row.id} className="hover:bg-slate-50">
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Audit Log */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-800">📋 Audit Log</h2>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold">
-                {summaryTable.getHeaderGroups().map(headerGroup => (
+              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
+                {auditTable.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map(header => (
-                      <th key={header.id} className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <th key={header.id} className="px-6 py-3">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
@@ -495,89 +572,55 @@ export default function Home() {
                 ))}
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {summaryTable.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="hover:bg-slate-50">
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
+                {auditTable.getRowModel().rows.map(row => (
+                  <>
+                    <tr key={row.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => toggleRow(row.id)}>
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id} className="px-6 py-3">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Expanded Q&A Row */}
+                    {expandedRows[row.id] && (
+                      <tr className="bg-slate-50/50">
+                        <td colSpan={auditColumns.length} className="px-6 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div>
+                              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Prompt (User)</div>
+                              <div className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm font-mono whitespace-pre-wrap">
+                                {row.original.prompt_text}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Response (AI)</div>
+                              <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
+                                row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" : "bg-emerald-50 border-emerald-100 text-emerald-800")}>
+                                {row.original.response_text}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>
           </div>
-        </section>
-
-        {/* Audit Log */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-800">📋 Audit Log</h2>
-          </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-semibold border-b border-slate-200">
-                  {auditTable.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map(header => (
-                        <th key={header.id} className="px-6 py-3">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
-                  {auditTable.getRowModel().rows.map(row => (
-                    <>
-                      <tr key={row.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => toggleRow(row.id)}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className="px-6 py-3">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                      {/* Expanded Q&A Row */}
-                      {expandedRows[row.id] && (
-                        <tr className="bg-slate-50/50">
-                          <td colSpan={auditColumns.length} className="px-6 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                              <div>
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Prompt (User)</div>
-                                <div className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm font-mono whitespace-pre-wrap">
-                                  {row.original.prompt_text}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Response (AI)</div>
-                                <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
-                                  row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" : "bg-emerald-50 border-emerald-100 text-emerald-800")}>
-                                  {row.original.response_text}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  ))}
-                </tbody>
-              </table>
+          <div className="border-t border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
+            <div className="text-sm text-slate-500">
+              Page {auditTable.getState().pagination.pageIndex + 1} of {auditTable.getPageCount()}
             </div>
-            <div className="border-t border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
-              <div className="text-sm text-slate-500">
-                Page {auditTable.getState().pagination.pageIndex + 1} of {auditTable.getPageCount()}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => auditTable.previousPage()} disabled={!auditTable.getCanPreviousPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button>
-                <button onClick={() => auditTable.nextPage()} disabled={!auditTable.getCanNextPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button>
-              </div>
+            <div className="flex gap-2">
+              <button onClick={() => auditTable.previousPage()} disabled={!auditTable.getCanPreviousPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={() => auditTable.nextPage()} disabled={!auditTable.getCanNextPage()} className="p-2 border rounded hover:bg-white disabled:opacity-50"><ChevronRight className="h-4 w-4" /></button>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-      </div>
-    </main>
-  );
+    </div>
+  </main>
+);
 }
