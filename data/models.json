@@ -88,5 +88,23 @@
         "tier": "Mid",
         "cost_per_m_in": 0.20,
         "cost_per_m_out": 0.20
+    },
+    {
+        "id": "mistralai/mistral-large",
+        "name": "Mistral Large",
+        "provider": "Mistral AI",
+        "region": "Europe",
+        "tier": "High",
+        "cost_per_m_in": 2.0,
+        "cost_per_m_out": 6.0
+    },
+    {
+        "id": "mistralai/mistral-medium",
+        "name": "Mistral Medium",
+        "provider": "Mistral AI",
+        "region": "Europe",
+        "tier": "Mid",
+        "cost_per_m_in": 0.60,
+        "cost_per_m_out": 1.80
     }
 ]

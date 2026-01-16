@@ -15,10 +15,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter, Trophy } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
+import TimeLapseChart from './TimeLapseChart';
+import BiasChart from './BiasChart';
+import PriceChart from './PriceChart';
+import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
 
 function cn(...inputs: ClassValue[]) {
@@ -93,7 +97,8 @@ type ModelMetadata = {
 export default function Home() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [summary, setSummary] = useState<ModelSummary[]>([]);
-  const [trends, setTrends] = useState<TrendRow[]>([]);
+  const [trends, setTrends] = useState<any[]>([]);
+  const [biasData, setBiasData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<string>('');
   const [showReport, setShowReport] = useState(true);
@@ -137,15 +142,39 @@ export default function Home() {
       });
 
     // 2. Fetch Trends
-    const p2 = fetch('/trends.csv')
-      .then(r => r.text())
-      .then(csv => {
-        const parsed = Papa.parse<TrendRow>(csv, { header: true, dynamicTyping: true });
-        setTrends(parsed.data.filter(r => r.date && r.model));
-      }).catch(err => console.log("Trends not found", err));
+    const p2 = new Promise<void>((resolve, reject) => {
+      Papa.parse<any>('/trends.csv', {
+        download: true,
+        header: true,
+        complete: (results) => {
+          setTrends(results.data.filter(r => r.model));
+          resolve();
+        },
+        error: (err) => {
+          console.log("Trends not found", err);
+          reject(err);
+        }
+      });
+    });
 
-    // 3. Fetch AI Report
-    const p3 = fetch('/latest_report.md')
+    // 3. Fetch Bias Log
+    const p3 = new Promise<void>((resolve, reject) => {
+      Papa.parse<any>('/bias_log.csv', {
+        download: true,
+        header: true,
+        complete: (results) => {
+          setBiasData(results.data.filter(r => r.model));
+          resolve();
+        },
+        error: (err) => {
+          console.log("Bias log not found", err);
+          reject(err);
+        }
+      });
+    });
+
+    // 4. Fetch AI Report
+    const p4 = fetch('/latest_report.md')
       .then(r => r.text())
       .then(text => setReport(text))
       .catch(e => console.log("No report found", e));
@@ -376,9 +405,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8" id="dashboard-content">
 
-        {/* new Header Layout */}
+        {/* Top Row: Branding & Navigation */}
         <header className="space-y-6">
           {/* Top Row: Branding & Navigation */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-200 pb-6">
@@ -405,6 +434,14 @@ export default function Home() {
                 <ArrowLeftRight className="h-4 w-4 text-emerald-500" />
                 Compare Models
               </Link>
+              <Link
+                href="/leaderboard"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm text-sm"
+              >
+                <Trophy className="h-4 w-4 text-yellow-500" />
+                Leaderboard
+              </Link>
+              <DownloadReportButton />
             </div>
           </div>
 
@@ -440,6 +477,7 @@ export default function Home() {
                 <option value="All">🌍 All Regions</option>
                 <option value="US">🇺🇸 US Only</option>
                 <option value="China">🇨🇳 China Only</option>
+                <option value="Europe">🇪🇺 Europe Only</option>
               </select>
 
               <select
@@ -505,6 +543,12 @@ export default function Home() {
           )
         }
 
+        {/* Time Travel Trends */}
+        <TimeLapseChart data={trends} />
+
+        {/* Bias Chart */}
+        <BiasChart data={biasData} />
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -569,6 +613,9 @@ export default function Home() {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Price Chart */}
+          <PriceChart data={filteredData} />
 
           {/* Line Chart: Trends */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">

@@ -7,7 +7,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { Shield, ArrowRight, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Shield, ArrowRight, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -48,6 +48,7 @@ function InfoTooltip({ text }: { text: string }) {
 export default function StrategyPage() {
     const [data, setData] = useState<StrategyRow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedBenignModel, setSelectedBenignModel] = useState<{ model: string, refusals: StrategyRow[] } | null>(null);
 
     useEffect(() => {
         fetch('/strategy_log.csv')
@@ -153,7 +154,15 @@ export default function StrategyPage() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {benignData.map(m => (
-                            <div key={m.model} className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex items-center justify-between">
+                            <div
+                                key={m.model}
+                                className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex items-center justify-between cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all"
+                                onClick={() => {
+                                    // Get control subset for this model
+                                    const refusals = data.filter(r => r.model === m.model && r.type === 'Benign' && r.verdict === 'REMOVED');
+                                    setSelectedBenignModel({ model: m.model, refusals });
+                                }}
+                            >
                                 <div>
                                     <div className="font-medium text-slate-700">{m.model.split('/')[1] || m.model}</div>
                                     <div className="text-xs text-slate-500">{m.count} control prompts</div>
@@ -164,9 +173,68 @@ export default function StrategyPage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Drill Down Modal */}
+                    {selectedBenignModel && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-slate-800">False Positive Analysis</h3>
+                                        <p className="text-sm text-slate-500">
+                                            Benign prompts refused by <span className="font-semibold text-indigo-600">{selectedBenignModel.model.split('/')[1]}</span>
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedBenignModel(null)}
+                                        className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                                    >
+                                        <X className="h-5 w-5 text-slate-500" />
+                                    </button>
+                                </div>
+
+                                <div className="p-6 overflow-y-auto space-y-6">
+                                    {selectedBenignModel.refusals.length === 0 ? (
+                                        <div className="text-center py-8 text-slate-400">
+                                            <CheckCircle className="h-12 w-12 mx-auto mb-2 text-emerald-200" />
+                                            <p>No false positives! This model correctly handled all benign prompts.</p>
+                                        </div>
+                                    ) : (
+                                        // Group by Category
+                                        Object.entries(
+                                            selectedBenignModel.refusals.reduce((acc, row) => {
+                                                const cat = row.category || 'Uncategorized';
+                                                if (!acc[cat]) acc[cat] = [];
+                                                acc[cat].push(row);
+                                                return acc;
+                                            }, {} as Record<string, StrategyRow[]>)
+                                        ).map(([category, rows]) => (
+                                            <div key={category}>
+                                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
+                                                    {category} ({rows.length})
+                                                </h4>
+                                                <div className="space-y-3">
+                                                    {rows.map((row, i) => (
+                                                        <div key={i} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
+                                                            <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-700 font-mono mb-2">
+                                                                {row.prompt_text}
+                                                            </div>
+                                                            <div className="pl-3 border-l-2 border-red-200 text-sm text-slate-600">
+                                                                {row.response_text || <span className="italic text-slate-400">No response text provided</span>}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
-            </div>
-        </main>
+            </div >
+        </main >
     );
 }
