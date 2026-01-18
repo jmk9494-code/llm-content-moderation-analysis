@@ -114,7 +114,7 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
             </div>
 
             <div className="h-80 w-full mb-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                     <LineChart data={currentData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />

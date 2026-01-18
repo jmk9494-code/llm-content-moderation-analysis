@@ -19,6 +19,7 @@ export const StrategyRowSchema = z.object({
     category: z.string(),
     type: z.enum(["Direct", "Adversarial", "Benign"]).catch("Direct"), // Fallback if type is weird
     verdict: z.string(),
+    prompt_id: z.string().optional(),
     prompt_text: z.string().default(""),
     response_text: z.string().default(""),
 });

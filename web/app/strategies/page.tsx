@@ -56,28 +56,54 @@ export default function StrategyPage() {
         // Fetch metadata matching dashboard approach
         fetch('/models.json').then(r => r.json()).then(setModelsMeta).catch(() => { });
 
-        fetch('/strategy_log.csv')
-            .then(r => r.text())
-            .then(csv => {
-                const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
-                // Validate with Zod
-                const validRows: StrategyRow[] = [];
-                parsed.data.forEach((row: any) => {
-                    const result = StrategyRowSchema.safeParse(row);
-                    if (result.success) {
-                        validRows.push(result.data);
-                    } else {
-                        console.warn("Skipping invalid strategy row:", result.error);
-                    }
-                });
+        Promise.all([
+            fetch('/strategy_log.csv').then(r => r.text()),
+            fetch('/strategy_prompts.csv').then(r => r.text())
+        ]).then(([logCsv, promptsCsv]) => {
+            const parsedLog = Papa.parse(logCsv, { header: true, dynamicTyping: true });
+            const parsedPrompts = Papa.parse(promptsCsv, { header: true, dynamicTyping: true });
 
-                setData(validRows.filter(r => r.model && r.type));
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to load strategy log", err);
-                setLoading(false);
+            // Create map of ID -> Text
+            const promptMap = new Map<string, string>();
+            parsedPrompts.data.forEach((p: any) => {
+                if (p.id && p.text) promptMap.set(p.id, p.text);
             });
+
+            // Validate with Zod & Merge
+            const validRows: StrategyRow[] = [];
+            parsedLog.data.forEach((row: any) => {
+                const result = StrategyRowSchema.safeParse(row);
+                if (result.success) {
+                    const enriched = result.data;
+                    // Fallback to existing text if available, otherwise look up from prompts CSV
+                    if ((!enriched.prompt_text || enriched.prompt_text === 'Prompt text unavailable') && enriched.prompt_id) {
+                        // IDs in log might be like S-001, map matches exactly
+                        const text = promptMap.get(enriched.prompt_id || ''); // prompt_id isn't in schema but seems to be in CSV?
+                        // Wait, Schema doesn't have prompt_id. I need to check the Schema or just use row.prompt_id
+                        if (text) enriched.prompt_text = text;
+                    }
+                    // Actually, looking at the previous file view of strategy_log.csv, it DOES have prompt_id (line 1).
+                    // But the Schema (lines 16-24 of schemas.ts) MISSES prompt_id!
+                    // I need to update the schema too or just cast it here.
+                    // Let's rely on row.prompt_id for lookup but we need to pass it through if we want to be strict.
+                    // The Zod schema trims unknown keys by default? No, strip is default.
+                    // I should probably check if Schema allows passthrough or add prompt_id to Schema.
+                    // For now, let's just grab it from raw row for lookup.
+                    if (!enriched.prompt_text && row.prompt_id) {
+                        enriched.prompt_text = promptMap.get(row.prompt_id) || "Prompt text unavailable";
+                    }
+                    validRows.push(enriched);
+                } else {
+                    console.warn("Skipping invalid strategy row:", result.error);
+                }
+            });
+
+            setData(validRows.filter(r => r.model && r.type));
+            setLoading(false);
+        }).catch(err => {
+            console.error("Failed to load strategy data", err);
+            setLoading(false);
+        });
     }, []);
 
     // --- Aggregations ---

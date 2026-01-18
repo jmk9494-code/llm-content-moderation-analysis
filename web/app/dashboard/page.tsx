@@ -478,58 +478,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats Grid - Moved to Top */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
-              <div>
-                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                  Total Audits
-                  <InfoTooltip text="Total number of test cases run across all selected models." />
-                </div>
-                <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
-              </div>
-            </div>
+          {/* Stats Grid - Moved to Top (Removed Duplicate) */}
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="p-3 bg-red-50 rounded-xl text-red-600"><Shield className="h-6 w-6" /></div>
-              <div>
-                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                  Strictness
-                  <InfoTooltip text="% of content the MODEL decided to Remove (acting as moderator)." />
-                </div>
-                <div className="text-2xl font-bold text-slate-900">
-                  {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="p-3 bg-amber-50 rounded-xl text-amber-600"><AlertOctagon className="h-6 w-6" /></div>
-              <div>
-                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                  Refusals & Blocks
-                  <InfoTooltip text="% of prompts where the model refused to answer entirely or was blocked by API." />
-                </div>
-                <div className="text-2xl font-bold text-slate-900">
-                  {filteredSummary.length ? ((filteredSummary.reduce((a, b) => a + b.soft_refusal_rate + b.block_rate, 0)) / filteredSummary.length).toFixed(1) : 0}%
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
-              <div>
-                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                  Avg Verbosity
-                  <InfoTooltip text="Average length of model responses in characters." />
-                </div>
-                <div className="text-2xl font-bold text-slate-900">
-                  {filteredSummary.length ? Math.round(filteredSummary.reduce((a, b) => a + b.avg_len, 0) / filteredSummary.length) : 0} chars
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
             <div className="relative w-full md:w-64">
@@ -701,76 +651,15 @@ export default function Home() {
           )}
         </div>
 
-        {/* Bias Analysis Chart */}
-        <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-8">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <Scale className="h-5 w-5 text-indigo-600" />
-              Axis of Bias Analysis
-              <InfoTooltip text="Political compass analysis of refusal reasoning (LLM Judge)" />
-            </h3>
-            <BiasChart data={biasData} />
-          </div>
-        </ChartErrorBoundary>
+        {/* Bias Chart Moved to Charts Row */}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Total Audits
-                <InfoTooltip text="Total number of test cases run across all selected models." />
-              </div>
-              <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
-            </div>
-          </div>
+        {/* Stats Grid Removed (Duplicate / Redundant) */}
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-red-50 rounded-xl text-red-600"><Shield className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Strictness
-                <InfoTooltip text="% of content the MODEL decided to Remove (acting as moderator)." />
-              </div>
-              <div className="text-2xl font-bold text-slate-900">
-                {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-amber-50 rounded-xl text-amber-600"><AlertOctagon className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Refusals & Blocks
-                <InfoTooltip text="% of prompts where the model refused to answer entirely or was blocked by API." />
-              </div>
-              <div className="text-2xl font-bold text-slate-900">
-                {filteredSummary.length ? ((filteredSummary.reduce((a, b) => a + b.soft_refusal_rate + b.block_rate, 0)) / filteredSummary.length).toFixed(1) : 0}%
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
-            <div>
-              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Avg Verbosity
-                <InfoTooltip text="Average length of model responses in characters." />
-              </div>
-              <div className="text-2xl font-bold text-slate-900">
-                {filteredSummary.length ? Math.round(filteredSummary.reduce((a, b) => a + b.avg_len, 0) / filteredSummary.length) : 0} chars
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Charts Row: Price & Bias */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Price Analysis Chart */}
           <ChartErrorBoundary fallbackMessage="Price analysis unavailable.">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
               <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-amber-500" />
                 Price of Censorship
@@ -780,75 +669,60 @@ export default function Home() {
             </div>
           </ChartErrorBoundary>
 
-          {/* Line Chart: Trends */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-emerald-600" />
-              ⏳ Time-Travel Trends
-              <InfoTooltip text="Historical view of refusal rates. This chart lets you 'time-travel' to see how model behavior has drifted or tightened over different audit runs." />
-            </h3>
-            <div className="h-64 w-full">
-              {trends.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trends}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis unit="%" />
-                    <Tooltip />
-                    <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
-                    {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
-                      <Line
-                        key={model}
-                        type="monotone"
-                        dataKey="refusal_rate"
-                        data={trends.filter(t => t.model === model)}
-                        name={model.split('/')[1] || model}
-                        stroke={`hsl(${i * 90}, 70%, 50%)`}
-                        strokeWidth={2}
-                        dot={true}
-                        activeDot={{ onClick: () => setModelFilter(model), cursor: 'pointer' }}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 italic">
-                  No historical data available yet.
-                </div>
-              )}
+          {/* Bias Analysis Chart */}
+          <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
+              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Scale className="h-5 w-5 text-indigo-600" />
+                Axis of Bias
+                <InfoTooltip text="Political compass analysis of refusal reasoning (LLM Judge)" />
+              </h3>
+              <BiasChart data={biasData} />
             </div>
+          </ChartErrorBoundary>
+        </div>
+
+        {/* Full Width Time-Travel Chart */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
+          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-600" />
+            ⏳ Time-Travel Trends
+            <InfoTooltip text="Historical view of refusal rates. This chart lets you 'time-travel' to see how model behavior has drifted or tightened over different audit runs." />
+          </h3>
+          <div className="h-64 w-full">
+            {trends.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trends}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                  <YAxis unit="%" />
+                  <Tooltip />
+                  <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
+                  {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
+                    <Line
+                      key={model}
+                      type="monotone"
+                      dataKey="refusal_rate"
+                      data={trends.filter(t => t.model === model)}
+                      name={model.split('/')[1] || model}
+                      stroke={`hsl(${i * 90}, 70%, 50%)`}
+                      strokeWidth={2}
+                      dot={true}
+                      activeDot={{ onClick: () => setModelFilter(model), cursor: 'pointer' }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 italic">
+                No historical data available yet.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Radar Chart Section */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-indigo-600" />
-            Censorship Profile (Refusal by Category)
-            <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model. Click a legend item to filter." />
-          </h3>
-          <div className="h-80 w-full text-xs">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="subject" />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                {activeModels.map((model, index) => (
-                  <Radar
-                    key={model}
-                    name={model.split('/')[1] || model}
-                    dataKey={model}
-                    stroke={colors[index % colors.length]}
-                    fill={colors[index % colors.length]}
-                    fillOpacity={0.1}
-                  />
-                ))}
-                <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* Radar Chart Removed (Censorship Profile) as requested */}
+
 
         {/* Drill Down Modal */}
         {selectedDrillDown && (
@@ -904,6 +778,8 @@ export default function Home() {
           </div>
         )}
 
+
+        <DataChatbot />
       </div>
     </main>
   );
