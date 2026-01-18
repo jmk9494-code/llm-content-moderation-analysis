@@ -28,7 +28,7 @@ import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 import { generateReport } from '@/lib/analyst';
-import DataChatbot from '@/components/DataChatbot';
+
 import { RefreshCw } from 'lucide-react';
 import { AuditRowSchema, AuditRow } from '@/lib/schemas';
 
