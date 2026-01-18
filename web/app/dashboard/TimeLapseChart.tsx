@@ -9,7 +9,8 @@ import {
     CartesianGrid,
     Tooltip,
     Legend,
-    ResponsiveContainer
+    ResponsiveContainer,
+    Brush
 } from 'recharts';
 import { Play, Pause, FastForward, RotateCcw } from 'lucide-react';
 
@@ -135,6 +136,7 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
                                 isAnimationActive={false} // We handle animation via state
                             />
                         ))}
+                        <Brush dataKey="date" height={30} stroke="#8884d8" />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

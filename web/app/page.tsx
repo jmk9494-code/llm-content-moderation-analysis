@@ -23,7 +23,7 @@ export default function LandingPage() {
             <Eye className="h-8 w-8 text-indigo-600" />
           </motion.div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 font-display leading-tight">
-            Who watches the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">watchers</span>?
+            Into the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">black box</span>.
           </h1>
           <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             As AI models become the world's moderators, their hidden biases shape our reality. We built <strong>Algorithmic Arbiters</strong> to shine a light on the black box.

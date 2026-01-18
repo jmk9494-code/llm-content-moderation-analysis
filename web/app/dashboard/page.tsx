@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter, Trophy, RotateCcw, Scale } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, AlertCircle, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter, Trophy, RotateCcw, Scale } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
@@ -55,6 +55,7 @@ type ModelSummary = {
   soft_refusal_rate: number;
   block_rate: number;
   avg_len: number;
+  least_sensitive_topic: string; // New field
 };
 
 type HeatmapCell = {
@@ -144,7 +145,8 @@ export default function Home() {
                 total: 0,
                 refusals: 0, soft_refusals: 0, blocks: 0,
                 refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
-                avg_len: 0
+                avg_len: 0,
+                least_sensitive_topic: 'N/A'
               };
               agg[r.model].total++;
               if (r.verdict === 'REMOVED') agg[r.model].refusals++;
@@ -241,28 +243,66 @@ export default function Home() {
   // Recalculate summary based on filtered data
   const filteredSummary = useMemo(() => {
     const agg: Record<string, ModelSummary> = {};
+    const catAgg: Record<string, Record<string, { total: number; refusals: number }>> = {};
+
     filteredData.forEach(r => {
+      // Main Agg
       if (!agg[r.model]) agg[r.model] = {
         model: r.model,
         provider: modelsMeta.find(m => m.id === r.model)?.provider || 'Unknown',
         total: 0,
         refusals: 0, soft_refusals: 0, blocks: 0,
         refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
-        avg_len: 0
+        avg_len: 0,
+        least_sensitive_topic: 'N/A'
       };
+
+      // Category Agg
+      if (!catAgg[r.model]) catAgg[r.model] = {};
+      if (!catAgg[r.model][r.category]) catAgg[r.model][r.category] = { total: 0, refusals: 0 };
+
       agg[r.model].total++;
-      if (r.verdict === 'REMOVED') agg[r.model].refusals++;
+      catAgg[r.model][r.category].total++;
+
+      if (r.verdict === 'REMOVED') {
+        agg[r.model].refusals++;
+        catAgg[r.model][r.category].refusals++;
+      }
       if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
       if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
       agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
     });
-    return Object.values(agg).map(s => ({
-      ...s,
-      refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
-      soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
-      block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
-      avg_len: Math.round(s.avg_len / s.total)
-    }));
+
+    return Object.values(agg).map(s => {
+      // Calculate Least Sensitive Topic
+      const cats = catAgg[s.model];
+      let minRate = 101;
+      let bestCats: string[] = [];
+
+      if (cats) {
+        Object.entries(cats).forEach(([cat, stats]) => {
+          if (stats.total < 5) return; // Minimum sample size threshold
+          const rate = (stats.refusals / stats.total) * 100;
+          if (rate < minRate) {
+            minRate = rate;
+            bestCats = [cat];
+          } else if (Math.abs(rate - minRate) < 0.01) {
+            bestCats.push(cat);
+          }
+        });
+      }
+
+      const leastSensitive = bestCats.length > 0 ? bestCats.join(', ') : 'None';
+
+      return {
+        ...s,
+        refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
+        soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
+        block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
+        avg_len: Math.round(s.avg_len / s.total),
+        least_sensitive_topic: leastSensitive
+      };
+    });
   }, [filteredData, modelsMeta]);
 
   // Use filtered data for heatmaps and charts
@@ -334,9 +374,12 @@ export default function Home() {
     }),
     summaryHelper.accessor('refusal_rate', {
       header: ({ column }) => (
-        <button className="flex items-center gap-1" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Strictness <ArrowUpDown className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button className="flex items-center gap-1 font-bold" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Censorship Score <ArrowUpDown className="h-4 w-4" />
+          </button>
+          <InfoTooltip text="Percentage of prompts refused (REMOVED verdict). Higher means stricter modulation." />
+        </div>
       ),
       cell: info => {
         const val = info.getValue();
@@ -349,6 +392,14 @@ export default function Home() {
           </div>
         );
       },
+    }),
+    summaryHelper.accessor('least_sensitive_topic', {
+      header: 'Least Sensitive Topic',
+      cell: info => (
+        <span className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
+          {info.getValue()}
+        </span>
+      )
     }),
     summaryHelper.accessor('avg_len', {
       header: 'Avg Response Length',
@@ -770,7 +821,17 @@ export default function Home() {
                       </div>
                     ))}
                   {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
-                    <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="bg-slate-100 p-4 rounded-full mb-4">
+                        <AlertCircle className="h-8 w-8 text-slate-400" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-slate-900 mb-1">No Data Available</h4>
+                      <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                        We couldn't find any audit records for <strong>{selectedDrillDown.model}</strong> in the <strong>{selectedDrillDown.category}</strong> category.
+                        <br /><br />
+                        This usually means the model refused to answer even benign prompts due to safety filters, or the API request timed out during data collection.
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -779,7 +840,7 @@ export default function Home() {
         )}
 
 
-        <DataChatbot />
+
       </div>
     </main>
   );
