@@ -26,7 +26,7 @@ export function NavBar() {
                             <div className="p-1 bg-slate-900 rounded-md">
                                 <Box className="h-5 w-5 text-white" />
                             </div>
-                            Algorithmic Arbiters
+                            Moderation Bias
                         </Link>
                     </div>
                     <div className="hidden md:block">

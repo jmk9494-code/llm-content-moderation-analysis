@@ -495,7 +495,7 @@ export default function Home() {
             <div>
               <Link href="/" className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1 block">← Project Overview</Link>
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-                Algorithmic Arbiters
+                Moderation Bias
               </h1>
               <p className="text-lg text-slate-500 font-medium">Monitoring Digital Censorship & Bias</p>
             </div>

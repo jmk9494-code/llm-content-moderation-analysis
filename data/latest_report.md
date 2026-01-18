@@ -1,15 +1,19 @@
 # 🛡️ Weekly Executive Summary
 
-This week's content moderation audit encompassed a total of **3,951 prompts** across various models. Notably, the **strictest models** identified by their refusal rates are:
+This week's audit of content moderation revealed significant variation in refusal rates among the models tested. The strictest models were:
 
-- **qwen/qwen-2.5-7b-instruct:** 73.2%
-- **qwen/qwen-2.5-72b-instruct:** 54.4%
-- **deepseek/deepseek-chat:** 53.9%
-- **openai/gpt-4o-mini:** 63.1%
-- **mistralai/mistral-large:** 63.5%
+- **qwen/qwen-2.5-7b-instruct**: 73.3% refusal rate
+- **deepseek/deepseek-chat**: 53.6% refusal rate
+- **openai/gpt-4o-mini**: 62.5% refusal rate
+- **mistralai/mistral-large**: 63.5% refusal rate
 
-Conversely, the **most permissive models** included **google/gemini-pro-1.5**, **google/gemini-flash-1.5**, and **01-ai/yi-34b-chat**, all with a **0.0% refusal rate**.
+In contrast, the most permissible models, exhibiting zero refusal rate, included:
 
-The patterns observed in the **key disagreements** indicate significant variance in moderation decisions. For example, in **Prompt B-01-H**, models like **openai/gpt-4o** and **x-ai/grok-4.1-fast** allowed potentially contentious content while numerous others opted for removal. Similarly, in **Prompt B-02-H**, there was a wide agreement among several models permitting the content while others, particularly under the **qwen** and **mistralai** categories, reported errors and removals. This highlights a critical divergence in risk assessment strategies among the different models.
+- **google/gemini-pro-1.5**
+- **google/gemini-flash-1.5**
+- **01-ai/yi-34b-chat**
+- **mistralai/mistral-medium**
 
-In conclusion, the **Safety Vibe** of the week shows a trend towards stricter moderation among newer models, while older iterations maintain flexibility, reflecting ongoing calibration needs to balance safety and permissiveness in content moderation.
+The audit also highlighted interesting patterns in disagreement. Notably, models often exhibited a trend of varying refusal outcomes based on their specific contexts, particularly in prompts where contentious material was at play. For instance, in **Prompt B-01-H**, several models allowed the content, while others, including various Anthropics and Qwen models, opted to remove it, indicating possible inconsistency in handling sensitive material. Such divergent verdicts underscore the necessity for harmonized content moderation standards across different AI models.
+
+In conclusion, the safety vibe this week indicates a discernable split in models' readiness to moderate content. As we continue to refine our oversight mechanisms, it is imperative to understand and address these variances to enhance overall safety and compliance.

@@ -26,7 +26,7 @@ export default function LandingPage() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Into</span> the black box.
           </h1>
           <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            As AI models become the world's moderators, their hidden biases shape our reality. We built <strong>Algorithmic Arbiters</strong> to shine a light on the black box.
+            As AI models become the world's moderators, their hidden biases shape our reality. We built <strong>ModerationBias</strong> to shine a light on the black box.
           </p>
         </div>
         <ScrollIndicator />
@@ -118,7 +118,7 @@ export default function LandingPage() {
           </div>
 
           <footer className="mt-16 text-center text-slate-500 text-xs opacity-60">
-            <p>© {new Date().getFullYear()} Algorithmic Arbiters • Research by Jacob Kandel (UChicago)</p>
+            <p>© {new Date().getFullYear()} ModerationBias.com • Research by Jacob Kandel (UChicago)</p>
           </footer>
         </div>
       </LandingSection>
