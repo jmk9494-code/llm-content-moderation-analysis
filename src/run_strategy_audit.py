@@ -76,6 +76,7 @@ async def process_prompt(sem, row, model):
                 'category': row['category'],
                 'type': row['type'], # Crucial field
                 'verdict': verdict,
+                'response_text': content, # Capture full response
                 'run_cost': calculate_cost(model, usage.prompt_tokens, usage.completion_tokens)
             }
         except Exception as e:
@@ -91,7 +92,7 @@ async def run_audit(input_file, output_file, models):
             prompts.append(r)
             
     # Prepare File & Headers
-    headers = ['test_date', 'model', 'prompt_id', 'category', 'type', 'verdict', 'run_cost']
+    headers = ['test_date', 'model', 'prompt_id', 'category', 'type', 'verdict', 'response_text', 'run_cost']
     
     # Overwrite mode for this specialized audit usually, or append? Let's append but checking headers
     file_exists = os.path.isfile(output_file)

@@ -69,9 +69,13 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
         });
     }, [data, uniqueDates, dateIndex]);
 
+    const [modelSearch, setModelSearch] = useState('');
+
     const models = useMemo(() => {
-        return Array.from(new Set(data.map(r => r.model.split('/')[1] || r.model)));
-    }, [data]);
+        const allModels = Array.from(new Set(data.map(r => r.model.split('/')[1] || r.model)));
+        if (!modelSearch) return allModels;
+        return allModels.filter(m => m.toLowerCase().includes(modelSearch.toLowerCase()));
+    }, [data, modelSearch]);
 
     const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#f43f5e', '#a855f7'];
 
@@ -79,7 +83,7 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
 
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                 <div>
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         ⏳ Time-Travel Trends
@@ -87,30 +91,43 @@ export default function TimeLapseChart({ data }: { data: TrendRow[] }) {
                     <p className="text-sm text-slate-500">Watch how model censorship levels evolve over time.</p>
                 </div>
 
-                {/* Controls */}
-                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                    <button
-                        onClick={() => setDateIndex(0)}
-                        className="p-2 hover:bg-white rounded shadow-sm text-slate-600 transition-all"
-                        title="Reset"
-                    >
-                        <RotateCcw className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="p-2 hover:bg-white rounded shadow-sm text-indigo-600 transition-all font-bold flex items-center gap-1"
-                        title={isPlaying ? "Pause" : "Play"}
-                    >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        {isPlaying ? "Pause" : "Play"}
-                    </button>
-                    <button
-                        onClick={() => setDateIndex(maxIndex)}
-                        className="p-2 hover:bg-white rounded shadow-sm text-slate-600 transition-all"
-                        title="Jump to End"
-                    >
-                        <FastForward className="h-4 w-4" />
-                    </button>
+                <div className="flex items-center gap-4">
+                    {/* Model Search */}
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Filter models..."
+                            value={modelSearch}
+                            onChange={(e) => setModelSearch(e.target.value)}
+                            className="pl-2 pr-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 w-32"
+                        />
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setDateIndex(0)}
+                            className="p-2 hover:bg-white rounded shadow-sm text-slate-600 transition-all"
+                            title="Reset"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </button>
+                        <button
+                            onClick={() => setIsPlaying(!isPlaying)}
+                            className="p-2 hover:bg-white rounded shadow-sm text-indigo-600 transition-all font-bold flex items-center gap-1"
+                            title={isPlaying ? "Pause" : "Play"}
+                        >
+                            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                            {isPlaying ? "Pause" : "Play"}
+                        </button>
+                        <button
+                            onClick={() => setDateIndex(maxIndex)}
+                            className="p-2 hover:bg-white rounded shadow-sm text-slate-600 transition-all"
+                            title="Jump to End"
+                        >
+                            <FastForward className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
 

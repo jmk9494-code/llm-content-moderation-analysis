@@ -393,16 +393,13 @@ export default function Home() {
         );
       },
     }),
-    summaryHelper.accessor('least_sensitive_topic', {
-      header: 'Least Sensitive Topic',
-      cell: info => (
-        <span className="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-100">
-          {info.getValue()}
-        </span>
-      )
-    }),
     summaryHelper.accessor('avg_len', {
-      header: 'Avg Response Length',
+      header: () => (
+        <div className="flex items-center gap-1">
+          <span>Avg Response Length</span>
+          <InfoTooltip text="Average character count of model responses. Longer responses might indicate more comprehensive reasoning." />
+        </div>
+      ),
       cell: info => <span className="text-slate-500 font-mono">{info.getValue()} chars</span>,
     }),
     summaryHelper.accessor('total', {

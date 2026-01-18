@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText } from 'lucide-react';
+import { Box, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText, FileBarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
     { name: 'Strategies', href: '/strategies', icon: Crosshair },
     { name: 'Compare', href: '/compare', icon: ArrowLeftRight },
     { name: 'Audit Log', href: '/audit', icon: FileText },
+    { name: 'Report', href: '/report', icon: FileBarChart },
 ];
 
 export function NavBar() {
@@ -21,10 +22,12 @@ export function NavBar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-slate-900">
-                            <Shield className="h-6 w-6 text-indigo-600" />
+                        <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-slate-900">
+                            <div className="p-1 bg-slate-900 rounded-md">
+                                <Box className="h-5 w-5 text-white" />
+                            </div>
                             Algorithmic Arbiters
-                        </div>
+                        </Link>
                     </div>
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">

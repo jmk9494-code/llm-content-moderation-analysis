@@ -110,11 +110,7 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative h-full flex flex-col">
             <div className="mb-4 flex justify-between items-start shrink-0">
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900">🧭 Axis of Bias</h3>
-                    <p className="text-sm text-slate-500">
-                        We map each model's refusals to a political compass. <br />
-                        Points represent the <strong>average bias center</strong>.
-                    </p>
+                    {/* Title removed as per user request */}
                 </div>
                 <button
                     onClick={() => setShowModal(true)}

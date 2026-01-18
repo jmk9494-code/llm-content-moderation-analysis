@@ -71,12 +71,7 @@ export default function PriceChart({ data }: { data: any[] }) {
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900">💰 The Price of Censorship</h3>
-                <p className="text-sm text-slate-500">
-                    Does paying more get you a "safer" model or just a stricter one?
-                    <br />
-                    <span className="text-xs text-slate-400">X-Axis: Approx Cost ($/1M Tok) | Y-Axis: Refusal Rate (%)</span>
-                </p>
+                {/* Title removed */}
             </div>
 
             <div className="h-80 w-full">
