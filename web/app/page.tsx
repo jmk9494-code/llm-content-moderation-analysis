@@ -117,7 +117,7 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <footer className="absolute bottom-8 left-0 right-0 text-center text-slate-500 text-xs opacity-60">
+          <footer className="mt-16 text-center text-slate-500 text-xs opacity-60">
             <p>© {new Date().getFullYear()} Algorithmic Arbiters • Research by Jacob Kandel (UChicago)</p>
           </footer>
         </div>
