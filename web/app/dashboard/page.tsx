@@ -28,6 +28,7 @@ import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 import { generateReport } from '@/lib/analyst';
+import DataChatbot from '@/components/DataChatbot';
 import { RefreshCw } from 'lucide-react';
 import { AuditRowSchema, AuditRow } from '@/lib/schemas';
 
@@ -477,7 +478,60 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+          {/* Stats Grid - Moved to Top */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
+              <div>
+                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                  Total Audits
+                  <InfoTooltip text="Total number of test cases run across all selected models." />
+                </div>
+                <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-red-50 rounded-xl text-red-600"><Shield className="h-6 w-6" /></div>
+              <div>
+                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                  Strictness
+                  <InfoTooltip text="% of content the MODEL decided to Remove (acting as moderator)." />
+                </div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-amber-50 rounded-xl text-amber-600"><AlertOctagon className="h-6 w-6" /></div>
+              <div>
+                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                  Refusals & Blocks
+                  <InfoTooltip text="% of prompts where the model refused to answer entirely or was blocked by API." />
+                </div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {filteredSummary.length ? ((filteredSummary.reduce((a, b) => a + b.soft_refusal_rate + b.block_rate, 0)) / filteredSummary.length).toFixed(1) : 0}%
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
+              <div>
+                <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                  Avg Verbosity
+                  <InfoTooltip text="Average length of model responses in characters." />
+                </div>
+                <div className="text-2xl font-bold text-slate-900">
+                  {filteredSummary.length ? Math.round(filteredSummary.reduce((a, b) => a + b.avg_len, 0) / filteredSummary.length) : 0} chars
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
             <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
@@ -490,7 +544,7 @@ export default function Home() {
                 className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full bg-slate-50"
               />
             </div>
-
+            {/* ... Filters ... */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
                 <Filter className="h-4 w-4 text-slate-400" />
@@ -561,37 +615,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* AI Weekly Report Section */}
-        <section className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden mb-8">
-          <div className="p-4 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center">
-            <div
-              className="flex items-center gap-2 text-indigo-900 font-semibold cursor-pointer"
-              onClick={() => setShowReport(!showReport)}
-            >
-              <FileText className="h-5 w-5 text-indigo-600" />
-              Live Analyst Report
-              <ChevronUp className={cn("h-5 w-5 text-indigo-400 transition-transform ml-2", showReport ? "" : "rotate-180")} />
-            </div>
-
-            <button
-              onClick={() => setReport(generateReport(filteredData, { region: regionFilter, tier: tierFilter }))}
-              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-            >
-              <RefreshCw className="h-3 w-3" />
-              Generate Analysis
-            </button>
-          </div>
-
-          {showReport && (
-            <div className="p-6 prose prose-indigo max-w-none text-slate-600 text-sm">
-              {report ? <ReactMarkdown>{report}</ReactMarkdown> : (
-                <div className="text-center text-slate-400 italic py-4">
-                  Click "Generate Analysis" to analyze the currently filtered dataset.
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+        {/* Removed Static Analyst Report */}
 
         {/* Improved Leaderboard (Moved Up) */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">

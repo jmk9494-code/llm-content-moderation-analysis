@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils';
 const navItems = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Audit Log', href: '/audit', icon: FileText },
     { name: 'Strategies', href: '/strategies', icon: Crosshair },
     { name: 'Compare', href: '/compare', icon: ArrowLeftRight },
+    { name: 'Audit Log', href: '/audit', icon: FileText },
 ];
 
 export function NavBar() {

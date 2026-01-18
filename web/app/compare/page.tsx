@@ -10,7 +10,7 @@ import {
 import { Shield, ArrowRight, ArrowLeftRight, Check, X as XIcon, Minimize2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { ModelLogo } from '@/components/ui/ModelLogo';
+import ModelLogo from '@/components/ModelLogo';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -187,7 +187,7 @@ export default function ComparePage() {
                     {/* Model A Card */}
                     <div className="bg-white p-6 rounded-2xl border-t-4 border-t-indigo-500 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <ModelLogo modelId={modelA} className="h-32 w-32 text-6xl" />
+                            {metaA && <ModelLogo provider={metaA.provider} name={metaA.name} className="h-32 w-32" />}
                         </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-1">{metaA?.name || modelA}</h2>
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6">
@@ -211,7 +211,7 @@ export default function ComparePage() {
                     {/* Model B Card */}
                     <div className="bg-white p-6 rounded-2xl border-t-4 border-t-emerald-500 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <ModelLogo modelId={modelB} className="h-32 w-32 text-6xl" />
+                            {metaB && <ModelLogo provider={metaB.provider} name={metaB.name} className="h-32 w-32" />}
                         </div>
                         <h2 className="text-2xl font-bold text-slate-900 mb-1">{metaB?.name || modelB}</h2>
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6">
