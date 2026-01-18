@@ -2,6 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  images: {
+    domains: ['img.logo.dev'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.logo.dev',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
   async headers() {
     return [
       {
@@ -25,10 +36,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            // Allow scripts from self and Vercel analytics/insights (often used in Vercel deployments)
-            // 'unsafe-inline' and 'unsafe-eval' might be needed for some libs (recharts sometimes uses eval/function construction)
-            // Ideally we'd be stricter, but standard Next.js often requires 'unsafe-inline' for styles.
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://vitals.vercel-insights.com;",
+            // Added img.logo.dev to img-src
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://img.logo.dev; font-src 'self'; connect-src 'self' https://vitals.vercel-insights.com;",
           },
         ],
       },

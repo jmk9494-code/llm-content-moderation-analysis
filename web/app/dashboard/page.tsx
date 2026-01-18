@@ -15,13 +15,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter, Trophy } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, Activity, MessageSquare, AlertOctagon, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, ArrowRight, ArrowLeftRight, Menu, Filter, Trophy, RotateCcw } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
 import TimeLapseChart from './TimeLapseChart';
 import BiasChart from './BiasChart';
 import PriceChart from './PriceChart';
+import ModelLogo from '@/components/ModelLogo';
 
 import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
@@ -44,13 +45,14 @@ type TrendRow = {
 
 type ModelSummary = {
   model: string;
+  provider: string; // Added for logo
   total: number;
-  refusals: number;     // Verdict = REMOVED (Strictness)
-  soft_refusals: number; // Verdict = REFUSAL (Model Refusal)
-  blocks: number;       // Verdict = BLOCKED (API Block)
-  refusal_rate: number; // Removed %
-  soft_refusal_rate: number; // Refusal %
-  block_rate: number;   // Blocked %
+  refusals: number;
+  soft_refusals: number;
+  blocks: number;
+  refusal_rate: number;
+  soft_refusal_rate: number;
+  block_rate: number;
   avg_len: number;
 };
 
@@ -111,51 +113,57 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 1. Fetch Audit Log
-    const p1 = fetch('/audit_log.csv')
-      .then(r => r.text())
-      .then(csv => {
-        const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
-        // Validate with Zod
-        const validRows: AuditRow[] = [];
-        parsed.data.forEach((row: any) => {
-          const result = AuditRowSchema.safeParse(row);
-          if (result.success) {
-            validRows.push(result.data);
-          } else {
-            console.warn("Skipping invalid audit row:", result.error);
-          }
-        });
-        const rows = validRows.filter(r => r.model);
-        setData(rows);
+    // 1. Fetch Model Metadata First for Provider lookup
+    fetch('/models.json')
+      .then(r => r.json())
+      .then(meta => {
+        setModelsMeta(meta);
 
-        // Aggregate for Leaderboard
-        const agg: Record<string, ModelSummary> = {};
-        rows.forEach(r => {
-          if (!agg[r.model]) agg[r.model] = {
-            model: r.model, total: 0,
-            refusals: 0, soft_refusals: 0, blocks: 0,
-            refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
-            avg_len: 0
-          };
-          agg[r.model].total++;
-          if (r.verdict === 'REMOVED') agg[r.model].refusals++;
-          if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
-          if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
-          agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
-        });
+        // 2. Fetch Audit Log
+        return fetch('/audit_log.csv')
+          .then(r => r.text())
+          .then(csv => {
+            const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+            const validRows: AuditRow[] = [];
+            parsed.data.forEach((row: any) => {
+              const result = AuditRowSchema.safeParse(row);
+              if (result.success) {
+                validRows.push(result.data);
+              }
+            });
+            const rows = validRows.filter(r => r.model);
+            setData(rows);
 
-        const summaryList = Object.values(agg).map(s => ({
-          ...s,
-          refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
-          soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
-          block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
-          avg_len: Math.round(s.avg_len / s.total)
-        }));
-        setSummary(summaryList);
-      });
+            // Calculate Initial Summary
+            const agg: Record<string, ModelSummary> = {};
+            rows.forEach(r => {
+              if (!agg[r.model]) agg[r.model] = {
+                model: r.model,
+                provider: meta.find((m: ModelMetadata) => m.id === r.model)?.provider || 'Unknown',
+                total: 0,
+                refusals: 0, soft_refusals: 0, blocks: 0,
+                refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
+                avg_len: 0
+              };
+              agg[r.model].total++;
+              if (r.verdict === 'REMOVED') agg[r.model].refusals++;
+              if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
+              if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
+              agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
+            });
 
-    // 2. Fetch Trends
+            setSummary(Object.values(agg).map(s => ({
+              ...s,
+              refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
+              soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
+              block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
+              avg_len: Math.round(s.avg_len / s.total)
+            })));
+          });
+      })
+      .catch(e => console.log("Init error", e));
+
+    // 3. Fetch Trends
     const p2 = new Promise<void>((resolve, reject) => {
       Papa.parse<any>('/trends.csv', {
         download: true,
@@ -164,14 +172,11 @@ export default function Home() {
           setTrends(results.data.filter(r => r.model));
           resolve();
         },
-        error: (err) => {
-          console.log("Trends not found", err);
-          reject(err);
-        }
+        error: (err) => resolve() // Don't fail entire load
       });
     });
 
-    // 3. Fetch Bias Log
+    // 4. Fetch Bias Log
     const p3 = new Promise<void>((resolve, reject) => {
       Papa.parse<any>('/bias_log.csv', {
         download: true,
@@ -180,20 +185,11 @@ export default function Home() {
           setBiasData(results.data.filter(r => r.model));
           resolve();
         },
-        error: (err) => {
-          console.log("Bias log not found", err);
-          reject(err);
-        }
+        error: (err) => resolve()
       });
     });
 
-    // 4. Fetch Model Metadata
-    fetch('/models.json')
-      .then(r => r.json())
-      .then(m => setModelsMeta(m))
-      .catch(e => console.log("No metadata found", e));
-
-    Promise.all([p1, p2, p3]).then(() => setLoading(false));
+    Promise.all([p2, p3]).then(() => setLoading(false));
   }, []);
 
   // --- Filtering Config ---
@@ -201,6 +197,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('All');
   const [tierFilter, setTierFilter] = useState('All');
+  // New: Interactive Chart Filters
+  const [modelFilter, setModelFilter] = useState<string>('All');
 
   const uniqueDates = useMemo(() => {
     return Array.from(new Set(data.map(r => r.test_date))).sort().reverse();
@@ -221,6 +219,11 @@ export default function Home() {
       const allowed = modelsMeta.filter(m => m.tier === tierFilter).map(m => m.id);
       res = res.filter(r => allowed.includes(r.model));
     }
+    // Interactive Model Filter
+    if (modelFilter !== 'All') {
+      res = res.filter(r => r.model === modelFilter);
+    }
+
     // Search Filter
     if (searchQuery) {
       const lower = searchQuery.toLowerCase();
@@ -232,14 +235,16 @@ export default function Home() {
       );
     }
     return res;
-  }, [data, selectedDate, searchQuery, regionFilter, tierFilter, modelsMeta]);
+  }, [data, selectedDate, searchQuery, regionFilter, tierFilter, modelsMeta, modelFilter]);
 
   // Recalculate summary based on filtered data
   const filteredSummary = useMemo(() => {
     const agg: Record<string, ModelSummary> = {};
     filteredData.forEach(r => {
       if (!agg[r.model]) agg[r.model] = {
-        model: r.model, total: 0,
+        model: r.model,
+        provider: modelsMeta.find(m => m.id === r.model)?.provider || 'Unknown',
+        total: 0,
         refusals: 0, soft_refusals: 0, blocks: 0,
         refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
         avg_len: 0
@@ -257,7 +262,7 @@ export default function Home() {
       block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
       avg_len: Math.round(s.avg_len / s.total)
     }));
-  }, [filteredData]);
+  }, [filteredData, modelsMeta]);
 
   // Use filtered data for heatmaps and charts
   const heatmapData = useMemo(() => {
@@ -306,6 +311,7 @@ export default function Home() {
   };
 
   // --- Charts Prep ---
+  // Ensure we sort by refusal rate
   const chartData = [...filteredSummary].sort((a, b) => b.refusal_rate - a.refusal_rate);
 
   // --- Summary Table Config ---
@@ -314,12 +320,15 @@ export default function Home() {
     summaryHelper.accessor('model', {
       header: 'Model',
       cell: info => (
-        <Link
-          href={`/model/${encodeURIComponent(info.getValue())}`}
-          className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-        >
-          {info.getValue()}
-        </Link>
+        <div className="flex items-center gap-3">
+          <ModelLogo provider={info.row.original.provider} name={info.getValue()} />
+          <Link
+            href={`/model/${encodeURIComponent(info.getValue())}`}
+            className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        </div>
       ),
     }),
     summaryHelper.accessor('refusal_rate', {
@@ -377,7 +386,15 @@ export default function Home() {
     }),
     auditHelper.accessor('model', {
       header: 'Model',
-      cell: info => <span className="font-medium text-slate-700">{info.getValue().split('/')[1] || info.getValue()}</span>,
+      cell: info => {
+        const provider = modelsMeta.find(m => m.id === info.getValue())?.provider || 'Unknown';
+        return (
+          <div className="flex items-center gap-2">
+            <ModelLogo provider={provider} name={info.getValue()} className="h-5 w-5" />
+            <span className="font-medium text-slate-700">{info.getValue().split('/')[1] || info.getValue()}</span>
+          </div>
+        );
+      },
     }),
     auditHelper.accessor('category', {
       header: 'Category',
@@ -480,6 +497,16 @@ export default function Home() {
                 <span className="text-xs font-bold uppercase text-slate-500">Filter By:</span>
               </div>
 
+              {modelFilter !== 'All' && (
+                <button
+                  onClick={() => setModelFilter('All')}
+                  className="flex items-center gap-1 px-3 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                  Model: {modelFilter.split('/')[1] || modelFilter}
+                </button>
+              )}
+
               <select
                 value={regionFilter}
                 onChange={(e) => setRegionFilter(e.target.value)}
@@ -515,6 +542,21 @@ export default function Home() {
                   </option>
                 ))}
               </select>
+
+              {(modelFilter !== 'All' || regionFilter !== 'All' || tierFilter !== 'All' || selectedDate !== 'all') && (
+                <button
+                  onClick={() => {
+                    setModelFilter('All');
+                    setRegionFilter('All');
+                    setTierFilter('All');
+                    setSelectedDate('all');
+                  }}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Reset All Filters"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -643,7 +685,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Shield className="h-5 w-5 text-indigo-600" />
               Model Stringency Comparison
-              <InfoTooltip text="Comparison of refusal rates across different models. Higher means more restricted/censored." />
+              <InfoTooltip text="Verified refusal rates across models. Click any bar to isolate that model across the dashboard." />
             </h3>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -657,7 +699,14 @@ export default function Home() {
                     cursor={{ fill: '#f1f5f9' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
-                  <Bar dataKey="refusal_rate" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar
+                    dataKey="refusal_rate"
+                    fill="#6366f1"
+                    radius={[0, 4, 4, 0]}
+                    barSize={20}
+                    cursor="pointer"
+                    onClick={(data: any) => setModelFilter(data.model)}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -679,8 +728,8 @@ export default function Home() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Activity className="h-5 w-5 text-emerald-600" />
-              Refusal Rate Trends (History)
-              <InfoTooltip text="Historical view of refusal rates over time for each model." />
+              ⏳ Time-Travel Trends
+              <InfoTooltip text="Historical view of refusal rates. This chart lets you 'time-travel' to see how model behavior has drifted or tightened over different audit runs." />
             </h3>
             <div className="h-64 w-full">
               {trends.length > 0 ? (
@@ -690,7 +739,7 @@ export default function Home() {
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis unit="%" />
                     <Tooltip />
-                    <Legend />
+                    <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
                     {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
                       <Line
                         key={model}
@@ -701,6 +750,7 @@ export default function Home() {
                         stroke={`hsl(${i * 90}, 70%, 50%)`}
                         strokeWidth={2}
                         dot={true}
+                        activeDot={{ onClick: () => setModelFilter(model), cursor: 'pointer' }}
                       />
                     ))}
                   </LineChart>
@@ -719,7 +769,7 @@ export default function Home() {
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Activity className="h-5 w-5 text-indigo-600" />
             Censorship Profile (Refusal by Category)
-            <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model." />
+            <InfoTooltip text="Radar chart showing which categories trigger the most refusals per model. Click a legend item to filter." />
           </h3>
           <div className="h-80 w-full text-xs">
             <ResponsiveContainer width="100%" height="100%">
@@ -737,7 +787,7 @@ export default function Home() {
                     fillOpacity={0.1}
                   />
                 ))}
-                <Legend />
+                <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
                 <Tooltip />
               </RadarChart>
             </ResponsiveContainer>
@@ -765,7 +815,8 @@ export default function Home() {
                 {/* Rows */}
                 {heatmapData.models.map(m => (
                   <>
-                    <div key={m} className="p-2 text-sm font-medium text-slate-700 flex items-center">
+                    <div key={m} className="p-2 text-sm font-medium text-slate-700 flex items-center gap-2">
+                      <ModelLogo provider={modelsMeta.find(meta => meta.id === m)?.provider || 'Unknown'} name={m} className="h-5 w-5" />
                       {m.split('/')[1] || m}
                     </div>
                     {heatmapData.categories.map(c => {

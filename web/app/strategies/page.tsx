@@ -4,12 +4,12 @@ import { useEffect, useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import Link from 'next/link';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { Shield, ArrowRight, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import ModelLogo from '@/components/ModelLogo'; // Import Logo
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -18,9 +18,13 @@ function cn(...inputs: ClassValue[]) {
 // --- Types ---
 import { StrategyRowSchema, StrategyRow } from '@/lib/schemas';
 
-// --- Types ---
-// Removed manual type definition, using Zod inferred type instead
-// StrategyRow is now imported from @/lib/schemas
+type ModelMetadata = {
+    id: string;
+    name: string;
+    provider: string;
+    region: string;
+    tier: string;
+};
 
 function InfoTooltip({ text }: { text: string }) {
     const [show, setShow] = useState(false);
@@ -45,8 +49,13 @@ export default function StrategyPage() {
     const [data, setData] = useState<StrategyRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedBenignModel, setSelectedBenignModel] = useState<{ model: string, refusals: StrategyRow[] } | null>(null);
+    const [selectedAttackModel, setSelectedAttackModel] = useState<string | null>(null); // For Attack Vector Drilldown
+    const [modelsMeta, setModelsMeta] = useState<ModelMetadata[]>([]);
 
     useEffect(() => {
+        // Fetch metadata matching dashboard approach
+        fetch('/models.json').then(r => r.json()).then(setModelsMeta).catch(() => { });
+
         fetch('/strategy_log.csv')
             .then(r => r.text())
             .then(csv => {
@@ -114,6 +123,7 @@ export default function StrategyPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
+                        <Link href="/dashboard" className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1 block">← Back to Dashboard</Link>
                         <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
                             <Shield className="h-8 w-8 text-indigo-600" />
                             Strategy Analysis
@@ -129,7 +139,7 @@ export default function StrategyPage() {
                     <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                         <AlertTriangle className="h-5 w-5 text-orange-500" />
                         Attack Vector Robustness
-                        <InfoTooltip text="Comparison of refusal rates for Direct questions vs Adversarial attacks. A large gap indicates the model is vulnerable to jailbreaks." />
+                        <InfoTooltip text="Comparison of refusal rates for Direct questions vs Adversarial attacks. Click bar to see details." />
                     </h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -142,8 +152,22 @@ export default function StrategyPage() {
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Legend />
-                                <Bar dataKey="Direct" fill="#6366f1" name="Direct Violations" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Adversarial" fill="#f43f5e" name="Adversarial (Jailbreaks)" radius={[4, 4, 0, 0]} />
+                                <Bar
+                                    dataKey="Direct"
+                                    fill="#6366f1"
+                                    name="Direct Violations"
+                                    radius={[4, 4, 0, 0]}
+                                    cursor="pointer"
+                                    onClick={(data: any) => setSelectedAttackModel(data.model)}
+                                />
+                                <Bar
+                                    dataKey="Adversarial"
+                                    fill="#f43f5e"
+                                    name="Adversarial (Jailbreaks)"
+                                    radius={[4, 4, 0, 0]}
+                                    cursor="pointer"
+                                    onClick={(data: any) => setSelectedAttackModel(data.model)}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -167,9 +191,12 @@ export default function StrategyPage() {
                                     setSelectedBenignModel({ model: m.model, refusals });
                                 }}
                             >
-                                <div>
-                                    <div className="font-medium text-slate-700">{m.model.split('/')[1] || m.model}</div>
-                                    <div className="text-xs text-slate-500">{m.count} control prompts</div>
+                                <div className="flex items-center gap-3">
+                                    <ModelLogo provider={modelsMeta.find(meta => meta.id === m.model)?.provider || 'Unknown'} name={m.model} />
+                                    <div>
+                                        <div className="font-medium text-slate-700">{m.model.split('/')[1] || m.model}</div>
+                                        <div className="text-xs text-slate-500">{m.count} control prompts</div>
+                                    </div>
                                 </div>
                                 <div className={cn("text-2xl font-bold", m.falsePositiveRate > 10 ? "text-red-600" : "text-emerald-600")}>
                                     {m.falsePositiveRate.toFixed(1)}%
@@ -178,10 +205,10 @@ export default function StrategyPage() {
                         ))}
                     </div>
 
-                    {/* Drill Down Modal */}
+                    {/* Drill Down Modal (Benign) */}
                     {selectedBenignModel && (
-                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedBenignModel(null)}>
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                                     <div>
                                         <h3 className="font-bold text-lg text-slate-800">Over-Censorship Analysis</h3>
@@ -221,7 +248,7 @@ export default function StrategyPage() {
                                                     {rows.map((row, i) => (
                                                         <div key={i} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
                                                             <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-700 font-mono mb-2">
-                                                                {row.prompt_text}
+                                                                {row.prompt_text || "Prompt text unavailable"}
                                                             </div>
                                                             <div className="pl-3 border-l-2 border-red-200 text-sm text-slate-600">
                                                                 {row.response_text || <span className="italic text-slate-400">No response text provided</span>}
@@ -232,6 +259,59 @@ export default function StrategyPage() {
                                             </div>
                                         ))
                                     )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Drill Down Modal (Attack Vectors) */}
+                    {selectedAttackModel && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedAttackModel(null)}>
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                                <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-slate-800">Attack Vector Details</h3>
+                                        <p className="text-sm text-slate-500">
+                                            Direct vs Adversarial results for <span className="font-semibold text-indigo-600">{selectedAttackModel.split('/')[1]}</span>
+                                        </p>
+                                    </div>
+                                    <button onClick={() => setSelectedAttackModel(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                                        <X className="h-5 w-5 text-slate-500" />
+                                    </button>
+                                </div>
+
+                                <div className="p-6 overflow-y-auto space-y-6">
+                                    {/* Compare Direct vs Adversarial */}
+                                    {['Direct', 'Adversarial'].map(type => {
+                                        const rows = data.filter(r => r.model === selectedAttackModel && r.type === type);
+                                        return (
+                                            <div key={type} className="mb-6">
+                                                <h4 className={cn("text-sm font-bold uppercase tracking-wider mb-3 pb-1 border-b",
+                                                    type === 'Direct' ? "text-indigo-600 border-indigo-100" : "text-rose-600 border-rose-100")}>
+                                                    {type} Prompts ({rows.length})
+                                                </h4>
+                                                <div className="space-y-3">
+                                                    {rows.map((row, i) => (
+                                                        <div key={i} className="border border-slate-200 rounded-xl p-4 flex gap-4">
+                                                            <div className="flex-1">
+                                                                <div className="text-xs text-slate-400 font-mono mb-1">{row.category}</div>
+                                                                <div className="bg-slate-50 p-2 rounded text-sm text-slate-800 font-mono">
+                                                                    {row.prompt_text || "Prompt text unavailable"}
+                                                                </div>
+                                                            </div>
+                                                            <div className="w-32 shrink-0 flex flex-col items-end">
+                                                                <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase mb-2",
+                                                                    row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                                                                    {row.verdict}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {rows.length === 0 && <div className="text-slate-400 italic text-sm">No records found.</div>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

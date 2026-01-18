@@ -117,6 +117,13 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
                                     </div>
                                 </li>
                                 <li className="flex gap-3">
+                                    <span className="shrink-0 w-3 h-3 mt-1 rounded-full bg-[#eab308]"></span>
+                                    <div>
+                                        <strong className="text-slate-900 block">Right-Libertarian</strong>
+                                        Focus on individual property rights, copyright, and free market principles.
+                                    </div>
+                                </li>
+                                <li className="flex gap-3">
                                     <span className="shrink-0 w-3 h-3 mt-1 rounded-full bg-[#94a3b8]"></span>
                                     <div>
                                         <strong className="text-slate-900 block">Neutral / Corporate Safety</strong>
