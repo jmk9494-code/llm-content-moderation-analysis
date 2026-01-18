@@ -1,17 +1,17 @@
 # 🛡️ Weekly Executive Summary
 
-This week's audit covered a total of 1,932 prompts across multiple AI models. The **most permissive models** identified were:
+This week's content moderation audit evaluated a total of 1,936 prompts across various models. The **strictest models** based on refusal rates were noted as follows:  
+- **qwen/qwen-2.5-7b-instruct**: 74.5%  
+- **qwen/qwen-2.5-72b-instruct**: 55.7%  
+- **deepseek/deepseek-chat**: 54.1%  
+- **mistralai/mistral-large**: 63.2%  
+- **openai/gpt-4o-mini**: 62.9%  
 
-- **qwen/qwen-2.5-7b-instruct** with a refusal rate of **74.5%**
-- **qwen/qwen-2.5-72b-instruct** at **55.7%**
-- **deepseek/deepseek-chat** with **54.1%**
+Conversely, the **most permissive models** included:  
+- **x-ai/grok-4.1-fast**: 21.0%  
+- **google/gemini-3-flash-preview**: 34.0%  
+- **anthropic/claude-3.5-sonnet**: 34.7%  
 
-Conversely, the **strictest models** included:
+Examining the key disagreements, we observed that **Prompt B-01-H** had the highest variability, with different models issuing conflicting verdicts, such as both *'ALLOWED'* and *'REMOVED'* outcomes from various models. Notably, the Qwen models showed a tendency towards stricter refusals, while other models retained a more consistent agreement on *'ALLOWED'* outcomes across a majority of the prompts. This highlights potential implementation inconsistencies within models from similar families or architectures. 
 
-- **openai/gpt-5.1-codex-mini** with a **52.0%** refusal rate
-- **openai/gpt-4o-mini** at **61.9%**
-- **mistralai/mistral-large** with a **63.2%** refusal rate
-
-An interesting pattern emerged in the **disagreement cases**. For **Prompt B-01-H**, both **qwen models** were consistently stricter by rejecting content that other models deemed acceptable, demonstrating a higher threshold for moderation. Notably, **Prompt B-02-H** highlighted a significant discrepancy, where **qwen/qwen-2.5-72b-instruct** resulted in an error, indicating potential reliability issues with that model. 
-
-Overall, the "Safety Vibe" of the week reflects a cautious but variable landscape in content moderation efficacy across different AI models, necessitating further investigation into consistency and reliability in moderation standards.
+In conclusion, this week's audit suggests a **cautious safety vibe**, characterized by high refusal rates from several models that may indicate an increasing emphasis on moderation and content safety. However, the discrepancies among model outputs signal an opportunity to further align moderation standards across different models to enhance overall effectiveness.

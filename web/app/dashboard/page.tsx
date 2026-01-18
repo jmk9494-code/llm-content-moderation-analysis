@@ -28,16 +28,13 @@ import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 import { generateReport } from '@/lib/analyst';
 import { RefreshCw } from 'lucide-react';
+import { AuditRowSchema, AuditRow } from '@/lib/schemas';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-import { AuditRowSchema, AuditRow } from '@/lib/schemas';
-
 // --- Types ---
-// Removed manual type def, now using Zod inferred type
-
 
 type TrendRow = {
   date: string;
@@ -48,8 +45,12 @@ type TrendRow = {
 type ModelSummary = {
   model: string;
   total: number;
-  refusals: number;
-  refusal_rate: number;
+  refusals: number;     // Verdict = REMOVED (Strictness)
+  soft_refusals: number; // Verdict = REFUSAL (Model Refusal)
+  blocks: number;       // Verdict = BLOCKED (API Block)
+  refusal_rate: number; // Removed %
+  soft_refusal_rate: number; // Refusal %
+  block_rate: number;   // Blocked %
   avg_len: number;
 };
 
@@ -81,9 +82,6 @@ function InfoTooltip({ text }: { text: string }) {
   );
 }
 
-
-
-
 type ModelMetadata = {
   id: string;
   name: string;
@@ -91,7 +89,6 @@ type ModelMetadata = {
   region: string;
   tier: string;
 };
-
 
 export default function Home() {
   const [data, setData] = useState<AuditRow[]>([]);
@@ -108,7 +105,6 @@ export default function Home() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [selectedDrillDown, setSelectedDrillDown] = useState<HeatmapCell | null>(null);
   const [modelsMeta, setModelsMeta] = useState<ModelMetadata[]>([]);
-
 
   const toggleRow = (id: string) => {
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
@@ -136,15 +132,24 @@ export default function Home() {
         // Aggregate for Leaderboard
         const agg: Record<string, ModelSummary> = {};
         rows.forEach(r => {
-          if (!agg[r.model]) agg[r.model] = { model: r.model, total: 0, refusals: 0, refusal_rate: 0, avg_len: 0 };
+          if (!agg[r.model]) agg[r.model] = {
+            model: r.model, total: 0,
+            refusals: 0, soft_refusals: 0, blocks: 0,
+            refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
+            avg_len: 0
+          };
           agg[r.model].total++;
           if (r.verdict === 'REMOVED') agg[r.model].refusals++;
+          if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
+          if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
           agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
         });
 
         const summaryList = Object.values(agg).map(s => ({
           ...s,
-          refusal_rate: (s.refusals / s.total) * 100,
+          refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
+          soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
+          block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
           avg_len: Math.round(s.avg_len / s.total)
         }));
         setSummary(summaryList);
@@ -182,13 +187,6 @@ export default function Home() {
       });
     });
 
-    // 4. Fetch AI Report (Initially empty/placeholder, or generated on load)
-    // Removed static fetch logic for dynamic generation
-    // fetch('/latest_report.md')...
-
-
-
-
     // 4. Fetch Model Metadata
     fetch('/models.json')
       .then(r => r.json())
@@ -199,8 +197,6 @@ export default function Home() {
   }, []);
 
   // --- Filtering Config ---
-
-  // --- Filters ---
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('All');
@@ -242,14 +238,23 @@ export default function Home() {
   const filteredSummary = useMemo(() => {
     const agg: Record<string, ModelSummary> = {};
     filteredData.forEach(r => {
-      if (!agg[r.model]) agg[r.model] = { model: r.model, total: 0, refusals: 0, refusal_rate: 0, avg_len: 0 };
+      if (!agg[r.model]) agg[r.model] = {
+        model: r.model, total: 0,
+        refusals: 0, soft_refusals: 0, blocks: 0,
+        refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
+        avg_len: 0
+      };
       agg[r.model].total++;
       if (r.verdict === 'REMOVED') agg[r.model].refusals++;
+      if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
+      if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
       agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
     });
     return Object.values(agg).map(s => ({
       ...s,
-      refusal_rate: (s.refusals / s.total) * 100,
+      refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
+      soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
+      block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
       avg_len: Math.round(s.avg_len / s.total)
     }));
   }, [filteredData]);
@@ -279,7 +284,6 @@ export default function Home() {
     const categories = Array.from(new Set(filteredData.map(r => r.category))).sort();
     const models = Array.from(new Set(filteredData.map(r => r.model)));
 
-    // Fomat: [{ subject: 'Hate Speech', 'gpt-4': 20, 'claude': 50 }, ...]
     return categories.map(cat => {
       const entry: any = { subject: cat };
       models.forEach(mod => {
@@ -300,7 +304,6 @@ export default function Home() {
     if (rate < 80) return 'bg-orange-100 text-orange-800';
     return 'bg-red-100 text-red-800';
   };
-
 
   // --- Charts Prep ---
   const chartData = [...filteredSummary].sort((a, b) => b.refusal_rate - a.refusal_rate);
@@ -382,12 +385,19 @@ export default function Home() {
     }),
     auditHelper.accessor('verdict', {
       header: 'Verdict',
-      cell: info => (
-        <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase",
-          info.getValue() === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-          {info.getValue()}
-        </span>
-      ),
+      cell: info => {
+        const val = info.getValue();
+        let colorClass = "bg-emerald-100 text-emerald-700";
+        if (val === 'REMOVED') colorClass = "bg-red-100 text-red-700";
+        else if (val === 'REFUSAL') colorClass = "bg-orange-100 text-orange-700";
+        else if (val === 'BLOCKED') colorClass = "bg-slate-800 text-white";
+
+        return (
+          <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase", colorClass)}>
+            {val}
+          </span>
+        );
+      },
     }),
   ];
 
@@ -409,14 +419,12 @@ export default function Home() {
 
   const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F'];
 
-
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8" id="dashboard-content">
 
         {/* Top Row: Branding & Navigation */}
         <header className="space-y-6">
-          {/* Top Row: Branding & Navigation */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-200 pb-6">
             <div>
               <Link href="/" className="text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1 block">← Project Overview</Link>
@@ -452,10 +460,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Filter Bar */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
-
-            {/* Search */}
             <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-slate-400" />
@@ -469,7 +474,6 @@ export default function Home() {
               />
             </div>
 
-            {/* Dropdowns */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
                 <Filter className="h-4 w-4 text-slate-400" />
@@ -498,7 +502,6 @@ export default function Home() {
                 <option value="Low">Low Tier</option>
               </select>
 
-              {/* Date Filter */}
               <select
                 id="date-filter"
                 value={selectedDate}
@@ -577,7 +580,7 @@ export default function Home() {
         </ChartErrorBoundary>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600"><Activity className="h-6 w-6" /></div>
             <div>
@@ -588,18 +591,37 @@ export default function Home() {
               <div className="text-2xl font-bold text-slate-900">{filteredData.length}</div>
             </div>
           </div>
+
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-red-50 rounded-xl text-red-600"><AlertOctagon className="h-6 w-6" /></div>
+            <div className="p-3 bg-red-50 rounded-xl text-red-600"><Shield className="h-6 w-6" /></div>
             <div>
               <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
-                Failed Runs (Refusal Rate)
-                <InfoTooltip text="Percentage of prompts that were refused by the models." />
+                Strictness
+                <InfoTooltip text="% of content the MODEL decided to Remove (acting as moderator)." />
               </div>
               <div className="text-2xl font-bold text-slate-900">
                 {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}%
               </div>
             </div>
           </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-amber-50 rounded-xl text-amber-600"><AlertOctagon className="h-6 w-6" /></div>
+            <div>
+              <div className="text-sm text-slate-500 font-medium uppercase flex items-center">
+                Refusals & Blocks
+                <InfoTooltip text="% of prompts where the model refused to answer entirely or was blocked by API." />
+              </div>
+              <div className="text-2xl font-bold text-slate-900">
+                {filteredSummary.length ? ((filteredSummary.reduce((a, b) => a + b.soft_refusal_rate + b.block_rate, 0)) / filteredSummary.length).toFixed(1) : 0}%
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.soft_refusal_rate, 0) / filteredSummary.length).toFixed(1) : 0}% Refused /
+                {filteredSummary.length ? (filteredSummary.reduce((a, b) => a + b.block_rate, 0) / filteredSummary.length).toFixed(1) : 0}% Blocked
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600"><MessageSquare className="h-6 w-6" /></div>
             <div>
@@ -845,7 +867,10 @@ export default function Home() {
                               <div>
                                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Response (AI)</div>
                                 <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
-                                  row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" : "bg-emerald-50 border-emerald-100 text-emerald-800")}>
+                                  row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" :
+                                    (row.original.verdict === 'REFUSAL' ? "bg-orange-50 border-orange-100 text-orange-800" :
+                                      (row.original.verdict === 'BLOCKED' ? "bg-slate-800 text-white" : "bg-emerald-50 border-emerald-100 text-emerald-800"))
+                                )}>
                                   {row.original.response_text}
                                 </div>
                               </div>
@@ -870,59 +895,61 @@ export default function Home() {
           </div>
         </section>
 
-
-
         {/* Drill Down Modal */}
-        {
-          selectedDrillDown && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedDrillDown(null)}>
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">Drill Down Analysis</h3>
-                    <p className="text-sm text-slate-500">
-                      Viewing <span className="font-semibold text-slate-700">{selectedDrillDown.model}</span> on <span className="font-semibold text-slate-700">{selectedDrillDown.category}</span>
-                    </p>
-                  </div>
-                  <button onClick={() => setSelectedDrillDown(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-                    <X className="h-5 w-5 text-slate-500" />
-                  </button>
+        {selectedDrillDown && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedDrillDown(null)}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Drill Down Analysis</h3>
+                  <p className="text-sm text-slate-500">
+                    Viewing <span className="font-semibold text-slate-700">{selectedDrillDown.model}</span> on <span className="font-semibold text-slate-700">{selectedDrillDown.category}</span>
+                  </p>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
-                  <div className="space-y-4">
-                    {filteredData
-                      .filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category)
-                      .map((row, idx) => (
-                        <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-mono text-slate-400">{row.test_date}</span>
-                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                              row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-                              {row.verdict}
-                            </span>
+                <button onClick={() => setSelectedDrillDown(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                  <X className="h-5 w-5 text-slate-500" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-4">
+                  {filteredData
+                    .filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category)
+                    .map((row, idx) => (
+                      <div key={idx} className="border border-slate-200 rounded-xl p-4 hover:border-indigo-200 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-mono text-slate-400">{row.test_date}</span>
+                          <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                            row.verdict === 'REMOVED' ? "bg-red-100 text-red-700" :
+                              (row.verdict === 'REFUSAL' ? "bg-orange-100 text-orange-700" :
+                                (row.verdict === 'BLOCKED' ? "bg-slate-800 text-white" : "bg-emerald-100 text-emerald-700"))
+                          )}>
+                            {row.verdict}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono whitespace-pre-wrap">
+                            {row.prompt_text}
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono whitespace-pre-wrap">
-                              {row.prompt_text}
-                            </div>
-                            <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
-                              row.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-900" : "bg-emerald-50 border-emerald-100 text-emerald-900")}>
-                              {row.response_text}
-                            </div>
+                          <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border",
+                            row.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-900" :
+                              (row.verdict === 'REFUSAL' ? "bg-orange-50 border-orange-100 text-orange-900" :
+                                (row.verdict === 'BLOCKED' ? "bg-slate-800 text-white" : "bg-emerald-50 border-emerald-100 text-emerald-900"))
+                          )}>
+                            {row.response_text}
                           </div>
                         </div>
-                      ))}
-                    {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
-                      <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
-                    )}
-                  </div>
+                      </div>
+                    ))}
+                  {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
+                    <div className="text-center text-slate-400 py-12">No records found for this selection.</div>
+                  )}
                 </div>
               </div>
             </div>
-          )
-        }
+          </div>
+        )}
 
-      </div >
-    </main >
+      </div>
+    </main>
   );
 }
