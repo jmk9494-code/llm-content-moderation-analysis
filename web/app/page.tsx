@@ -1,136 +1,128 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, BarChart3, Lock, Users, ArrowRight, BookOpen } from 'lucide-react';
+import { Shield, BarChart3, Lock, ArrowRight, Eye, Scale, Server } from 'lucide-react';
+import LandingSection from '@/components/landing/LandingSection';
+import ScrollIndicator from '@/components/landing/ScrollIndicator';
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-white font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <main className="bg-white font-sans overflow-x-hidden snap-y snap-mandatory h-screen overflow-y-scroll no-scrollbar scroll-smooth">
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-slate-50 border-b border-slate-200">
+      {/* 1. The Hook: Who watches the watchers? */}
+      <LandingSection className="bg-slate-50 relative">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+        <div className="text-center max-w-4xl mx-auto space-y-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            className="inline-flex items-center justify-center p-3 bg-indigo-50 rounded-2xl mb-6 shadow-sm border border-indigo-100"
+          >
+            <Eye className="h-8 w-8 text-indigo-600" />
+          </motion.div>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 font-display leading-tight">
+            Who watches the <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">watchers</span>?
+          </h1>
+          <p className="text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            As AI models become the world's moderators, their hidden biases shape our reality. We built <strong>Algorithmic Arbiters</strong> to shine a light on the black box.
+          </p>
+        </div>
+        <ScrollIndicator />
+      </LandingSection>
 
-        <div className="max-w-7xl mx-auto px-6 py-24 sm:py-32 lg:flex lg:items-center lg:gap-x-10 lg:px-8 relative">
-          <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
-            <div className="flex">
-            </div>
+      {/* 2. The Problem: Bias is Inevitable */}
+      <LandingSection className="bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div className="order-2 md:order-1 relative">
+            {/* Abstract visual for bias */}
+            <div className="aspect-square bg-slate-50 rounded-3xl border border-slate-200 p-8 relative overflow-hidden shadow-2xl">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-100 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+              <div className="absolute bottom-[-20%] right-[-20%] w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-50"></div>
 
-            <h1 className="mt-10 max-w-lg text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl font-display">
-              Algorithmic Arbiters
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-              A comprehensive, automated auditing system for Large Language Models. We continuously test AI safety filters against contentious topics to track strictness drifts, bias, and refusal rates over time.
-            </p>
-
-            <div className="mt-10 flex items-center gap-x-6">
-              <Link
-                href="/dashboard"
-                className="rounded-xl bg-indigo-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all hover:scale-105 flex items-center gap-2"
-              >
-                Launch Dashboard <BarChart3 className="h-4 w-4" />
-              </Link>
-              <a href="https://github.com/jmk9494-code/llm-content-moderation-analysis" target="_blank" className="text-sm font-semibold leading-6 text-slate-900 flex items-center gap-2 hover:text-indigo-600 transition-colors">
-                View Source Code <ArrowRight className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Hero Visual */}
-          <div className="mt-16 sm:mt-24 lg:mt-0 lg:flex-shrink-0 lg:flex-grow">
-            <div className="relative mx-auto w-[22rem] max-w-full drop-shadow-xl">
-              <div className="absolute top-0 -left-4 bg-indigo-100 w-72 h-72 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-              <div className="absolute top-0 -right-4 bg-purple-100 w-72 h-72 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 relative">
-                <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                  <div className="h-10 w-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-                    <Shield className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-900">Safety Audit Log</div>
-                    <div className="text-xs text-green-600 font-medium flex items-center gap-1">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                      </span>
-                      System Active
-                    </div>
-                  </div>
+              <div className="relative z-10 space-y-4">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-red-500"></div>
+                  <div className="text-sm font-mono text-slate-500">I cannot answer that...</div>
                 </div>
-
-                <div className="space-y-4">
-                  {[1, 2, 3].map((_, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <div className={`mt-1 h-2 w-2 rounded-full ${i === 1 ? 'bg-red-500' : 'bg-green-500'}`} />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-2 bg-slate-100 rounded w-3/4"></div>
-                        <div className="h-2 bg-slate-50 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3 translate-x-4">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                  <div className="text-sm font-mono text-slate-500">Here is the information...</div>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3 translate-x-8 opacity-50">
+                  <div className="h-2 w-16 bg-slate-200 rounded"></div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-24 sm:py-32 bg-white">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-600">Methodology</h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              How we audit the AI ecosystem
-            </p>
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-              We move beyond simple benchmarks. By simulating real-world, adversarial user prompts, we uncover how models truly behave when faced with free speech boundaries.
+          <div className="order-1 md:order-2 space-y-6">
+            <div className="h-12 w-12 bg-rose-50 rounded-xl flex items-center justify-center">
+              <Scale className="h-6 w-6 text-rose-600" />
+            </div>
+            <h2 className="text-4xl font-bold text-slate-900">Silence is a Choice.</h2>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              When an AI refuses a prompt, it's making a moral judgment. Is it safety? Or is it over-censorship?
+              <br /><br />
+              We analyze thousands of refusals to map the <strong>political and ethical boundaries</strong> of every major LLM.
             </p>
           </div>
+        </div>
+      </LandingSection>
 
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
-                  <BookOpen className="h-5 w-5 flex-none text-indigo-600" />
-                  Free Speech & Censorship
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">We identify "Over-Censorship" where models refuse benign, safe requests. We track how policies restrict information access across regions.</p>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
-                  <BarChart3 className="h-5 w-5 flex-none text-indigo-600" />
-                  Longitudinal Tracking
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">Audits run automatically every week. We visualize how model refusal rates drift over time as companies update their alignment.</p>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-slate-900">
-                  <Lock className="h-5 w-5 flex-none text-indigo-600" />
-                  Adversarial Stress-Testing
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-slate-600">
-                  <p className="flex-auto">Our <strong>Strategy Analysis</strong> engine tests models against "Jailbreak" attempts and subtle borderline queries to measure true robustness, not just basic compliance.</p>
-                </dd>
-              </div>
-            </dl>
+      {/* 3. The Scale: Continuous Auditing */}
+      <LandingSection className="bg-slate-900 text-white">
+        <div className="text-center max-w-4xl mx-auto space-y-12">
+          <h2 className="text-3xl md:text-5xl font-bold">The Dataset</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-indigo-400 mb-2">Weekly</div>
+              <div className="text-slate-400">Automated Audits</div>
+            </div>
+            <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-emerald-400 mb-2">15+</div>
+              <div className="text-slate-400">Models Tracked</div>
+            </div>
+            <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-amber-400 mb-2">10k+</div>
+              <div className="text-slate-400">Data Points</div>
+            </div>
           </div>
+          <p className="text-slate-400 max-w-2xl mx-auto">
+            From OpenAI to Anthropic, from Meta to Mistral. We track the entire ecosystem so you don't have to.
+          </p>
         </div>
-      </section>
+      </LandingSection>
 
-      {/* Footer / Attribution */}
-      <footer className="py-12 text-center text-slate-500 text-sm">
-        <p>Created & Maintained by <span className="font-semibold text-slate-900">Jacob Kandel</span></p>
-        <p className="mt-1">Student at the <span className="font-semibold text-slate-900">University of Chicago</span> 🎓</p>
-        <div className="mt-8 pt-8 border-t border-slate-200 max-w-xs mx-auto">
-          <p>© {new Date().getFullYear()} Algorithmic Arbiters</p>
+      {/* 4. The Solution: Call to Action */}
+      <LandingSection className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white relative">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+        <div className="text-center relative z-10 space-y-8">
+          <div className="inline-flex p-4 rounded-full bg-indigo-500/20 mb-4 animate-pulse">
+            <Server className="h-8 w-8 text-indigo-300" />
+          </div>
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tight">
+            See the Data.
+          </h2>
+          <p className="text-xl text-indigo-200 max-w-xl mx-auto">
+            Explore the interactive dashboard to compare models, visualize bias, and time-travel through censorship history.
+          </p>
+          <div className="pt-8">
+            <Link
+              href="/dashboard"
+              className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-indigo-900 transition-all duration-200 bg-white font-display rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 hover:bg-indigo-50 hover:scale-105 hover:shadow-2xl"
+            >
+              Launch Interactive Dashboard
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <footer className="absolute bottom-8 left-0 right-0 text-center text-slate-500 text-xs opacity-60">
+            <p>© {new Date().getFullYear()} Algorithmic Arbiters • Research by Jacob Kandel (UChicago)</p>
+          </footer>
         </div>
-      </footer>
+      </LandingSection>
+
     </main>
   );
 }
