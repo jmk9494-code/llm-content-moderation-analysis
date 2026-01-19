@@ -688,7 +688,7 @@ export default function Home() {
                             cell && cell.count > 0 ? getRateColor(rate) : "bg-slate-50 text-slate-300 border-slate-100",
                             cell && cell.count > 0 ? "hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 border-transparent" : "cursor-not-allowed"
                           )}
-                          title={cell && cell.count > 0 ? `Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count} audits)` : "No Data Available"}
+                          title={cell && cell.count > 0 ? `Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count} audits)` : "Not Audited: This model has not been tested on this category yet."}
                           onClick={() => cell && cell.count > 0 && setSelectedDrillDown(cell)}
                         >
                           {cell && cell.count > 0 ? `${rate.toFixed(0)}%` : "N/A"}
