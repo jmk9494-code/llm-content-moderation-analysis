@@ -110,7 +110,10 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative h-full flex flex-col">
             <div className="mb-4 flex justify-between items-start shrink-0">
                 <div>
-                    {/* Title removed as per user request */}
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        ⚖️ Axis of Bias
+                    </h3>
+                    <p className="text-sm text-slate-500">How models lean when they refuse.</p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
@@ -158,10 +161,10 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
                 </div>
 
                 <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="x" name="Economic" domain={[-6, 6]} hide />
-                        <YAxis type="number" dataKey="y" name="Social" domain={[-6, 6]} hide />
+                        <XAxis type="number" dataKey="x" name="Economic" domain={[-8, 8]} hide />
+                        <YAxis type="number" dataKey="y" name="Social" domain={[-8, 8]} hide />
                         <ZAxis type="number" dataKey="z" range={[50, 400]} name="Refusals" />
                         <Tooltip content={<CustomTooltip />} />
 
