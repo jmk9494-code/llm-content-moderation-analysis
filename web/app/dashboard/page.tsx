@@ -824,15 +824,15 @@ export default function Home() {
                       </div>
                     ))}
                   {filteredData.filter(r => r.model === selectedDrillDown.model && r.category === selectedDrillDown.category).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="flex flex-col items-center justify-center py-16 text-center select-none opacity-60">
                       <div className="bg-slate-100 p-4 rounded-full mb-4">
-                        <AlertCircle className="h-8 w-8 text-slate-400" />
+                        <AlertCircle className="h-8 w-8 text-slate-300" />
                       </div>
-                      <h4 className="text-lg font-semibold text-slate-900 mb-1">No Data Available</h4>
-                      <p className="text-sm text-slate-500 max-w-sm mx-auto">
-                        We couldn't find any audit records for <strong>{selectedDrillDown.model}</strong> in the <strong>{selectedDrillDown.category}</strong> category.
+                      <h4 className="text-lg font-semibold text-slate-400 mb-1">No Data Available</h4>
+                      <p className="text-sm text-slate-400 max-w-sm mx-auto">
+                        We couldn't find any audit records for <strong className="text-slate-500">{selectedDrillDown.model}</strong> in the <strong className="text-slate-500">{selectedDrillDown.category}</strong> category.
                         <br /><br />
-                        This usually means the model refused to answer even benign prompts due to safety filters, or the API request timed out during data collection.
+                        <span className="italic">This usually means the model refused to answer even benign prompts due to safety filters, or the API request timed out during data collection.</span>
                       </p>
                     </div>
                   )}
