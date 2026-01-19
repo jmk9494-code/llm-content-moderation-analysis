@@ -680,7 +680,6 @@ export default function Home() {
                       const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
                       const rate = cell ? cell.rate : 0;
                       return (
-                      return (
                         <div
                           key={`${m}-${c}`}
                           className={cn(
@@ -693,7 +692,6 @@ export default function Home() {
                         >
                           {cell && cell.count > 0 ? `${rate.toFixed(0)}%` : "N/A"}
                         </div>
-                      );
                       );
                     })}
                   </>
@@ -737,42 +735,9 @@ export default function Home() {
         </div>
 
         {/* Full Width Time-Travel Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-600" />
-            ⏳ Time-Travel Trends
-            <InfoTooltip text="Historical view of refusal rates. This chart lets you 'time-travel' to see how model behavior has drifted or tightened over different audit runs." />
-          </h3>
-          <div className="h-64 w-full">
-            {trends.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trends}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis unit="%" />
-                  <Tooltip />
-                  <Legend onClick={(e) => setModelFilter(e.value || 'All')} wrapperStyle={{ cursor: 'pointer' }} />
-                  {Array.from(new Set(trends.map(t => t.model))).map((model, i) => (
-                    <Line
-                      key={model}
-                      type="monotone"
-                      dataKey="refusal_rate"
-                      data={trends.filter(t => t.model === model)}
-                      name={model.split('/')[1] || model}
-                      stroke={`hsl(${i * 90}, 70%, 50%)`}
-                      strokeWidth={2}
-                      dot={true}
-                      activeDot={{ onClick: () => setModelFilter(model), cursor: 'pointer' }}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 italic">
-                No historical data available yet.
-              </div>
-            )}
-          </div>
+        {/* Full Width Time-Travel Chart - Slider Integrated */}
+        <div className="mb-8">
+          <TimeLapseChart data={trends} />
         </div>
 
         {/* Radar Chart Removed (Censorship Profile) as requested */}
