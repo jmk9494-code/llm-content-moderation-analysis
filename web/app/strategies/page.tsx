@@ -172,43 +172,7 @@ export default function StrategyPage() {
                     */}
 
                     {/* Attack Vector Chart (Legacy but useful for raw comparison) */}
-                    <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <AlertTriangle className="h-5 w-5 text-orange-500" />
-                            Refusal Rate Comparison
-                            <InfoTooltip text="Direct vs Adversarial refusal rates side-by-side." />
-                        </h3>
-                        <div className="flex-1 w-full min-h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={attackData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="model" tickFormatter={(val) => val.split('/')[1] || val} tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={60} />
-                                    <YAxis unit="%" />
-                                    <Tooltip
-                                        cursor={{ fill: '#f8fafc' }}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    />
-                                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Bar
-                                        dataKey="Direct"
-                                        fill="#6366f1"
-                                        name="Direct Violations"
-                                        radius={[4, 4, 0, 0]}
-                                        cursor="pointer"
-                                        onClick={(data: any) => setSelectedAttackModel(data.model)}
-                                    />
-                                    <Bar
-                                        dataKey="Adversarial"
-                                        fill="#f43f5e"
-                                        name="Adversarial (Jailbreaks)"
-                                        radius={[4, 4, 0, 0]}
-                                        cursor="pointer"
-                                        onClick={(data: any) => setSelectedAttackModel(data.model)}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </section>
+
                 </div>
 
                 {/* False Positive / Over-Refusal */}
