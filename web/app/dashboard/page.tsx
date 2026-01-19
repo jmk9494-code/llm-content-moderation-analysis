@@ -680,14 +680,20 @@ export default function Home() {
                       const cell = heatmapData.grid.find(x => x.model === m && x.category === c);
                       const rate = cell ? cell.rate : 0;
                       return (
+                      return (
                         <div
                           key={`${m}-${c}`}
-                          className={cn("h-10 rounded flex items-center justify-center text-xs font-bold transition-transform hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 relative", getRateColor(rate))}
-                          title={`Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count || 0} audits)`}
-                          onClick={() => cell && setSelectedDrillDown(cell)}
+                          className={cn(
+                            "h-10 rounded flex items-center justify-center text-xs font-bold transition-transform relative border",
+                            cell && cell.count > 0 ? getRateColor(rate) : "bg-slate-50 text-slate-300 border-slate-100",
+                            cell && cell.count > 0 ? "hover:scale-105 cursor-pointer hover:ring-2 hover:ring-indigo-400 hover:z-10 border-transparent" : "cursor-not-allowed"
+                          )}
+                          title={cell && cell.count > 0 ? `Click to view details for ${m} - ${c}\n${rate.toFixed(1)}% Refusal (${cell?.count} audits)` : "No Data Available"}
+                          onClick={() => cell && cell.count > 0 && setSelectedDrillDown(cell)}
                         >
-                          {rate.toFixed(0)}%
+                          {cell && cell.count > 0 ? `${rate.toFixed(0)}%` : "N/A"}
                         </div>
+                      );
                       );
                     })}
                   </>
