@@ -42,7 +42,7 @@ export default function PriceChart({ data }: { data: PriceData[] }) {
                         tickFormatter={(value) => value.split('/')[1] || value}
                     />
                     <Tooltip
-                        formatter={(value: number) => [`$${value.toFixed(6)}`, 'Cost']}
+                        formatter={(value: any) => [`$${Number(value).toFixed(6)}`, 'Cost']}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                     <Bar dataKey="cost" name="Total Cost" radius={[0, 4, 4, 0]}>
