@@ -199,10 +199,12 @@ export default function AuditPage() {
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-200 pb-6">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Global Audit Log</h1>
-                        <p className="text-slate-500 mt-2">Raw record of every prompt, response, and verdict.</p>
+                        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                            Global Audit Log
+                        </h1>
+                        <p className="text-lg text-slate-500 font-medium">Raw record of every prompt, response, and verdict.</p>
                     </div>
                     <a
                         href="/audit_log.csv"

@@ -155,11 +155,11 @@ export default function ComparePage() {
             <div className="max-w-7xl mx-auto space-y-8">
 
                 {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-                        <ArrowLeftRight className="h-8 w-8 text-indigo-600" />
+                <div className="border-b border-slate-200 pb-6">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
                         Model Comparison
                     </h1>
+                    <p className="text-lg text-slate-500 font-medium mt-1">Head-to-head performance analysis & disagreement detection</p>
                 </div>
 
                 {/* Selectors */}
