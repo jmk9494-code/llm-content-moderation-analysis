@@ -12,9 +12,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode support via class (next-themes) */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    /* Fallback for system preference if JS disabled, 
+       but next-themes usually handles this. */
+         --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
