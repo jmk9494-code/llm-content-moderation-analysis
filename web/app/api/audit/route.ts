@@ -6,7 +6,12 @@ import fs from 'fs';
 export async function GET() {
     try {
         // In Vercel (and local dev), the DB should be in the root or accessible via process.cwd()
-        const dbPath = path.join(process.cwd(), 'audit.db');
+        let dbPath = path.join(process.cwd(), 'audit.db');
+
+        if (!fs.existsSync(dbPath)) {
+            // Fallback for local dev (web directory)
+            dbPath = path.join(process.cwd(), '../audit.db');
+        }
 
         if (!fs.existsSync(dbPath)) {
             console.error(`Database not found at ${dbPath}`);

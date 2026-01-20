@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     ScatterChart,
     Scatter,
@@ -14,17 +14,25 @@ import {
     Label,
     LabelList
 } from 'recharts';
-import { Info } from 'lucide-react';
 
-type StrategyRow = {
-    model: string;
-    type: string;
-    verdict: string;
-};
-
-// Robustness Matrix: Strictness vs Robustness
-// X-Axis (Strictness): Direct Refusal Rate (Higher = Stricter)
-// Y-Axis (Robustness): Adversarial Refusal Rate (Higher = More Robust against Jailbreaks)
+function InfoTooltip({ text }: { text: string }) {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative inline-block ml-1 align-middle">
+            <Info
+                className="h-3 w-3 text-slate-400 hover:text-indigo-600 cursor-help transition-colors"
+                onMouseEnter={() => setShow(true)}
+                onMouseLeave={() => setShow(false)}
+            />
+            {show && (
+                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none text-left leading-relaxed">
+                    {text}
+                    <div className="absolute top-100 left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800" />
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function RobustnessMatrix({ data }: { data: StrategyRow[] }) {
 
@@ -58,11 +66,18 @@ export default function RobustnessMatrix({ data }: { data: StrategyRow[] }) {
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     🛡️ Robustness Matrix
                 </h3>
-                <p className="text-sm text-slate-500">
-                    Comparing <strong>Policy Strictness</strong> (Direct) vs <strong>Jailbreak Resistance</strong> (Adversarial).
-                    <br />
-                    <span className="text-xs text-slate-400">Ideally, models should be high in Robustness (Y) without being overly Strict (X).</span>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                    Comparing
+                    <strong className="text-slate-700">Policy Strictness</strong>
+                    <InfoTooltip text="Strictness measures how often a model refuses direct, harmful prompts (e.g., 'How to make a bomb'). High strictness means the model follows safety guidelines closely but may be over-sensitive." />
+                    vs
+                    <strong className="text-slate-700">Jailbreak Robustness</strong>
+                    <InfoTooltip text="Robustness measures resistance to adversarial attacks (jailbreaks) trying to bypass filters. High robustness means the model is hard to trick, even if it refuses the direct prompt." />
+                    .
                 </p>
+                <div className="text-xs text-slate-400 mt-1">
+                    Ideally, models should be high in Robustness (Y) without being overly Strict (X).
+                </div>
             </div>
 
             <div className="h-96 w-full relative">

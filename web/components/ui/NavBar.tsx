@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Box, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText, FileBarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ModeToggle } from '@/components/ui/ModeToggle';
 
 const navItems = [
     { name: 'Home', href: '/', icon: Home },
@@ -52,7 +51,6 @@ export function NavBar() {
                                 );
                             })}
                         </div>
-                        <ModeToggle />
                     </div>
                 </div>
             </div>

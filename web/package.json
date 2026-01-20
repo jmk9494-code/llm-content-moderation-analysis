@@ -10,7 +10,7 @@
     "lint": "eslint"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",
@@ -20,7 +20,6 @@
     "framer-motion": "^12.27.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
-    "next-themes": "^0.4.4",
     "papaparse": "^5.5.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
