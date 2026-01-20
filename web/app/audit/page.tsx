@@ -127,7 +127,7 @@ export default function AuditPage() {
             id: 'expander',
             header: () => null,
             cell: ({ row }) => (
-                <button onClick={() => toggleRow(row.id)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors">
+                <button onClick={() => toggleRow(row.id)} className="p-1 hover:bg-slate-100 rounded transition-colors">
                     {expandedRows[row.id] ? <ChevronDown className="h-4 w-4 text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
                 </button>
             ),
@@ -135,7 +135,7 @@ export default function AuditPage() {
         }),
         auditHelper.accessor('test_date', {
             header: 'Date',
-            cell: info => <span className="text-slate-500 dark:text-slate-400 whitespace-nowrap">{info.getValue()}</span>,
+            cell: info => <span className="text-slate-500 whitespace-nowrap">{info.getValue()}</span>,
             size: 100,
         }),
         auditHelper.accessor('model', {
@@ -145,7 +145,7 @@ export default function AuditPage() {
                 return (
                     <div className="flex items-center gap-2">
                         <ModelLogo provider={provider} name={info.getValue()} className="h-5 w-5" />
-                        <span className="font-medium text-slate-700 dark:text-slate-200">{info.getValue().split('/')[1] || info.getValue()}</span>
+                        <span className="font-medium text-slate-700">{info.getValue().split('/')[1] || info.getValue()}</span>
                     </div>
                 );
             },
@@ -153,17 +153,17 @@ export default function AuditPage() {
         }),
         auditHelper.accessor('category', {
             header: 'Category',
-            cell: info => <span className="text-slate-600 dark:text-slate-400">{info.getValue()}</span>,
+            cell: info => <span className="text-slate-600">{info.getValue()}</span>,
             size: 150,
         }),
         auditHelper.accessor('verdict', {
             header: 'Verdict',
             cell: info => {
                 const val = info.getValue();
-                let colorClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-                if (val === 'REMOVED') colorClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-                else if (val === 'REFUSAL') colorClass = "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
-                else if (val === 'BLOCKED') colorClass = "bg-slate-800 text-white dark:bg-slate-700 dark:text-slate-200";
+                let colorClass = "bg-emerald-100 text-emerald-700";
+                if (val === 'REMOVED') colorClass = "bg-red-100 text-red-700";
+                else if (val === 'REFUSAL') colorClass = "bg-orange-100 text-orange-700";
+                else if (val === 'BLOCKED') colorClass = "bg-slate-800 text-white";
 
                 return (
                     <span className={cn("px-2 py-1 rounded text-xs font-bold uppercase", colorClass)}>
@@ -194,15 +194,14 @@ export default function AuditPage() {
     });
 
     return (
-        <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 p-4 md:p-8 font-sans transition-colors duration-300">
+        <main className="min-h-screen bg-slate-50 text-slate-900 p-4 md:p-8 font-sans transition-colors duration-300">
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                     <div>
-                        <Link href="/dashboard" className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1 block">← Back to Dashboard</Link>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Global Audit Log</h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-2">Raw record of every prompt, response, and verdict.</p>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Global Audit Log</h1>
+                        <p className="text-slate-500 mt-2">Raw record of every prompt, response, and verdict.</p>
                     </div>
                     <a
                         href="/audit_log.csv"
@@ -215,7 +214,7 @@ export default function AuditPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full md:w-96">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search className="h-4 w-4 text-slate-400" />
@@ -225,7 +224,7 @@ export default function AuditPage() {
                             placeholder="Search prompts, responses, or models..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full bg-slate-50 dark:bg-slate-800 dark:text-white transition-colors"
+                            className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full bg-slate-50 transition-colors"
                         />
                     </div>
 
@@ -244,7 +243,7 @@ export default function AuditPage() {
                         <select
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <option value="all">All Dates</option>
                             {uniqueDates.map(d => (
@@ -269,12 +268,12 @@ export default function AuditPage() {
                 </div>
 
                 {/* Virtualized Table */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-[600px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
                     {/* Header Fixed */}
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 grid pr-4" style={{ gridTemplateColumns: '40px 100px 180px 150px 140px' }}>
+                    <div className="bg-slate-50 border-b border-slate-200 grid pr-4" style={{ gridTemplateColumns: '40px 100px 180px 150px 140px' }}>
                         {auditTable.getHeaderGroups().map(headerGroup => (
                             headerGroup.headers.map(header => (
-                                <div key={header.id} className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={header.column.getToggleSortingHandler()}>
+                                <div key={header.id} className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors" onClick={header.column.getToggleSortingHandler()}>
                                     <div className="flex items-center gap-1">
                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                         {{
@@ -314,9 +313,9 @@ export default function AuditPage() {
                                                 height: `${virtualRow.size}px`,
                                                 transform: `translateY(${virtualRow.start}px)`,
                                             }}
-                                            className="border-b border-slate-100 dark:border-slate-800"
+                                            className="border-b border-slate-100"
                                         >
-                                            <div className="grid h-[54px] items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                                            <div className="grid h-[54px] items-center hover:bg-slate-50 transition-colors cursor-pointer"
                                                 style={{ gridTemplateColumns: '40px 100px 180px 150px 140px' }}
                                                 onClick={() => toggleRow(row.id)}
                                             >
@@ -329,20 +328,20 @@ export default function AuditPage() {
 
                                             {/* Expanded Content */}
                                             {isExpanded && (
-                                                <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="px-6 py-4 bg-slate-50/50">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in fade-in zoom-in-95 duration-200">
                                                         <div>
                                                             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Prompt (User)</div>
-                                                            <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-mono whitespace-pre-wrap max-h-60 overflow-y-auto border border-transparent dark:border-slate-700">
+                                                            <div className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm font-mono whitespace-pre-wrap max-h-60 overflow-y-auto border border-transparent">
                                                                 {row.original.prompt_text}
                                                             </div>
                                                         </div>
                                                         <div>
                                                             <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Response (AI)</div>
                                                             <div className={cn("p-3 rounded-lg text-sm whitespace-pre-wrap border max-h-60 overflow-y-auto",
-                                                                row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-200" :
-                                                                    (row.original.verdict === 'REFUSAL' ? "bg-orange-50 border-orange-100 text-orange-800 dark:bg-orange-900/20 dark:border-orange-900/50 dark:text-orange-200" :
-                                                                        (row.original.verdict === 'BLOCKED' ? "bg-slate-800 text-white dark:bg-slate-700" : "bg-emerald-50 border-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-900/50 dark:text-emerald-200"))
+                                                                row.original.verdict === 'REMOVED' ? "bg-red-50 border-red-100 text-red-800" :
+                                                                    (row.original.verdict === 'REFUSAL' ? "bg-orange-50 border-orange-100 text-orange-800" :
+                                                                        (row.original.verdict === 'BLOCKED' ? "bg-slate-800 text-white" : "bg-emerald-50 border-emerald-100 text-emerald-800"))
                                                             )}>
                                                                 {row.original.response_text}
                                                             </div>
@@ -357,7 +356,7 @@ export default function AuditPage() {
                         )}
                     </div>
 
-                    <div className="border-t border-slate-200 dark:border-slate-800 p-2 text-xs text-center text-slate-400">
+                    <div className="border-t border-slate-200 p-2 text-xs text-center text-slate-400">
                         {rows.length} rows loaded | Virtualized Rendering Active
                     </div>
                 </div>
