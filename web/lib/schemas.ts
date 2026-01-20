@@ -3,13 +3,16 @@ import { z } from "zod";
 
 // Zod schema for the main audit log
 export const AuditRowSchema = z.object({
+    id: z.string(),
     test_date: z.string().default(""),
     model: z.string(),
     category: z.string(),
     verdict: z.string(),
-    run_cost: z.number().nullable().transform((val) => val ?? 0), // Handle nulls/missing cost
+    cost: z.number().nullable().transform((val) => val ?? 0),
     prompt_text: z.string().default(""),
     response_text: z.string().default(""),
+    latency_ms: z.number().optional(),
+    tokens_used: z.number().optional(),
 });
 
 // Zod schema for the strategy log
