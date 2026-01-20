@@ -37,9 +37,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex items-center justify-end px-4 pt-2 -mb-10 relative z-50">
-            <ModeToggle />
-          </div>
+
           <NavBar />
           <div className="flex-1">
             {children}
