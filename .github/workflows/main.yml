@@ -72,8 +72,8 @@ jobs:
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_19lsMlTpI0jeG5Lg2yNQb2Uo
-          VERCEL_PROJECT_ID: prj_B62ZeDVRbT9sfF0VMxvt7wg4e62x
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           # Copy fresh data to where Next.js expects it
           mkdir -p web/public/data
