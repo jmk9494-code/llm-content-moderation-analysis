@@ -14,6 +14,8 @@ import {
     Label,
     LabelList
 } from 'recharts';
+import { Info } from 'lucide-react';
+import { StrategyRow } from '@/lib/schemas';
 
 function InfoTooltip({ text }: { text: string }) {
     const [show, setShow] = useState(false);
