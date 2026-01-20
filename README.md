@@ -55,5 +55,27 @@ To further improve this audit, we recommend:
 2.  **Multilingual Attacks**: Test if models are more permissive when prompted in non-English languages.
 3.  **New Categories**: Add "Medical Misinformation" and "Legal Liability" domains.
 
+
+## 🛠️ Usage (Unified CLI)
+
+This project uses a unified manager script (`manage.py`) for all operations.
+
+```bash
+# 1. Run the Main Audit
+python manage.py audit --preset efficiency --resolve-latest
+
+# 2. Run Adversarial Strategy Audit
+python manage.py strategy --models "openai/gpt-4o-mini"
+
+# 3. Generate New Prompts (AI Red-Teaming)
+python manage.py generate --category "Hate Speech" --count 10
+
+# 4. Clean Logs
+python manage.py clean
+
+# 5. Generate Weekly Report
+python manage.py report
+```
+
 ## 📅 Project Timeline
 Automated data collection will continue throughout the year to capture longitudinal trends in model behavior. **A formal paper summarizing the results and findings from this ongoing audit will be released at the end of the year**.
