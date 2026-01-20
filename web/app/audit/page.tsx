@@ -271,7 +271,7 @@ export default function AuditPage() {
                 {/* Virtualized Table */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-[600px]">
                     {/* Header Fixed */}
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 grid pr-4" style={{ gridTemplateColumns: '40px 100px 180px 150px 100px' }}>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 grid pr-4" style={{ gridTemplateColumns: '40px 100px 180px 150px 140px' }}>
                         {auditTable.getHeaderGroups().map(headerGroup => (
                             headerGroup.headers.map(header => (
                                 <div key={header.id} className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" onClick={header.column.getToggleSortingHandler()}>
@@ -317,7 +317,7 @@ export default function AuditPage() {
                                             className="border-b border-slate-100 dark:border-slate-800"
                                         >
                                             <div className="grid h-[54px] items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                                                style={{ gridTemplateColumns: '40px 100px 180px 150px 100px' }}
+                                                style={{ gridTemplateColumns: '40px 100px 180px 150px 140px' }}
                                                 onClick={() => toggleRow(row.id)}
                                             >
                                                 {row.getVisibleCells().map(cell => (

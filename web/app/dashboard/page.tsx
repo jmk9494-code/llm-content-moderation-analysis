@@ -767,14 +767,7 @@ export default function Home() {
 
           {/* Bias Analysis Chart */}
           <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <Scale className="h-5 w-5 text-indigo-600" />
-                Axis of Bias
-                <InfoTooltip text="Political compass analysis of refusal reasoning (LLM Judge)" />
-              </h3>
-              <BiasChart data={biasData} />
-            </div>
+            <BiasChart data={biasData} />
           </ChartErrorBoundary>
         </div>
 
