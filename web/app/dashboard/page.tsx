@@ -13,7 +13,7 @@ import {
 } from '@tanstack/react-table';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
-  LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ErrorBar
 } from 'recharts';
 import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, MessageSquare, AlertOctagon, AlertCircle, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, Menu, Filter, RotateCcw, Scale, Trophy } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -27,6 +27,8 @@ import DownloadReportButton from './DownloadReportButton';
 import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 import { generateReport } from '@/lib/analyst';
+import { getCache, setCache, getCacheKey } from '@/lib/cache-utils';
+import { calculateConfidenceInterval, formatCI, chiSquareTest, getSignificanceIndicator } from '@/lib/stats-utils';
 
 import { RefreshCw, CheckCircle } from 'lucide-react';
 import { AuditRowSchema, AuditRow, StrategyRowSchema, StrategyRow } from '@/lib/schemas';
@@ -461,12 +463,19 @@ export default function Home() {
       ),
       cell: info => {
         const val = info.getValue();
+        const row = info.row.original;
+        const ci = calculateConfidenceInterval(row.refusals, row.total);
         return (
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
-              <div className={cn("h-full rounded-full", val > 50 ? "bg-red-500" : "bg-emerald-500")} style={{ width: `${val}%` }} />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
+                <div className={cn("h-full rounded-full", val > 50 ? "bg-red-500" : "bg-emerald-500")} style={{ width: `${val}%` }} />
+              </div>
+              <span className={cn("font-bold", val > 50 ? "text-red-600" : "text-emerald-600")}>{val.toFixed(1)}%</span>
             </div>
-            <span className={cn("font-bold", val > 50 ? "text-red-600" : "text-emerald-600")}>{val.toFixed(1)}%</span>
+            <span className="text-xs text-slate-400 font-mono" title="95% Confidence Interval">
+              CI: {formatCI(ci.lower, ci.upper)}
+            </span>
           </div>
         );
       },
