@@ -4,7 +4,8 @@ from src.database import AuditResult
 
 def test_generate_report_no_data(db_session, caplog):
     """Verify that empty DB results in a warning log."""
-    generate_weekly_report(output_dir="/tmp")
+    with patch("src.analyst.get_session", return_value=db_session):
+        generate_weekly_report(output_dir="/tmp")
     assert "No audit log found" in caplog.text
 
 @patch("src.analyst.OpenAI")
