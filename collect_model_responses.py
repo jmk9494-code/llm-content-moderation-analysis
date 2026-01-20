@@ -10,8 +10,14 @@ from dotenv import load_dotenv
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 from src.analyst import generate_weekly_report
+import uuid
+from src.database import init_db, ModelRegistry, Prompt, AuditResult
+import datetime
 
 load_dotenv()
+
+# Initialize DB
+Session = init_db()
 
 # --- Configuration & Pricing ---
 client = AsyncOpenAI(
@@ -208,6 +214,36 @@ async def process_prompt(sem, p, model_name):
             
             run_cost = calculate_cost(model_name, p_tokens, c_tokens)
             
+            # --- DB Save ---
+            try:
+                session = Session()
+                # Ensure Prompt Exists
+                if not session.query(Prompt).get(p['id']):
+                    session.add(Prompt(id=p['id'], category=p['category'], text=p['text']))
+                    
+                # Ensure Model Exists
+                if not session.query(ModelRegistry).get(model_name):
+                    session.add(ModelRegistry(id=model_name, family=model_name.split('/')[0]))
+                    
+                # Save Result
+                db_result = AuditResult(
+                    run_id=p.get('run_id'),
+                    timestamp=datetime.datetime.now(),
+                    model_id=model_name,
+                    prompt_id=p['id'],
+                    verdict=verdict,
+                    response_text=content,
+                    cost=run_cost,
+                    prompt_tokens=p_tokens,
+                    completion_tokens=c_tokens
+                )
+                session.add(db_result)
+                session.commit()
+                session.close()
+            except Exception as e:
+                print(f"DB Error: {e}")
+            # --- End DB Save ---
+
             return {
                 'test_date': time.strftime("%Y-%m-%d"),
                 'model': model_name,
@@ -233,6 +269,27 @@ async def process_prompt(sem, p, model_name):
             
             print(f"Error on {model_name} / {p['id']}: {e}")
             
+            # --- DB Save Error ---
+            try:
+                session = Session()
+                db_result = AuditResult(
+                    run_id=p.get('run_id'),
+                    timestamp=datetime.datetime.now(),
+                    model_id=model_name,
+                    prompt_id=p['id'],
+                    verdict=verdict,
+                    response_text=f"SYSTEM ERROR: {e}",
+                    cost=0,
+                    prompt_tokens=0,
+                    completion_tokens=0
+                )
+                session.add(db_result)
+                session.commit()
+                session.close()
+            except:
+                pass
+            # --- End DB Save Error ---
+
             return {
                 'test_date': time.strftime("%Y-%m-%d"),
                 'model': model_name,
@@ -265,6 +322,12 @@ async def run_audit_async(prompts, model_names, output_file):
     for model in model_names:
         print(f"\n=== Starting Audit for {model} ===")
         sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
+        
+        # Inject run_id
+        run_id = str(uuid.uuid4())
+        for p in prompts:
+            p['run_id'] = run_id
+            
         tasks = [process_prompt(sem, p, model) for p in prompts]
         results = await asyncio.gather(*tasks)
         

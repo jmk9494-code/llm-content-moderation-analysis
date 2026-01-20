@@ -9,3 +9,4 @@ tenacity       # For auto-retrying failed API calls (CRITICAL)
 scikit-learn   # For calculating "Cohen's Kappa" (Inter-rater agreement)
 tqdm
 httpx          # For dynamic model resolution from OpenRouter API
+sqlalchemy     # For SQLite database management
