@@ -22,6 +22,7 @@ import Link from 'next/link';
 import TimeLapseChart from './TimeLapseChart';
 import BiasChart from './BiasChart';
 import PriceChart from './PriceChart';
+import CategoryChart from './CategoryChart';
 import ModelLogo from '@/components/ModelLogo';
 
 import DownloadReportButton from './DownloadReportButton';
@@ -56,6 +57,7 @@ type ModelSummary = {
   block_rate: number;
   avg_len: number;
   least_sensitive_topic: string; // New field
+  total_cost: number; // For PriceChart
 };
 
 type HeatmapCell = {
@@ -121,18 +123,36 @@ export default function Home() {
       .then(meta => {
         setModelsMeta(meta);
 
-        // 2. Fetch Audit Log
-        return fetch('/audit_log.csv')
-          .then(r => r.text())
-          .then(csv => {
-            const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+        // 2. Fetch Audit Log from API (SQLite)
+        return fetch('/api/audit')
+          .then(r => r.json())
+          .then((json: { data: any[], error?: string }) => {
+            if (json.error) {
+              console.error("API Error:", json.error);
+              return;
+            }
+
             const validRows: AuditRow[] = [];
-            parsed.data.forEach((row: any) => {
-              const result = AuditRowSchema.safeParse(row);
-              if (result.success) {
-                validRows.push(result.data);
-              }
+            json.data.forEach((row: any) => {
+              // Map API response to AuditRow schema
+              const mapped: AuditRow = {
+                id: row.case_id || 'unknown',
+                test_date: row.timestamp ? row.timestamp.split('T')[0] : 'Unknown',
+                model: row.model,
+                category: row.category,
+                verdict: row.verdict,
+                prompt_text: row.prompt,
+                response_text: row.response,
+                cost: row.cost || 0, // Ensure cost is captured
+                latency_ms: row.latency_ms,
+                tokens_used: row.tokens_used
+              };
+
+              // We skip strict validation for now to match API shape directly
+              // or use safeParse if schema matches perfectly
+              validRows.push(mapped);
             });
+
             const rows = validRows.filter(r => r.model);
             setData(rows);
 
@@ -146,9 +166,11 @@ export default function Home() {
                 refusals: 0, soft_refusals: 0, blocks: 0,
                 refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
                 avg_len: 0,
-                least_sensitive_topic: 'N/A'
+                least_sensitive_topic: 'N/A',
+                total_cost: 0
               };
               agg[r.model].total++;
+              agg[r.model].total_cost += (r.cost || 0);
               if (r.verdict === 'REMOVED') agg[r.model].refusals++;
               if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
               if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
@@ -162,12 +184,18 @@ export default function Home() {
               block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
               avg_len: Math.round(s.avg_len / s.total)
             })));
+
+            setLoading(false);
           });
       })
-      .catch(e => console.log("Init error", e));
+      .catch(e => {
+        console.error("Init error", e);
+        setLoading(false);
+      });
 
-    // 3. Fetch Trends
-    const p2 = new Promise<void>((resolve, reject) => {
+    // 3. Fetch Trends (Keep CSV for now if API doesn't support trends yet)
+    // Note: To fully migrate, we'd need a trends API too.
+    const p2 = new Promise<void>((resolve) => {
       Papa.parse<any>('/trends.csv', {
         download: true,
         header: true,
@@ -175,12 +203,12 @@ export default function Home() {
           setTrends(results.data.filter(r => r.model));
           resolve();
         },
-        error: (err) => resolve() // Don't fail entire load
+        error: () => resolve()
       });
     });
 
     // 4. Fetch Bias Log
-    const p3 = new Promise<void>((resolve, reject) => {
+    const p3 = new Promise<void>((resolve) => {
       Papa.parse<any>('/bias_log.csv', {
         download: true,
         header: true,
@@ -188,11 +216,9 @@ export default function Home() {
           setBiasData(results.data.filter(r => r.model));
           resolve();
         },
-        error: (err) => resolve()
+        error: () => resolve()
       });
     });
-
-    Promise.all([p2, p3]).then(() => setLoading(false));
   }, []);
 
   // --- Filtering Config ---
@@ -254,7 +280,8 @@ export default function Home() {
         refusals: 0, soft_refusals: 0, blocks: 0,
         refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
         avg_len: 0,
-        least_sensitive_topic: 'N/A'
+        least_sensitive_topic: 'N/A',
+        total_cost: 0
       };
 
       // Category Agg
@@ -262,6 +289,7 @@ export default function Home() {
       if (!catAgg[r.model][r.category]) catAgg[r.model][r.category] = { total: 0, refusals: 0 };
 
       agg[r.model].total++;
+      agg[r.model].total_cost += (r.cost || 0);
       catAgg[r.model][r.category].total++;
 
       if (r.verdict === 'REMOVED') {
@@ -707,8 +735,8 @@ export default function Home() {
 
         {/* Stats Grid Removed (Duplicate / Redundant) */}
 
-        {/* Charts Row: Price & Bias */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Charts Row: Price, Bias, & Category */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Price Analysis Chart */}
           <ChartErrorBoundary fallbackMessage="Price analysis unavailable.">
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
@@ -717,7 +745,23 @@ export default function Home() {
                 Price of Censorship
                 <InfoTooltip text="Does paying more guarantee less censorship?" />
               </h3>
-              <PriceChart data={filteredData} />
+              <PriceChart data={filteredSummary.map(s => ({ model: s.model, cost: s.total_cost }))} />
+            </div>
+          </ChartErrorBoundary>
+
+          {/* Category Sensitivity Chart */}
+          <ChartErrorBoundary fallbackMessage="Category analysis unavailable.">
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
+              <CategoryChart data={heatmapData.categories.map(c => {
+                // Calculate aggregate refusal rate for this category across ALL filtered models
+                const relevantRows = filteredData.filter(r => r.category === c);
+                const total = relevantRows.length;
+                const refusals = relevantRows.filter(r => r.verdict === 'REMOVED').length;
+                return {
+                  category: c,
+                  rate: total > 0 ? (refusals / total) * 100 : 0
+                };
+              })} />
             </div>
           </ChartErrorBoundary>
 

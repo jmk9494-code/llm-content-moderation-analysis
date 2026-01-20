@@ -7,24 +7,23 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer,
     Cell
 } from 'recharts';
 
-type PriceData = {
-    model: string;
-    cost: number;
+type CategoryData = {
+    category: string;
+    rate: number;
 };
 
-export default function PriceChart({ data }: { data: PriceData[] }) {
-    // Sort by cost descending
-    const sortedData = [...data].sort((a, b) => b.cost - a.cost);
+export default function CategoryChart({ data }: { data: CategoryData[] }) {
+    // Sort by refusal rate descending
+    const sortedData = [...data].sort((a, b) => b.rate - a.rate);
 
     return (
         <div className="w-full h-[300px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                <span>💰</span> Estimated Cost by Model
+                <span>🛡️</span> Sensitivity by Topic
             </h3>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -33,21 +32,20 @@ export default function PriceChart({ data }: { data: PriceData[] }) {
                     margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
                 >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                    <XAxis type="number" tickFormatter={(val) => `$${val.toFixed(4)}`} />
+                    <XAxis type="number" unit="%" domain={[0, 100]} />
                     <YAxis
                         type="category"
-                        dataKey="model"
+                        dataKey="category"
                         width={100}
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(value) => value.split('/')[1] || value}
                     />
                     <Tooltip
-                        formatter={(value: number) => [`$${value.toFixed(6)}`, 'Cost']}
+                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Refusal Rate']}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Bar dataKey="cost" name="Total Cost" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="rate" name="Refusal Rate" radius={[0, 4, 4, 0]}>
                         {sortedData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#6366f1'} />
+                            <Cell key={`cell-${index}`} fill={index < 3 ? '#ef4444' : '#f97316'} />
                         ))}
                     </Bar>
                 </BarChart>
