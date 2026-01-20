@@ -133,6 +133,7 @@ export default function Home() {
           .then((json: { data: any[], error?: string }) => {
             if (json.error) {
               console.error("API Error:", json.error);
+              setLoading(false);
               return;
             }
 
@@ -995,8 +996,8 @@ function CategoryChart({ data }: { data: CategoryData[] }) {
   const sortedData = [...data].sort((a, b) => a.category.localeCompare(b.category));
 
   return (
-    <div className="w-full h-[300px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
-      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+    <div className="w-full h-[300px] bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
         <span>🛡️</span> Sensitivity by Topic
       </h3>
       <ResponsiveContainer width="100%" height="100%">
@@ -1038,8 +1039,8 @@ function PriceChart({ data }: { data: PriceData[] }) {
   const sortedData = [...data].sort((a, b) => b.cost - a.cost);
 
   return (
-    <div className="w-full h-[300px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
-      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+    <div className="w-full h-[300px] bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
         <span>💰</span> Estimated Cost by Model
       </h3>
       <ResponsiveContainer width="100%" height="100%">

@@ -59,6 +59,7 @@ export default function AuditPage() {
                     .then((json: { data: any[], error?: string }) => {
                         if (json.error) {
                             console.error("API Error:", json.error);
+                            setLoading(false);
                             return;
                         }
 

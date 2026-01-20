@@ -80,8 +80,6 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
         });
     }, [data]);
 
-    if (chartData.length === 0) return null;
-
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const d = payload[0].payload;
@@ -147,38 +145,45 @@ export default function BiasChart({ data }: { data: BiasRow[] }) {
 
             <div className="flex-1 min-h-[300px] w-full relative">
                 {/* Background Labels */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-8 opacity-20 text-xs font-bold uppercase text-slate-400">
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 opacity-20 text-[10px] font-bold uppercase text-slate-400">
                     <div className="flex justify-between">
                         <span>Left-Auth</span>
                         <span>Right-Auth</span>
                     </div>
                 </div>
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-8 opacity-20 text-xs font-bold uppercase text-slate-400">
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end p-4 opacity-20 text-[10px] font-bold uppercase text-slate-400">
                     <div className="flex justify-between">
                         <span>Left-Lib</span>
                         <span>Right-Lib</span>
                     </div>
                 </div>
 
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                    <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="x" name="Economic" domain={[-8, 8]} hide />
-                        <YAxis type="number" dataKey="y" name="Social" domain={[-8, 8]} hide />
-                        <ZAxis type="number" dataKey="z" range={[50, 400]} name="Refusals" />
-                        <Tooltip content={<CustomTooltip />} />
+                {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" dataKey="x" name="Economic" domain={[-8, 8]} hide />
+                            <YAxis type="number" dataKey="y" name="Social" domain={[-8, 8]} hide />
+                            <ZAxis type="number" dataKey="z" range={[50, 400]} name="Refusals" />
+                            <Tooltip content={<CustomTooltip />} />
 
-                        <ReferenceLine y={0} stroke="#94a3b8" />
-                        <ReferenceLine x={0} stroke="#94a3b8" />
+                            <ReferenceLine y={0} stroke="#94a3b8" />
+                            <ReferenceLine x={0} stroke="#94a3b8" />
 
-                        <Scatter name="Models" data={chartData} fill="#8884d8">
-                            {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[entry.dominantLeaning] || "#94a3b8"} />
-                            ))}
-                            <LabelList dataKey="model" position="top" style={{ fontSize: '10px', fill: '#64748b' }} />
-                        </Scatter>
-                    </ScatterChart>
-                </ResponsiveContainer>
+                            <Scatter name="Models" data={chartData} fill="#8884d8">
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[entry.dominantLeaning] || "#94a3b8"} />
+                                ))}
+                                <LabelList dataKey="model" position="top" style={{ fontSize: '10px', fill: '#64748b' }} />
+                            </Scatter>
+                        </ScatterChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                        <span className="text-2xl mb-2">⚖️</span>
+                        <p className="text-sm">No bias data available</p>
+                    </div>
+                )}
             </div>
         </div>
     );
