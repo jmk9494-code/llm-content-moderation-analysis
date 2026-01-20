@@ -763,8 +763,8 @@ export default function Home() {
 
         {/* Stats Grid Removed (Duplicate / Redundant) */}
 
-        {/* Charts Row: Price, Bias, & Category */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Charts: Price, Bias, & Category - Full Width */}
+        <div className="space-y-6 mb-8">
           {/* Price Analysis Chart */}
           <ChartErrorBoundary fallbackMessage="Price analysis unavailable.">
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
@@ -809,13 +809,6 @@ export default function Home() {
 
 
         <div className="space-y-8 mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Shield className="h-6 w-6 text-indigo-600" />
-            <h2 className="text-2xl font-bold text-slate-900">Strategy Analysis</h2>
-          </div>
-          <p className="text-slate-500 -mt-6 mb-6">
-            Deep dive into how models handle different attack vectors. Comparing Direct vs Adversarial policies.
-          </p>
 
           {/* Robustness Matrix */}
           <div className="w-full">
