@@ -83,5 +83,9 @@ jobs:
             cp data/latest_report.md web/public/
           fi
           
+          # DEBUG: Verify file existence
+          echo "=== DEBUG: Listing web/public directory ==="
+          ls -R web/public
+          
           # Deploy
-          npx vercel deploy web --prod --token=$VERCEL_TOKEN --yes
+          npx vercel deploy web --prod --token=$VERCEL_TOKEN --yes --debug
