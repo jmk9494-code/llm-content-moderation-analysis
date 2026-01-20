@@ -759,45 +759,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Bias Chart Moved to Charts Row */}
-
-        {/* Stats Grid Removed (Duplicate / Redundant) */}
-
-        {/* Charts: Price, Bias, & Category - Full Width */}
-        <div className="space-y-6 mb-8">
-          {/* Price Analysis Chart */}
-          <ChartErrorBoundary fallbackMessage="Price analysis unavailable.">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
-              <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-amber-500" />
-                Price of Censorship
-                <InfoTooltip text="Does paying more guarantee less censorship?" />
-              </h3>
-              <PriceChart data={filteredSummary.map(s => ({ model: s.model, cost: s.total_cost }))} />
-            </div>
-          </ChartErrorBoundary>
-
-          {/* Category Sensitivity Chart */}
-          <ChartErrorBoundary fallbackMessage="Category analysis unavailable.">
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-full">
-              <CategoryChart data={heatmapData.categories.map(c => {
-                // Calculate aggregate refusal rate for this category across ALL filtered models
-                const relevantRows = filteredData.filter(r => r.category === c);
-                const total = relevantRows.length;
-                const refusals = relevantRows.filter(r => r.verdict === 'REMOVED').length;
-                return {
-                  category: c,
-                  rate: total > 0 ? (refusals / total) * 100 : 0
-                };
-              })} />
-            </div>
-          </ChartErrorBoundary>
-
-          {/* Bias Analysis Chart */}
-          <ChartErrorBoundary fallbackMessage="Bias analysis unavailable.">
-            <BiasChart data={biasData} />
-          </ChartErrorBoundary>
-        </div>
 
         {/* Full Width Time-Travel Chart */}
         {/* Full Width Time-Travel Chart - Slider Integrated */}
