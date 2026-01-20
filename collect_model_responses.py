@@ -13,8 +13,8 @@ from src.analyst import generate_weekly_report
 import uuid
 from src.database import init_db, ModelRegistry, Prompt, AuditResult
 import datetime
-
-load_dotenv()
+from src.config import settings
+from src.logger import logger
 
 # Initialize DB
 Session = init_db()
@@ -22,7 +22,7 @@ Session = init_db()
 # --- Configuration & Pricing ---
 client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
+    api_key=settings.openrouter_api_key,
 )
 
 # Load Models Configuration
@@ -31,7 +31,7 @@ def load_model_registry(path="data/models.json"):
         with open(path, 'r') as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading models.json: {e}")
+        logger.error(f"Error loading models.json: {e}")
         return []
 
 MODEL_REGISTRY = load_model_registry()
@@ -64,7 +64,7 @@ def fetch_openrouter_models():
         response.raise_for_status()
         return response.json()["data"]
     except Exception as e:
-        print(f"Warning: Failed to fetch models from OpenRouter: {e}")
+        logger.warning(f"Failed to fetch models from OpenRouter: {e}")
         return []
 
 def resolve_latest_model(models_data, keywords):
@@ -128,9 +128,9 @@ def update_trends(audit_file='audit_log.csv', trends_file='data/trends.csv'):
         ).reset_index()
         
         trends.to_csv(trends_file, index=False)
-        print(f"✅ Trends updated: {len(trends)} rows written to {trends_file}")
+        logger.info(f"✅ Trends updated: {len(trends)} rows written to {trends_file}")
     except Exception as e:
-        print(f"⚠️ Failed to update trends: {e}")
+        logger.error(f"Failed to update trends: {e}")
 
 # --- Core Logic ---
 
@@ -197,13 +197,13 @@ def parse_response(response_text):
         if any(k in lower_text for k in refusal_keywords):
             return "REFUSAL" # Model refused to answer/roleplay
             
-        print(f"JSON Parse Error: {response_text[:100]}...")
+        logger.debug(f"JSON Parse Error: {response_text[:100]}...")
         return "ERROR"
 
 async def process_prompt(sem, p, model_name):
     """Wrapper to handle semaphore and strict processing for a single prompt."""
     async with sem:
-        print(f"[{model_name}] Testing {p['id']}...")
+        logger.info(f"[{model_name}] Testing {p['id']}...")
         try:
             content, usage = await call_target_model_async(model_name, p['text'])
             verdict = parse_response(content)
@@ -241,7 +241,7 @@ async def process_prompt(sem, p, model_name):
                 session.commit()
                 session.close()
             except Exception as e:
-                print(f"DB Error: {e}")
+                logger.error(f"DB Error: {e}")
             # --- End DB Save ---
 
             return {
@@ -267,7 +267,7 @@ async def process_prompt(sem, p, model_name):
             elif "400" in error_msg: 
                  verdict = "BLOCKED" # Often 400 is returned for safety blocks by some providers
             
-            print(f"Error on {model_name} / {p['id']}: {e}")
+            logger.error(f"Error on {model_name} / {p['id']}: {e}")
             
             # --- DB Save Error ---
             try:
@@ -320,7 +320,7 @@ async def run_audit_async(prompts, model_names, output_file):
     total_processed = 0
     
     for model in model_names:
-        print(f"\n=== Starting Audit for {model} ===")
+        logger.info(f"=== Starting Audit for {model} ===")
         sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
         
         # Inject run_id
@@ -340,16 +340,16 @@ async def run_audit_async(prompts, model_names, output_file):
         print(f"Finished {model}: {len(valid_results)}/{len(prompts)} prompts processed.")
         total_processed += len(valid_results)
         
-    print(f"\nAll Audits Completed! Total rows written: {total_processed}")
+    logger.info(f"All Audits Completed! Total rows written: {total_processed}")
 
 def export_metadata(output_path="web/public/models.json"):
     """Exports the model registry to the web public folder."""
     try:
         with open(output_path, 'w') as f:
             json.dump(MODEL_REGISTRY, f, indent=2)
-        print(f"✅ Exported model metadata to {output_path}")
+        logger.info(f"✅ Exported model metadata to {output_path}")
     except Exception as e:
-        print(f"⚠️ Failed to export metadata: {e}")
+        logger.error(f"Failed to export metadata: {e}")
 
 # --- Loaders and Entry Point ---
 
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     if args.preset:
         base_models = PRESETS[args.preset]
         if args.resolve_latest and args.preset == "efficiency":
-            print("\n🔍 Resolving latest models from OpenRouter...")
+            logger.info("🔍 Resolving latest models from OpenRouter...")
             api_models = fetch_openrouter_models()
             resolved = []
             
@@ -397,11 +397,11 @@ if __name__ == "__main__":
                 best_match = resolve_latest_model(api_models, kw)
                 if best_match:
                     mid = best_match["id"]
-                    print(f"  ✅ Found latest for '{' '.join(kw)}': {mid}")
+                    logger.info(f"  ✅ Found latest for '{' '.join(kw)}': {mid}")
                     update_pricing_registry(best_match)
                     resolved.append(mid)
                 else:
-                    print(f"  ⚠️  Could not resolve latest for '{' '.join(kw)}'. Using fallback: {fallback}")
+                    logger.warning(f"  Could not resolve latest for '{' '.join(kw)}'. Using fallback: {fallback}")
                     resolved.append(fallback)
             models = resolved
         else:
@@ -421,10 +421,10 @@ if __name__ == "__main__":
     asyncio.run(run_audit_async(loaded_prompts, models, args.output))
     
     # Update trends file for the dashboard
-    print("\n📈 Updating longitudinal trends...")
+    logger.info("📈 Updating longitudinal trends...")
     update_trends(args.output, "data/trends.csv")
     
-    print("\n🧠 Running AI Analyst...")
+    logger.info("🧠 Running AI Analyst...")
     generate_weekly_report(args.output, "data/latest_report.md")
     
-    print(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
+    logger.info(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
