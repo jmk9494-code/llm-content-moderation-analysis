@@ -11,3 +11,5 @@ tqdm
 httpx          # For dynamic model resolution from OpenRouter API
 sqlalchemy     # For SQLite database management
 pydantic-settings # For environment validation
+ruff              # Fast Python linter
+black             # Code formatter
