@@ -810,11 +810,6 @@ export default function Home() {
 
         <div className="space-y-8 mb-8">
 
-          {/* Robustness Matrix */}
-          <div className="w-full">
-            <RobustnessMatrix data={strategyData} />
-          </div>
-
           {/* False Positive / Over-Refusal */}
           <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
