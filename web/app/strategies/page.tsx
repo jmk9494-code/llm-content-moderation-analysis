@@ -161,18 +161,9 @@ export default function StrategyPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="w-full">
                     {/* New Robustness Matrix */}
                     <RobustnessMatrix data={data} />
-
-                    {/* Simplified Bar Chart or List could go here if needed, but Matrix is better */}
-                    {/* Kept existing Bar Chart logic just in case, or we replace? 
-                        The user asked for a "better way". A matrix + a detailed list below is good.
-                        I'll replace the full width chart with this matrix and maybe keep the list below.
-                    */}
-
-                    {/* Attack Vector Chart (Legacy but useful for raw comparison) */}
-
                 </div>
 
                 {/* False Positive / Over-Refusal */}
