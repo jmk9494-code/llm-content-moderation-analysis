@@ -220,11 +220,11 @@ async def process_prompt(sem, p, model_name):
             try:
                 session = Session()
                 # Ensure Prompt Exists
-                if not session.query(Prompt).get(p['id']):
+                if not session.get(Prompt, p['id']):
                     session.add(Prompt(id=p['id'], category=p['category'], text=p['text']))
                     
                 # Ensure Model Exists
-                if not session.query(ModelRegistry).get(model_name):
+                if not session.get(ModelRegistry, model_name):
                     session.add(ModelRegistry(id=model_name, family=model_name.split('/')[0]))
                     
                 # Save Result
