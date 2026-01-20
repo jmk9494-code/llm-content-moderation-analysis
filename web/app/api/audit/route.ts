@@ -21,8 +21,9 @@ export async function GET() {
         const db = new Database(dbPath, { readonly: true });
 
         // Join tables to reconstruct the flat view the frontend expects
+        const stmt = db.prepare(`
         SELECT
-        ar.timestamp,
+            ar.timestamp,
             m.id as model,
             p.id as case_id,
             p.category,
@@ -36,7 +37,7 @@ export async function GET() {
       JOIN models m ON ar.model_id = m.id
       JOIN prompts p ON ar.prompt_id = p.id
       ORDER BY ar.timestamp DESC
-            `);
+    `);
 
         const rows = stmt.all();
         db.close();
