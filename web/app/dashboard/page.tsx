@@ -15,7 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
   LineChart, Line, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
-import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, MessageSquare, AlertOctagon, AlertCircle, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, Menu, Filter, RotateCcw, Scale } from 'lucide-react';
+import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, MessageSquare, AlertOctagon, AlertCircle, Grid3X3, FileText, ChevronUp, ChevronDown, Search, X, Info, Menu, Filter, RotateCcw, Scale, Trophy } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
