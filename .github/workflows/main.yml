@@ -40,6 +40,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Unit Tests
+        env:
+          OPENROUTER_API_KEY: "mock_key_for_ci" # Tests won't hit real API due to mocks
+        run: |
+          # The -m flag ensures we're using the installed module context
+          # We ignore depreciation warnings that might clutter logs
+          python -m pytest -W ignore::DeprecationWarning
+
       - name: Run Model Collection (Efficiency Suite with dynamic resolution)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
