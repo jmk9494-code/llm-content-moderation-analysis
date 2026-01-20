@@ -54,16 +54,26 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Stage all changes (CSVs, JSONs, etc.)
+          # Strategy: Stash local changes, pull latest remote, then re-apply changes.
+          # This minimizes conflicts when the remote has moved ahead during the job run.
+          
+          echo "Stashing local changes..."
+          git stash push -m "New analysis data" --include-untracked
+          
+          echo "Pulling latest changes from remote..."
+          git pull --rebase origin main
+          
+          echo "Restoring local changes..."
+          # If stash pop fails due to conflicts, we continue to allow debugging, 
+          # but usually for CSV appends it should work or leave markers.
+          git stash pop || echo "Warning: Stash pop reported conflicts. Check output."
+          
+          # Stage all changes (including resolved or marker-filled files)
           git add .
           
           # Only commit if there are changes to avoid erroring out
           if ! git diff --cached --quiet; then
             git commit -m "Auto-update: LLM responses for $(date +%Y-%m-%d)"
-            
-            # Pull latest changes from remote and rebase your new data on top
-            git pull --rebase origin main
-            
             git push origin main
           else
             echo "No changes to commit"

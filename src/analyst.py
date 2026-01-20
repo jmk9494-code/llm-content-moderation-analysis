@@ -1,21 +1,28 @@
 import os
 import pandas as pd
 from openai import OpenAI
-from dotenv import load_dotenv
+from src.database import get_session, AuditResult, ModelRegistry
+from src.config import settings
+from src.logger import logger
+from sqlalchemy import select
 
-load_dotenv()
-
-def generate_weekly_report(audit_file="audit_log.csv", report_file="data/latest_report.md"):
+def generate_weekly_report(output_dir=".", report_file="data/latest_report.md"):
     """
-    Analyzes the latest audit log and uses an LLM to generate an executive summary.
+    Analyzes the latest audit log from the DB and uses an LLM to generate an executive summary.
     """
-    if not os.path.exists(audit_file):
-        print("⚠️ No audit log found to analyze.")
-        return
-
+    logger.info("📊 Starting AI Analyst analysis...")
+    
+    session = get_session()
     try:
-        df = pd.read_csv(audit_file)
-        if df.empty: return
+        # Fetch data using pandas and sqlalchemy
+        # We join on ModelRegistry to ensure we have model details if needed, 
+        # but for now just the results table is fine.
+        query = select(AuditResult.model_id.label("model"), AuditResult.verdict, AuditResult.prompt_id, AuditResult.response_text)
+        df = pd.read_sql(query, session.bind)
+        
+        if df.empty: 
+            logger.warning("⚠️ No audit log found to analyze.")
+            return
 
         # 1. Calculate Stats
         total_prompts = len(df)
@@ -29,7 +36,6 @@ def generate_weekly_report(audit_file="audit_log.csv", report_file="data/latest_
             stats_text += f"- {m}: {refusal_rate:.1f}% Refusal Rate\n"
 
         # 2. Find Disagreements (where models differ on the same prompt)
-        # Assuming prompt_id is present
         examples = ""
         if 'prompt_id' in df.columns:
             pivot = df.pivot_table(index='prompt_id', columns='model', values='verdict', aggfunc='first')
@@ -65,7 +71,7 @@ def generate_weekly_report(audit_file="audit_log.csv", report_file="data/latest_
 
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY")
+            api_key=settings.openrouter_api_key
         )
 
         response = client.chat.completions.create(
@@ -79,15 +85,18 @@ def generate_weekly_report(audit_file="audit_log.csv", report_file="data/latest_
         report_content = response.choices[0].message.content
         
         # Ensure output dir exists
-        os.makedirs(os.path.dirname(report_file), exist_ok=True)
+        full_path = os.path.join(output_dir, report_file)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
-        with open(report_file, "w") as f:
+        with open(full_path, "w") as f:
             f.write(report_content)
             
-        print(f"✅ Generated Analyst Report: {report_file}")
+        logger.info(f"✅ Generated Analyst Report: {full_path}")
         
     except Exception as e:
-        print(f"⚠️ Failed to generate analyst report: {e}")
+        logger.error(f"⚠️ Failed to generate analyst report: {e}")
+    finally:
+        session.close()
 
 if __name__ == "__main__":
     generate_weekly_report()

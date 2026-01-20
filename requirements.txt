@@ -13,3 +13,4 @@ sqlalchemy     # For SQLite database management
 pydantic-settings # For environment validation
 ruff              # Fast Python linter
 black             # Code formatter
+pytest            # Testing framework
