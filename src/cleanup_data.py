@@ -72,6 +72,10 @@ def clean_strategy_log():
     clean_df.to_csv(STRATEGY_LOG_PATH, index=False)
     print(f"Removed {original_count - len(clean_df)} rows (missing response_text). New count: {len(clean_df)}")
 
-if __name__ == "__main__":
+
+def clean_all():
     clean_audit_log()
     clean_strategy_log()
+
+if __name__ == "__main__":
+    clean_all()

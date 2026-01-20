@@ -4,15 +4,17 @@ import os
 import argparse
 import asyncio
 import json
-import pandas as pd # Required for aggregation
+import pandas as pd
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
-from src.analyst import generate_weekly_report
 import uuid
-from src.database import init_db, ModelRegistry, Prompt, AuditResult
 import datetime
+
+# Internal Imports
+from src.analyst import generate_weekly_report
+from src.database import init_db, ModelRegistry, Prompt, AuditResult
 from src.config import settings
 from src.logger import logger
 
@@ -365,7 +367,7 @@ def load_prompts(file_path):
                 prompts.append({'id': p_id, 'category': cat, 'text': text})
     return prompts
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="LLM Content Moderation Auditor (Async/JSON)")
     parser.add_argument("--model", type=str, help="Target model name or comma-separated list")
     parser.add_argument("--preset", type=str, choices=list(PRESETS.keys()), help="Use a predefined model set (e.g., 'efficiency')")
@@ -373,9 +375,10 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
     
+    # Check if sys.argv is passed or if we need to parse specific args. 
+    # argparse uses sys.argv by default.
     args = parser.parse_args()
     
-    # Determine models
     # Determine models
     if args.preset:
         base_models = PRESETS[args.preset]
@@ -385,7 +388,6 @@ if __name__ == "__main__":
             resolved = []
             
             # Define search patterns for Efficiency Suite
-            # Format: (Keywords List, Fallback ID)
             patterns = [
                 (["openai", "gpt", "mini"], "openai/gpt-4o-mini"),
                 (["google", "gemini", "flash"], "google/gemini-2.0-flash-exp"),
@@ -428,3 +430,6 @@ if __name__ == "__main__":
     generate_weekly_report(args.output, "data/latest_report.md")
     
     logger.info(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
+
+if __name__ == "__main__":
+    main()
