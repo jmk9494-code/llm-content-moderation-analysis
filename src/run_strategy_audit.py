@@ -118,7 +118,7 @@ async def run_audit(input_file, output_file, models):
             
     print(f"✅ Strategy Audit Complete. {len(all_results)} rows written to {output_file}")
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", type=str, default="openai/gpt-4o-mini,google/gemini-2.0-flash-exp")
     parser.add_argument("--input", type=str, default="data/strategy_prompts.csv")
@@ -127,3 +127,6 @@ if __name__ == "__main__":
     
     models = args.models.split(",")
     asyncio.run(run_audit(args.input, args.output, models))
+
+if __name__ == "__main__":
+    main()

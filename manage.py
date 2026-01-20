@@ -3,6 +3,8 @@ import sys
 import argparse
 from src.audit_runner import main as run_audit
 from src.cleanup_data import clean_all
+from src.run_strategy_audit import main as run_strategy
+from src.generate_prompts import main as run_generator
 
 def clean():
     clean_all()
@@ -23,6 +25,19 @@ def main():
     
     # Migrate Command
     subparsers.add_parser("migrate", help="Migrate CSV data to SQLite")
+
+    # Strategy Audit Command
+    strategy_parser = subparsers.add_parser("strategy", help="Run adversarial strategy audit")
+    # We can rely on sys.argv parsing inside the called main(), 
+    # but since we are using a parser here, we need to pass known_args?
+    # Actually, simpler approach: if command matches, just call the runner's main(), 
+    # which will parse sys.argv.
+    # HOWEVER, doing so might make the runner's argparse fail because of 'manage.py strategy' arguments.
+    # For a unified CLI, it's cleaner to handle args here or use `argparse.REMAINDER`.
+    
+    # Just adding them for now. If called, we might need to trick sys.argv or handle it cleaner.
+    # For now let's just expose them.
+    subparsers.add_parser("generate", help="Generate AI prompts")
 
     args = parser.parse_args()
 
@@ -45,6 +60,16 @@ def main():
         
     elif args.command == "migrate":
         run_migrate()
+
+    elif args.command == "strategy":
+        # Hack to remove 'strategy' from argv so the submodule parser works
+        sys.argv.pop(1)
+        run_strategy()
+    
+    elif args.command == "generate":
+        # Hack to remove 'generate' from argv
+        sys.argv.pop(1)
+        run_generator()
         
     else:
         parser.print_help()

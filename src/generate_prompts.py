@@ -93,7 +93,7 @@ def save_prompts(prompts, category, output_file):
         writer.writerows(rows)
         print(f"✅ Saved {len(rows)} prompts to {output_file}")
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Automated Prompt Generator")
     parser.add_argument("--category", type=str, required=True, help="Category to test (e.g., 'Hate Speech')")
     parser.add_argument("--count", type=int, default=5, help="Number of prompts to generate")
@@ -107,3 +107,6 @@ if __name__ == "__main__":
         save_prompts(prompts, args.category, args.output)
     else:
         print("No prompts were generated.")
+
+if __name__ == "__main__":
+    main()
