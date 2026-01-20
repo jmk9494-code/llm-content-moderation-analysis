@@ -174,6 +174,15 @@ export default function AuditPage() {
             },
             size: 100,
         }),
+        auditHelper.accessor('prompt_text', {
+            header: 'Snippet',
+            cell: info => {
+                const text = info.getValue();
+                const snippet = text ? text.substring(0, 60) + (text.length > 60 ? '...' : '') : '';
+                return <span className="text-slate-500 text-sm italic">{snippet}</span>;
+            },
+            size: 200,
+        }),
     ];
 
     const auditTable = useReactTable({

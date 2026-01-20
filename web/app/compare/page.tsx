@@ -265,8 +265,7 @@ export default function ComparePage() {
                         {divergences.slice(0, 50).map((d, idx) => (
                             <div
                                 key={idx}
-                                onClick={() => setSelectedDivergence(d)}
-                                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{d.category}</span>
