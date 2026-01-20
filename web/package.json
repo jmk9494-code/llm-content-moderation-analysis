@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.11.2",
