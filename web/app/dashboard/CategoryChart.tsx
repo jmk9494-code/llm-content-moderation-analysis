@@ -40,7 +40,7 @@ export default function CategoryChart({ data }: { data: CategoryData[] }) {
                         tick={{ fontSize: 11 }}
                     />
                     <Tooltip
-                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Refusal Rate']}
+                        formatter={(value: any) => [`${Number(value).toFixed(1)}%`, 'Refusal Rate']}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                     <Bar dataKey="rate" name="Refusal Rate" radius={[0, 4, 4, 0]}>
