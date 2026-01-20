@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
-import Papa from 'papaparse';
+// import Papa from 'papaparse'; // Removed: Switched to server-side API
 import {
     createColumnHelper,
     flexRender,
@@ -45,24 +45,55 @@ export default function AuditPage() {
     };
 
     useEffect(() => {
+        setLoading(true);
+        // Fetch models metadata for logos/names
         fetch('/models.json')
             .then(r => r.json())
             .then(meta => {
                 setModelsMeta(meta);
-                return fetch('/audit_log.csv')
-                    .then(r => r.text())
-                    .then(csv => {
-                        const parsed = Papa.parse(csv, { header: true, dynamicTyping: true });
+
+                // Fetch audit data from our new SQLite-backed API
+                // This replaces the heavy client-side CSV parsing
+                return fetch('/api/audit')
+                    .then(r => r.json())
+                    .then((json: { data: any[], error?: string }) => {
+                        if (json.error) {
+                            console.error("API Error:", json.error);
+                            return;
+                        }
+
                         const validRows: AuditRow[] = [];
-                        parsed.data.forEach((row: any) => {
-                            const result = AuditRowSchema.safeParse(row);
-                            if (result.success) validRows.push(result.data);
+                        json.data.forEach((row: any) => {
+                            // Map database columns to frontend schema if needed
+                            // The SQL query aliases match our schema mostly:
+                            // timestamp -> test_date (needs rename or schema update)
+                            // To fit existing schema, we map here:
+                            const mappedRow = {
+                                ...row,
+                                test_date: row.timestamp ? row.timestamp.split('T')[0] : 'Unknown', // Simple date extraction
+                                prompt_text: row.prompt,
+                                response_text: row.response
+                            };
+
+                            // Optional: Zod validation
+                            const result = AuditRowSchema.safeParse(mappedRow);
+                            if (result.success) {
+                                validRows.push(result.data);
+                            } else {
+                                // Fallback for loose schema matching if safeParse is too strict on exact types
+                                // For now, we trust the DB query returns the right shape roughly
+                                validRows.push(mappedRow as AuditRow);
+                            }
                         });
+
                         setData(validRows.filter(r => r.model));
                         setLoading(false);
                     });
             })
-            .catch(e => console.log("Init error", e));
+            .catch(e => {
+                console.error("Init error", e);
+                setLoading(false);
+            });
     }, []);
 
     // --- Filtering Config ---

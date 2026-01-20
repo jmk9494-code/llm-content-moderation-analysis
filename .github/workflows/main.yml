@@ -95,7 +95,11 @@ jobs:
         run: |
           # Copy fresh data to where Next.js expects it
           mkdir -p web/public/data
+          # Copy to public for legacy CSV access
           cp audit_log.csv web/public/
+          # Copy DB to root of web app for Server-Side access (better-sqlite3)
+          cp audit.db web/audit.db
+          
           cp data/trends.csv web/public/
           if [ -f "data/latest_report.md" ]; then
             cp data/latest_report.md web/public/
