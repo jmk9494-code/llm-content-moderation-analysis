@@ -36,8 +36,10 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          setData(json.data);
-          addToast({ type: 'success', title: 'Data loaded', message: `${json.data.length} audit records` });
+          // Filter out ERROR verdicts (broken models like yi-34b-chat)
+          const cleanData = json.data.filter((d: AuditRow) => d.verdict !== 'ERROR');
+          setData(cleanData);
+          addToast({ type: 'success', title: 'Data loaded', message: `${cleanData.length} audit records` });
         }
         setLoading(false);
       })

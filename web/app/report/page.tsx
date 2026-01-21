@@ -98,7 +98,9 @@ export default function ReportPage() {
         fetch('/api/audit')
             .then(r => r.json())
             .then(res => {
-                setData(res.data || []);
+                // Filter out ERROR verdicts (broken models)
+                const cleanData = (res.data || []).filter((r: AuditRow) => r.verdict !== 'ERROR');
+                setData(cleanData);
                 setLoading(false);
             })
             .catch(e => {

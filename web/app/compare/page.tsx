@@ -36,7 +36,8 @@ export default function ComparePage() {
         fetch('/api/audit')
             .then(r => r.json())
             .then(res => {
-                const rows = res.data || [];
+                // Filter out ERROR verdicts (broken models)
+                const rows = (res.data || []).filter((r: AuditRow) => r.verdict !== 'ERROR');
                 setData(rows);
 
                 // Set defaults: first two unique models
