@@ -1,27 +1,21 @@
+FROM python:3.12-slim
 
-# Base image
-FROM python:3.9-slim
-
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies (needed for some python packages like numpy/pandas compilation)
-RUN apt-get update && apt-get install -y \
+# Install system dependencies (if any)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage cache
-COPY requirements.txt .
-
-# Install Python dependencies
+# Copy requirements and install python deps
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
+# Expose port (if needed for a web server, adjust as appropriate)
+EXPOSE 8000
 
-# Default command (can be overridden)
-CMD ["python", "src/audit_runner.py", "--limit", "10"]
+# Default command (adjust to your entrypoint)
+CMD ["python", "src/audit_runner.py"]

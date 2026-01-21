@@ -395,6 +395,7 @@ def parse_args():
     parser.add_argument("--model", type=str, help="Target model name or comma-separated list")
     parser.add_argument("--preset", type=str, choices=list(PRESETS.keys()), help="Use a predefined model set (e.g., 'efficiency')")
     parser.add_argument("--resolve-latest", action="store_true", help="Auto-detect and use the latest models for the selected preset")
+    parser.add_argument("--policy", action="store_true", help="Enable A/B policy testing (adds policy flag handling)")
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
     parser.add_argument("--limit", type=int, help="Limit number of prompts to process")
@@ -405,8 +406,6 @@ def parse_args():
                         help="Run each prompt N times to measure response consistency (default: 1)")
     parser.add_argument("--temperature", type=float, default=None, metavar="T",
                         help="Set model temperature (0.0-2.0). None uses model default.")
-    parser.add_argument("--policy", type=str, default=None, metavar="VERSION",
-                        help="Tag this audit run with a policy version (e.g., 'v1.0', 'v2.0') for A/B comparison.")
     
     # Check if sys.argv is passed or if we need to parse specific args. 
     # argparse uses sys.argv by default.
