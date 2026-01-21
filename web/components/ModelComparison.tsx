@@ -11,8 +11,9 @@ type AuditRow = {
     model: string;
     verdict: string;
     category: string;
-    response: string;
-    timestamp: string;
+    response?: string;
+    response_text?: string;
+    timestamp?: string;
 };
 
 type ModelStats = {
@@ -27,32 +28,17 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
         const map: Record<string, { total: number; refusals: number; totalLen: number }> = {};
 
         data.forEach(d => {
-            // Normalize model name if needed, assuming formatted in data or needing format
             const modelName = d.model;
             if (!map[modelName]) map[modelName] = { total: 0, refusals: 0, totalLen: 0 };
 
             map[modelName].total++;
-            if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') { // Check verdict values from dashboard: 'safe', 'unsafe'? 
-                // Dashboard page says: safe, unsafe, default.
-                // Dashboard implementation: 
-                // if (activeFilter === 'unsafe') return data.filter(d => d.verdict === 'unsafe');
-                // HeatmapTable says: d.verdict === 'REFUSAL' || d.verdict === 'REMOVED'
-                // Need to be careful about verdict normalization. 
-                // The dashboard screenshot shows 'unsafe'. 
-                // Let's look at `web/app/dashboard/page.tsx` again.
-                // It renders `d.verdict`.
-                // Let's assume 'unsafe' is the key for censorship.
+            if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') {
                 map[modelName].refusals++;
             }
 
-            // Also check 'safe' vs others. 
-            // If verdict is NOT safe, is it censored?
-            // In dashboard page: 
-            // safe: green
-            // unsafe: red
-            // default: amber
-
-            map[modelName].totalLen += d.response?.length || 0;
+            // Handle both response and response_text field names
+            const responseText = d.response || d.response_text || '';
+            map[modelName].totalLen += responseText.length;
         });
 
         return Object.entries(map).map(([model, s]) => ({
