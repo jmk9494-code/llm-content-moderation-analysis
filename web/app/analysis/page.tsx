@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    ZAxis, Legend, PieChart, Pie, Cell
+    ZAxis, Legend, PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 import { calculateFleissKappa, calculatePowerAnalysis, calculateCohensH } from '@/lib/statistics';
 import HeatmapTable from '@/components/HeatmapTable';
@@ -84,7 +84,34 @@ export default function DeepDivePage() {
 
         const reliability = calculateFleissKappa(auditData, models, prompts);
 
-        return { reliability, models, prompts };
+        // Calculate Agreement Distribution
+        const distributionMap = new Map<string, number>();
+        prompts.forEach(p => {
+            const relevant = auditData.filter(d => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
+            if (relevant.length < 2) return; // Need at least 2 models to check agreement
+
+            const safeCount = relevant.filter(d => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
+            const percentage = (safeCount / relevant.length);
+
+            // Bucket: 0%, 1-20%, ... 100%
+            let bucket = "";
+            if (percentage === 0) bucket = "0% (All Unsafe)";
+            else if (percentage === 1) bucket = "100% (All Safe)";
+            else if (percentage < 0.5) bucket = "< 50% Safe";
+            else if (percentage >= 0.5) bucket = "> 50% Safe";
+
+            distributionMap.set(bucket, (distributionMap.get(bucket) || 0) + 1);
+        });
+
+        const distribution = Array.from(distributionMap.entries())
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => {
+                // Custom sort order
+                const order = ["0% (All Unsafe)", "< 50% Safe", "> 50% Safe", "100% (All Safe)"];
+                return order.indexOf(a.name) - order.indexOf(b.name);
+            });
+
+        return { reliability, models, prompts, distribution };
     }, [auditData]);
 
     const efficiencyData = useMemo(() => {
@@ -104,7 +131,7 @@ export default function DeepDivePage() {
                 costPer1k: (cost / total) * 1000,
                 total
             };
-        });
+        }).filter(m => m.total > 0);
     }, [auditData]);
 
     if (loading) return (
@@ -144,9 +171,7 @@ export default function DeepDivePage() {
                     <TabButton active={activeTab === 'efficiency'} onClick={() => setActiveTab('efficiency')} icon={<DollarSign className="w-4 h-4" />}>
                         Efficiency & Cost
                     </TabButton>
-                    <TabButton active={activeTab === 'experiment'} onClick={() => setActiveTab('experiment')} icon={<FlaskConical className="w-4 h-4" />}>
-                        Experiment Planner
-                    </TabButton>
+
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>
                         Semantic Clusters
                     </TabButton>
@@ -196,10 +221,26 @@ export default function DeepDivePage() {
                                 </div>
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                                     <h3 className="text-lg font-bold mb-4">Agreement Distribution</h3>
-                                    {/* Placeholder for distribution visualization */}
-                                    <div className="flex items-center justify-center h-32 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-400 text-sm">
-                                        Consensus Matrix Visualization Coming Soon
-                                    </div>
+                                    {stats.distribution ? (
+                                        <div className="h-48 text-xs">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={stats.distribution}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                                                    <YAxis hide />
+                                                    <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#fff', borderRadius: '8px' }} />
+                                                    <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} name="Prompts" />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                            <div className="text-center mt-2 text-slate-400">
+                                                Based on {stats.prompts.length} prompts
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center h-32 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-400 text-sm">
+                                            Not enough data for distribution
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -241,7 +282,7 @@ export default function DeepDivePage() {
                         </div>
                     )}
 
-                    {activeTab === 'experiment' && <ExperimentCalculator />}
+
 
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
 
@@ -286,68 +327,7 @@ function CustomTooltip({ active, payload }: any) {
     return null;
 }
 
-function ExperimentCalculator() {
-    const [h, setH] = useState(0.2);
-    const [power, setPower] = useState(0.8);
-    const [n, setN] = useState(0);
 
-    useEffect(() => {
-        setN(calculatePowerAnalysis(h, power));
-    }, [h, power]);
-
-    return (
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto">
-            <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-indigo-500" />
-                Sample Size Calculator
-            </h3>
-            <p className="text-slate-500 text-sm mb-6">
-                Determine how many prompts you need to run to detect a statistically significant difference between models.
-            </p>
-
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Expected Effect Size (Cohen's h)
-                    </label>
-                    <input
-                        type="range" min="0.1" max="1.0" step="0.05"
-                        value={h} onChange={e => setH(parseFloat(e.target.value))}
-                        className="w-full mb-2"
-                    />
-                    <div className="flex justifying-between text-xs text-slate-400">
-                        <span>Small (0.2)</span>
-                        <span className="mx-auto font-mono text-indigo-600 font-bold">{h}</span>
-                        <span>Large (0.8)</span>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Desired Statistical Power
-                    </label>
-                    <div className="flex gap-4">
-                        {[0.8, 0.9, 0.95, 0.99].map(p => (
-                            <button
-                                key={p}
-                                onClick={() => setPower(p)}
-                                className={`px-3 py-1 rounded text-sm border ${power === p ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-slate-200'}`}
-                            >
-                                {p * 100}%
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-xl text-center">
-                    <p className="text-sm text-indigo-800 dark:text-indigo-300 mb-1">Required Sample Size (per model)</p>
-                    <p className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{n.toLocaleString()}</p>
-                    <p className="text-xs text-indigo-400 mt-2">Prompts needed</p>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     if (clusters.length === 0) return <div className="p-8 text-center text-slate-500">No semantic clustering data available.</div>;
