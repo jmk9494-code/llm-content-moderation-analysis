@@ -3,10 +3,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
-import { ActivityFeed } from '@/components/ui/ActivityFeed';
 import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Filter, CheckCircle, Zap } from 'lucide-react';
+import { Activity, Filter, CheckCircle, Zap, Calendar, Clock, RefreshCw } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
 
@@ -67,7 +66,22 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const totalAudits = data.length;
     const uniqueModels = new Set(data.map(d => d.model)).size;
-    return { totalAudits, uniqueModels };
+
+    // Get unique dates to count audit runs
+    const uniqueDates = new Set(data.map(d => d.timestamp.split('T')[0])).size;
+
+    // Get first and most recent dates
+    const sortedDates = data.map(d => new Date(d.timestamp)).sort((a, b) => a.getTime() - b.getTime());
+    const firstDate = sortedDates[0] || new Date();
+    const lastDate = sortedDates[sortedDates.length - 1] || new Date();
+
+    // Calculate days since first collection
+    const daysSinceStart = Math.floor((new Date().getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Calculate hours since last update
+    const hoursSinceUpdate = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60));
+
+    return { totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate };
   }, [data]);
 
   const filterButtons: { label: string; value: FilterType; icon: React.ReactNode }[] = [
@@ -103,18 +117,43 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Single Stat Card with Tooltip */}
+            {/* Stat Cards */}
             <StatCardGrid>
               <StatCard
                 title="Total Audits"
                 value={stats.totalAudits.toLocaleString()}
                 icon={<Activity className="h-5 w-5 text-indigo-600" />}
                 description={
-                  <span title="Safe = Model provided helpful response. Unsafe/Removed = Model refused or flagged content. Higher refusal rates may indicate over-censorship.">
+                  <span title="Safe = Model provided helpful response. Unsafe/Removed = Model refused or flagged content.">
                     {stats.uniqueModels} models tested ⓘ
                   </span>
                 }
                 delay={0}
+              />
+              <StatCard
+                title="Data Collection"
+                value={stats.firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                icon={<Calendar className="h-5 w-5 text-emerald-600" />}
+                description={`${stats.daysSinceStart} days of monitoring`}
+                delay={0.1}
+              />
+              <StatCard
+                title="Audit Runs"
+                value={stats.uniqueDates.toString()}
+                icon={<RefreshCw className="h-5 w-5 text-blue-600" />}
+                description="Total audit sessions"
+                delay={0.2}
+              />
+              <StatCard
+                title="Data Freshness"
+                value={stats.hoursSinceUpdate < 24 ? 'Fresh' : stats.hoursSinceUpdate < 72 ? 'Stale' : 'Outdated'}
+                icon={<Clock className={`h-5 w-5 ${stats.hoursSinceUpdate < 24 ? 'text-green-600' : stats.hoursSinceUpdate < 72 ? 'text-yellow-600' : 'text-red-600'}`} />}
+                description={
+                  <span className={`font-medium ${stats.hoursSinceUpdate < 24 ? 'text-green-600' : stats.hoursSinceUpdate < 72 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {stats.hoursSinceUpdate < 24 ? `${stats.hoursSinceUpdate}h ago` : `${Math.floor(stats.hoursSinceUpdate / 24)}d ago`}
+                  </span>
+                }
+                delay={0.3}
               />
             </StatCardGrid>
 
@@ -141,31 +180,21 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Charts and Table - Main area */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* Model Comparison */}
-                {filteredData.length > 0 && (
-                  <ModelComparison data={filteredData} />
-                )}
+            {/* Main Content Grid - Full Width */}
+            <div className="space-y-6">
+              {/* Model Comparison */}
+              {filteredData.length > 0 && (
+                <ModelComparison data={filteredData} />
+              )}
 
-                {/* Heatmap Visualization */}
-                {filteredData.length > 0 && (
-                  <HeatmapTable
-                    data={filteredData}
-                    title="Category Sensitivity Heatmap"
-                    description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
-                  />
-                )}
-              </div>
-
-              {/* Activity Feed - Sidebar */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-20">
-                  <ActivityFeed data={data} maxItems={15} />
-                </div>
-              </div>
+              {/* Heatmap Visualization */}
+              {filteredData.length > 0 && (
+                <HeatmapTable
+                  data={filteredData}
+                  title="Category Sensitivity Heatmap"
+                  description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
+                />
+              )}
             </div>
           </div>
         )}
