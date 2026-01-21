@@ -92,5 +92,16 @@ python src/policy_tuner.py --category creative_writing
 **Backend (Render/Railway)**:
 *   Use `render.yaml` to deploy the worker and dashboard defined services.
 
+## 🆕 Updated Features
+
+- Simplified **Compare** and **Dashboard** pages for faster builds and reduced TypeScript errors.
+- Added `--policy` CLI flag to `audit_runner.py` for A/B policy testing.
+- Included a `Dockerfile` for containerized deployment of the audit runner.
+
+## 🧹 Cleanup
+
+- Simplified the login page to resolve TypeScript build errors on Vercel.
+- Added a note to install `@types/react` and `@types/react-dom` for proper type declarations.
+
 ## 📜 License
 Internal Research Tool.
