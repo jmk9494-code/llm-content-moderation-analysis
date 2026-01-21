@@ -138,6 +138,5 @@ jobs:
           echo "=== DEBUG: Listing web/public directory ==="
           ls -R web/public
           
-          # Deploy from web directory (Vercel project root is already set to 'web')
-          cd web
-          npx vercel deploy . --prod --token=$VERCEL_TOKEN --yes --debug
+          # Deploy from root (Vercel settings handle the 'web' subdirectory)
+          npx vercel deploy --prod --token=$VERCEL_TOKEN --yes --debug
