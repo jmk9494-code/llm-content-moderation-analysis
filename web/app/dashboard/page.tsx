@@ -11,6 +11,7 @@ import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
 import { Activity, DollarSign, CheckCircle, Zap, Filter, LayoutGrid, List } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
+import ModelComparison from '@/components/ModelComparison';
 
 export type AuditRow = {
   timestamp: string;
@@ -358,11 +359,17 @@ export default function DashboardPage() {
 
 
 
+
+                {/* Model Comparison */}
+                {filteredData.length > 0 && (
+                  <ModelComparison data={filteredData} />
+                )}
+
                 {/* Heatmap Visualization */}
                 {filteredData.length > 0 && (
                   <HeatmapTable
                     data={filteredData}
-                    title="Safety Heatmap: Where do models fail?"
+                    title="Category Sensitivity Heatmap"
                     description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                   />
                 )}

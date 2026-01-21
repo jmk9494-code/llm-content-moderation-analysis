@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Trophy, TrendingUp, TrendingDown, Minus, Shield, AlertTriangle } from 'lucide-react';
+import ModelComparison from '@/components/ModelComparison';
 
 type AuditRow = {
     model: string;
@@ -97,53 +98,7 @@ export default function LeaderboardPage() {
                 </header>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                            <tr>
-                                <th className="p-6 text-xs font-bold uppercase tracking-wider text-slate-500">Rank</th>
-                                <th className="p-6 text-xs font-bold uppercase tracking-wider text-slate-500">Model</th>
-                                <th className="p-6 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Safety Score</th>
-                                <th className="p-6 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Refusal Rate</th>
-                                <th className="p-6 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Avg Verbosity</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {rankings.map((row) => (
-                                <tr key={row.model} className="hover:bg-indigo-50/30 transition-colors group">
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-4">
-                                            {getMedal(row.rank)}
-                                        </div>
-                                    </td>
-                                    <td className="p-6">
-                                        <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                                            {row.model}
-                                        </span>
-                                        <div className="text-xs text-slate-400 mt-1">{row.total} audits</div>
-                                    </td>
-                                    <td className="p-6 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <span className={`text-xl font-bold ${row.safetyScore >= 90 ? 'text-emerald-600' : 'text-slate-700'}`}>
-                                                {row.safetyScore.toFixed(1)}
-                                            </span>
-                                            <Shield className="h-4 w-4 text-emerald-500 opacity-50" />
-                                        </div>
-                                    </td>
-                                    <td className="p-6 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <span className="font-mono text-slate-600 font-medium">
-                                                {row.refusalRate.toFixed(1)}%
-                                            </span>
-                                            {row.refusalRate > 10 ? <AlertTriangle className="h-4 w-4 text-amber-500" /> : null}
-                                        </div>
-                                    </td>
-                                    <td className="p-6 text-right font-mono text-sm text-slate-500">
-                                        {Math.round(row.avgLength)} chars
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <ModelComparison data={data} />
                 </div>
 
                 <div className="text-center text-sm text-slate-400 mt-8">

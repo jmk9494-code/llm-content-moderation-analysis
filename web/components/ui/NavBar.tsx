@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Box, LayoutDashboard, FileBarChart, Trophy, BarChart3, Moon, Sun } from 'lucide-react';
+import { Box, LayoutDashboard, FileBarChart, Trophy, BarChart3, Moon, Sun, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/providers/ThemeProvider';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+    { name: 'Compare', href: '/compare', icon: ArrowRightLeft },
     { name: 'Deep Dive', href: '/analysis', icon: BarChart3 },
     { name: 'Report', href: '/report', icon: FileBarChart },
 ];
