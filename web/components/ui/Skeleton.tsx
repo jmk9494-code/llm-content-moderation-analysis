@@ -1,16 +1,19 @@
 import { clsx } from 'clsx';
+import { CSSProperties } from 'react';
 
 interface SkeletonProps {
     className?: string;
+    style?: CSSProperties;
 }
 
-export function Skeleton({ className }: SkeletonProps) {
+export function Skeleton({ className, style }: SkeletonProps) {
     return (
         <div
             className={clsx(
                 'animate-pulse rounded-md bg-slate-200 dark:bg-slate-700',
                 className
             )}
+            style={style}
         />
     );
 }
