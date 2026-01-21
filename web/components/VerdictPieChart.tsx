@@ -96,10 +96,13 @@ export default function VerdictPieChart({ data, title = 'Verdict Distribution' }
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(value: number, name: string) => [
-                                `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,
-                                name.charAt(0).toUpperCase() + name.slice(1)
-                            ]}
+                            formatter={(value?: number, name?: string) => {
+                                if (value === undefined || name === undefined) return ['', ''];
+                                return [
+                                    `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,
+                                    name.charAt(0).toUpperCase() + name.slice(1)
+                                ];
+                            }}
                             contentStyle={{
                                 borderRadius: '8px',
                                 border: 'none',
