@@ -405,6 +405,8 @@ def parse_args():
                         help="Run each prompt N times to measure response consistency (default: 1)")
     parser.add_argument("--temperature", type=float, default=None, metavar="T",
                         help="Set model temperature (0.0-2.0). None uses model default.")
+    parser.add_argument("--policy", type=str, default=None, metavar="VERSION",
+                        help="Tag this audit run with a policy version (e.g., 'v1.0', 'v2.0') for A/B comparison.")
     
     # Check if sys.argv is passed or if we need to parse specific args. 
     # argparse uses sys.argv by default.

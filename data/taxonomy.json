@@ -1,0 +1,158 @@
+{
+    "version": "1.0",
+    "description": "Hierarchical category taxonomy for prompt classification",
+    "categories": {
+        "violence": {
+            "description": "Content involving physical harm or violent acts",
+            "subcategories": {
+                "weapons": {
+                    "description": "Weapons-related content",
+                    "tags": [
+                        "firearms",
+                        "explosives",
+                        "knives",
+                        "modifications"
+                    ]
+                },
+                "harm": {
+                    "description": "Harm to self or others",
+                    "tags": [
+                        "self-harm",
+                        "assault",
+                        "murder",
+                        "torture"
+                    ]
+                },
+                "terrorism": {
+                    "description": "Terrorism-related content",
+                    "tags": [
+                        "attacks",
+                        "extremism",
+                        "radicalization"
+                    ]
+                }
+            }
+        },
+        "adult": {
+            "description": "Adult or sexually explicit content",
+            "subcategories": {
+                "explicit": {
+                    "description": "Explicitly sexual content",
+                    "tags": [
+                        "pornography",
+                        "nudity",
+                        "sexual_acts"
+                    ]
+                },
+                "suggestive": {
+                    "description": "Suggestive but not explicit",
+                    "tags": [
+                        "dating",
+                        "romance",
+                        "flirtation"
+                    ]
+                }
+            }
+        },
+        "illegal": {
+            "description": "Illegal activities",
+            "subcategories": {
+                "drugs": {
+                    "description": "Drug-related content",
+                    "tags": [
+                        "manufacturing",
+                        "distribution",
+                        "usage"
+                    ]
+                },
+                "fraud": {
+                    "description": "Fraud and scams",
+                    "tags": [
+                        "phishing",
+                        "identity_theft",
+                        "financial_scams"
+                    ]
+                },
+                "hacking": {
+                    "description": "Unauthorized system access",
+                    "tags": [
+                        "malware",
+                        "exploits",
+                        "data_theft"
+                    ]
+                }
+            }
+        },
+        "misinformation": {
+            "description": "False or misleading information",
+            "subcategories": {
+                "health": {
+                    "description": "Health misinformation",
+                    "tags": [
+                        "vaccines",
+                        "treatments",
+                        "cures"
+                    ]
+                },
+                "political": {
+                    "description": "Political misinformation",
+                    "tags": [
+                        "elections",
+                        "propaganda",
+                        "conspiracy"
+                    ]
+                }
+            }
+        },
+        "hate": {
+            "description": "Hate speech and discrimination",
+            "subcategories": {
+                "race": {
+                    "description": "Racial discrimination",
+                    "tags": [
+                        "slurs",
+                        "stereotypes",
+                        "supremacy"
+                    ]
+                },
+                "religion": {
+                    "description": "Religious discrimination",
+                    "tags": [
+                        "blasphemy",
+                        "persecution",
+                        "extremism"
+                    ]
+                },
+                "gender": {
+                    "description": "Gender-based discrimination",
+                    "tags": [
+                        "misogyny",
+                        "transphobia",
+                        "harassment"
+                    ]
+                }
+            }
+        },
+        "privacy": {
+            "description": "Privacy violations",
+            "subcategories": {
+                "doxxing": {
+                    "description": "Revealing personal information",
+                    "tags": [
+                        "addresses",
+                        "phone_numbers",
+                        "employers"
+                    ]
+                },
+                "surveillance": {
+                    "description": "Unauthorized monitoring",
+                    "tags": [
+                        "tracking",
+                        "stalking",
+                        "spyware"
+                    ]
+                }
+            }
+        }
+    }
+}

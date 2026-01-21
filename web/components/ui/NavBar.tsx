@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Box, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText, FileBarChart, Clock, Shield, CheckCircle } from 'lucide-react';
+import { Box, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText, FileBarChart, Clock, Shield, CheckCircle, Trophy, BarChart3, Beaker } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
     { name: 'Home', href: '/', icon: Home },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Trends', href: '/trends', icon: Clock },
-    { name: 'Admin', href: '/admin', icon: Shield },
-    { name: 'Grading', href: '/grading', icon: CheckCircle },
+    { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+    { name: 'Analysis', href: '/analysis', icon: BarChart3 },
     { name: 'Compare', href: '/compare', icon: ArrowLeftRight },
-    { name: 'Audit Log', href: '/audit', icon: FileText },
+    { name: 'A/B Test', href: '/compare-policies', icon: Beaker },
+    { name: 'Grading', href: '/grading', icon: CheckCircle },
     { name: 'Report', href: '/report', icon: FileBarChart },
 ];
 

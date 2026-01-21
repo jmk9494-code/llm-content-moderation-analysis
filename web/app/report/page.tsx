@@ -70,12 +70,21 @@ export default function ReportPage() {
                         <p className="text-lg text-slate-500 mt-1">LLM Content Moderation Compliance Audit</p>
                         <p className="text-sm text-slate-400 mt-4">Generated on {new Date().toLocaleDateString()}</p>
                     </div>
-                    <button
-                        onClick={() => window.print()}
-                        className="print:hidden flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
-                    >
-                        <Printer className="h-4 w-4" /> Print PDF
-                    </button>
+                    <div className="flex gap-2 print:hidden">
+                        <a
+                            href="/api/export/csv"
+                            download
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                            📊 Export CSV
+                        </a>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                        >
+                            <Printer className="h-4 w-4" /> Print PDF
+                        </button>
+                    </div>
                 </div>
 
                 <hr className="border-slate-200" />
