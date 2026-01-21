@@ -32,17 +32,17 @@ export async function GET() {
                 row[header] = values[idx];
             });
 
-            // Map to expected format
+            // Map to expected format - handle various CSV column naming conventions
             data.push({
-                timestamp: row.timestamp || row.date || '',
+                timestamp: row.timestamp || row.test_date || row.date || '',
                 model: row.model || row.model_id || '',
-                case_id: row.case_id || row.run_id || '',
+                case_id: row.case_id || row.prompt_id || row.run_id || '',
                 category: row.category || '',
                 verdict: row.verdict || '',
-                prompt: row.prompt || row.text || '',
+                prompt: row.prompt || row.prompt_text || row.text || '',
                 response: row.response || row.response_text || '',
-                cost: parseFloat(row.cost) || 0,
-                tokens_used: parseInt(row.tokens_used) || parseInt(row.prompt_tokens) + parseInt(row.completion_tokens) || 0,
+                cost: parseFloat(row.cost || row.run_cost) || 0,
+                tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || (parseInt(row.prompt_tokens) + parseInt(row.completion_tokens)) || 0,
                 latency_ms: parseInt(row.latency_ms) || 0,
             });
         }
