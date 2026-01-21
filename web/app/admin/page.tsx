@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { Shield } from 'lucide-react';
-import PriceChart from '@/components/PriceChart';
-import LatencyChart from '@/components/LatencyChart';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -151,11 +149,6 @@ export default function AdminPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <PriceChart data={chartData} />
-                            <LatencyChart data={chartData} />
-                        </div>
-
                         <section className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
                             <h2 className="text-xl font-semibold mb-4">Detailed Audit Log</h2>
                             <DataTable columns={columns} data={data} searchKey="prompt" />
