@@ -3,8 +3,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
-import PriceChart from '@/components/PriceChart';
-import LatencyChart from '@/components/LatencyChart';
 import VerdictPieChart from '@/components/VerdictPieChart';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
@@ -334,13 +332,42 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Charts and Table - Main area */}
               <div className="lg:col-span-3 space-y-6">
-                {/* Charts Row */}
+                {/* Key Visualization */}
                 {filteredData.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <PriceChart data={chartData} />
-                    <LatencyChart data={chartData} />
-                    <VerdictPieChart data={filteredData} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <VerdictPieChart data={filteredData} title="How do models respond?" />
+                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                        <span>📊</span> What This Means
+                      </h3>
+                      <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                        <p>
+                          <strong className="text-emerald-600">Safe</strong> = Model provided helpful response
+                        </p>
+                        <p>
+                          <strong className="text-red-600">Unsafe/Removed</strong> = Model refused or flagged content
+                        </p>
+                        <p className="text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-700">
+                          Higher refusal rates may indicate over-censorship. Lower rates might mean the model is more permissive—or more susceptible to jailbreaks.
+                        </p>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                import HeatmapTable from '@/components/HeatmapTable';
+
+                // ... existing imports ...
+
+                // In proper location (around line 355 or so, after the VerdictPieChart section)
+
+                {/* Heatmap Visualization */}
+                {filteredData.length > 0 && (
+                  <HeatmapTable
+                    data={filteredData}
+                    title="Safety Heatmap: Where do models fail?"
+                    description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
+                  />
                 )}
 
                 {/* Table/Cards Section */}

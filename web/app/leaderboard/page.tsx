@@ -89,10 +89,10 @@ export default function LeaderboardPage() {
                 <header className="text-center space-y-4">
                     <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 flex items-center justify-center gap-3">
                         <Trophy className="h-10 w-10 text-indigo-600" />
-                        Bias Leaderboard
+                        Model Comparison
                     </h1>
                     <p className="text-lg text-slate-500">
-                        Ranking models by Safety Compliance and Refusal Rates.
+                        Compare how different models handle safety challenges and view strictness rankings.
                     </p>
                 </header>
 

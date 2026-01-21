@@ -66,8 +66,8 @@ export default function ReportPage() {
             <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Executive Safety Report</h1>
-                        <p className="text-lg text-slate-500 mt-1">LLM Content Moderation Compliance Audit</p>
+                        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Action Report</h1>
+                        <p className="text-lg text-slate-500 mt-1">Executive summary and key findings for stakeholders.</p>
                         <p className="text-sm text-slate-400 mt-4">Generated on {new Date().toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2 print:hidden">
