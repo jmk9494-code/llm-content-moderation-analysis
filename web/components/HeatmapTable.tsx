@@ -48,14 +48,14 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
 
     // 1. Process data to get Refusal Rate per Model per Category
     const matrix = useMemo(() => {
-        const models = Array.from(new Set(data.map(d => d.model))).sort();
+        const allModels = Array.from(new Set(data.map(d => d.model))).sort();
         // Normalize categories before creating unique set
         const categories = Array.from(new Set(data.map(d => normalizeCategory(d.category)))).filter(c => c).sort();
 
         const stats: Record<string, Record<string, { total: number; refusals: number; entries: any[] }>> = {};
 
         // Init stats
-        models.forEach(m => {
+        allModels.forEach(m => {
             stats[m] = {};
             categories.forEach(c => {
                 stats[m][c] = { total: 0, refusals: 0, entries: [] };
@@ -72,6 +72,12 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
             if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') {
                 stats[d.model][normalizedCategory].refusals++;
             }
+        });
+
+        // Filter out models with zero total entries (no data at all)
+        const models = allModels.filter(m => {
+            const totalForModel = categories.reduce((sum, c) => sum + (stats[m][c]?.total || 0), 0);
+            return totalForModel > 0;
         });
 
         return { models, categories, stats };
