@@ -2,15 +2,14 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import {
-    Brain, Tag, BarChart2, ShieldCheck, DollarSign, FlaskConical, FileText,
-    Calculator, Info
+    Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
+    Info, Database, Clock
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    ZAxis, Legend, PieChart, Pie, Cell, BarChart, Bar
+    Legend, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line
 } from 'recharts';
-import { calculateFleissKappa, calculatePowerAnalysis, calculateCohensH } from '@/lib/statistics';
-import HeatmapTable from '@/components/HeatmapTable';
+import { calculateFleissKappa } from '@/lib/statistics';
 
 // --- Types ---
 type AuditRow = {
@@ -21,7 +20,8 @@ type AuditRow = {
     cost: number;
     category: string;
     case_id: string;
-    prompt_id?: string; // fallback
+    prompt_id?: string;
+    timestamp?: string;
 };
 
 type Cluster = {
@@ -32,10 +32,10 @@ type Cluster = {
     models: Record<string, number>;
 };
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function DeepDivePage() {
-    const [activeTab, setActiveTab] = useState<'report' | 'reliability' | 'efficiency' | 'experiment' | 'clusters'>('report');
+    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters'>('datalog');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -78,8 +78,6 @@ export default function DeepDivePage() {
         if (auditData.length === 0) return null;
 
         const models = Array.from(new Set(auditData.map(d => d.model)));
-        // Group by prompt (case_id)
-        // We need a stable ID. case_id should be it.
         const prompts = Array.from(new Set(auditData.map(d => d.case_id || d.prompt_id || d.prompt)));
 
         const reliability = calculateFleissKappa(auditData, models, prompts);
@@ -88,12 +86,11 @@ export default function DeepDivePage() {
         const distributionMap = new Map<string, number>();
         prompts.forEach(p => {
             const relevant = auditData.filter(d => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
-            if (relevant.length < 2) return; // Need at least 2 models to check agreement
+            if (relevant.length < 2) return;
 
             const safeCount = relevant.filter(d => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
 
-            // Bucket: 0%, 1-20%, ... 100%
             let bucket = "";
             if (percentage === 0) bucket = "0% (All Unsafe)";
             else if (percentage === 1) bucket = "100% (All Safe)";
@@ -106,7 +103,6 @@ export default function DeepDivePage() {
         const distribution = Array.from(distributionMap.entries())
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => {
-                // Custom sort order
                 const order = ["0% (All Unsafe)", "< 50% Safe", "> 50% Safe", "100% (All Safe)"];
                 return order.indexOf(a.name) - order.indexOf(b.name);
             });
@@ -134,6 +130,54 @@ export default function DeepDivePage() {
         }).filter(m => m.total > 0);
     }, [auditData]);
 
+    // Longitudinal Data (by date)
+    const longitudinalData = useMemo(() => {
+        if (auditData.length === 0) return [];
+
+        const dateMap = new Map<string, { date: string; total: number; refusals: number }>();
+
+        auditData.forEach(d => {
+            const date = d.timestamp?.split('T')[0] || 'Unknown';
+            if (!dateMap.has(date)) {
+                dateMap.set(date, { date, total: 0, refusals: 0 });
+            }
+            const entry = dateMap.get(date)!;
+            entry.total++;
+            if (['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)) {
+                entry.refusals++;
+            }
+        });
+
+        return Array.from(dateMap.values())
+            .map(d => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+    }, [auditData]);
+
+    // AI Summary
+    const aiSummary = useMemo(() => {
+        if (!stats || efficiencyData.length === 0) return null;
+
+        const avgRefusal = efficiencyData.reduce((sum, m) => sum + m.refusalRate, 0) / efficiencyData.length;
+        const mostCautious = efficiencyData.reduce((a, b) => a.refusalRate > b.refusalRate ? a : b);
+        const leastCautious = efficiencyData.reduce((a, b) => a.refusalRate < b.refusalRate ? a : b);
+        const cheapest = efficiencyData.reduce((a, b) => a.costPer1k < b.costPer1k ? a : b);
+
+        return {
+            avgRefusal: avgRefusal.toFixed(1),
+            kappaScore: stats.reliability.score.toFixed(3),
+            kappaInterpretation: stats.reliability.interpretation,
+            mostCautious: mostCautious.name,
+            mostCautiousRate: mostCautious.refusalRate.toFixed(1),
+            leastCautious: leastCautious.name,
+            leastCautiousRate: leastCautious.refusalRate.toFixed(1),
+            cheapest: cheapest.name,
+            cheapestCost: cheapest.costPer1k.toFixed(4),
+            totalPrompts: stats.prompts.length,
+            totalModels: stats.models.length,
+            clusterCount: clusters.length
+        };
+    }, [stats, efficiencyData, clusters]);
+
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50 dark:bg-slate-900">
             <div className="flex flex-col items-center gap-2">
@@ -144,7 +188,7 @@ export default function DeepDivePage() {
     );
 
     return (
-        <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans  text-slate-900 dark:text-slate-100">
+        <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
@@ -160,10 +204,28 @@ export default function DeepDivePage() {
                     </div>
                 </header>
 
+                {/* AI Summary Panel */}
+                {aiSummary && (
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white">
+                        <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                            <Brain className="h-5 w-5" /> AI Analyst Summary
+                        </h2>
+                        <p className="text-indigo-100 text-sm leading-relaxed">
+                            Across <strong>{aiSummary.totalModels} models</strong> and <strong>{aiSummary.totalPrompts} prompts</strong>,
+                            the average refusal rate is <strong>{aiSummary.avgRefusal}%</strong>.
+                            Inter-model agreement (Fleiss' Kappa) is <strong>{aiSummary.kappaScore}</strong> ({aiSummary.kappaInterpretation}).
+                            The most cautious model is <strong>{aiSummary.mostCautious}</strong> ({aiSummary.mostCautiousRate}% refusal rate),
+                            while <strong>{aiSummary.leastCautious}</strong> is the most permissive ({aiSummary.leastCautiousRate}%).
+                            For cost efficiency, <strong>{aiSummary.cheapest}</strong> offers the lowest cost at ${aiSummary.cheapestCost}/1k prompts.
+                            {aiSummary.clusterCount > 0 && ` Semantic analysis identified ${aiSummary.clusterCount} distinct refusal themes.`}
+                        </p>
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-1">
-                    <TabButton active={activeTab === 'report'} onClick={() => setActiveTab('report')} icon={<FileText className="w-4 h-4" />}>
-                        AI Analyst Report
+                    <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>
+                        Data Log
                     </TabButton>
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>
                         Reliability & Consensus
@@ -171,7 +233,9 @@ export default function DeepDivePage() {
                     <TabButton active={activeTab === 'efficiency'} onClick={() => setActiveTab('efficiency')} icon={<DollarSign className="w-4 h-4" />}>
                         Efficiency & Cost
                     </TabButton>
-
+                    <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>
+                        Longitudinal Study
+                    </TabButton>
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>
                         Semantic Clusters
                     </TabButton>
@@ -179,16 +243,25 @@ export default function DeepDivePage() {
 
                 {/* Content */}
                 <div className="min-h-[60vh]">
-                    {activeTab === 'report' && (
+                    {activeTab === 'datalog' && (
                         <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                                    <Info className="w-4 h-4" /> What is the Data Log?
+                                </h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    The Data Log displays the raw AI-generated analysis report. It summarizes key findings from the moderation audit,
+                                    including model rankings, statistical insights, and recommendations. This report is auto-generated by running
+                                    the Python analysis script on the audit data.
+                                </p>
+                            </div>
                             {reportContent ? (
                                 <article className="prose prose-slate dark:prose-invert max-w-none">
-                                    {/* Simple Markdown Rendering */}
                                     {reportContent.split('\n').map((line, i) => {
                                         if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
                                         if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold mt-6 mb-3 flex items-center gap-2">{line.includes('Leaderboard') ? '🏆' : line.includes('Statistical') ? '📊' : ''} {line.replace('## ', '')}</h2>;
                                         if (line.startsWith('### ')) return <h3 key={i} className="text-xl font-bold mt-4 mb-2">{line.replace('### ', '')}</h3>;
-                                        if (line.startsWith('- ')) return <li key={i} className="ml-4 list-disc my-1">{line.replace('- ', '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').split('<strong>').map((part, idx) => idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part)}</li>;
+                                        if (line.startsWith('- ')) return <li key={i} className="ml-4 list-disc my-1">{line.replace('- ', '')}</li>;
                                         return <p key={i} className="my-2 whitespace-pre-wrap">{line}</p>;
                                     })}
                                 </article>
@@ -203,6 +276,16 @@ export default function DeepDivePage() {
 
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
+                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                                    <Info className="w-4 h-4" /> What is Reliability & Consensus?
+                                </h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    This tab measures how consistently different AI models agree on safety verdicts.
+                                    <strong> Fleiss' Kappa</strong> is a statistical measure of inter-rater reliability—higher scores mean models agree more often.
+                                    The <strong>Agreement Distribution</strong> shows what percentage of prompts had unanimous vs. split decisions across models.
+                                </p>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                                     <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
@@ -221,7 +304,7 @@ export default function DeepDivePage() {
                                 </div>
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                                     <h3 className="text-lg font-bold mb-4">Agreement Distribution</h3>
-                                    {stats.distribution ? (
+                                    {stats.distribution && stats.distribution.length > 0 ? (
                                         <div className="h-48 text-xs">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={stats.distribution}>
@@ -248,6 +331,17 @@ export default function DeepDivePage() {
 
                     {activeTab === 'efficiency' && (
                         <div className="space-y-6">
+                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                                    <Info className="w-4 h-4" /> What is Efficiency & Cost?
+                                </h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    This tab visualizes the trade-off between <strong>cost</strong> and <strong>safety</strong> across models.
+                                    The X-axis shows the cost per 1,000 prompts (in USD), while the Y-axis shows the refusal rate (%).
+                                    Ideally, you want a model in the <strong>bottom-left</strong> (low cost, low unnecessary refusals) or
+                                    <strong>top-left</strong> (low cost, high safety) depending on your use case.
+                                </p>
+                            </div>
                             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
                                     <span>Cost vs. Safety Trade-off</span>
@@ -282,7 +376,54 @@ export default function DeepDivePage() {
                         </div>
                     )}
 
-
+                    {activeTab === 'longitudinal' && (
+                        <div className="space-y-6">
+                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                                    <Info className="w-4 h-4" /> What is the Longitudinal Study?
+                                </h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                    This tab tracks <strong>model behavior over time</strong>. It shows how the overall refusal rate
+                                    changes across different audit dates. This helps identify trends—are models becoming more or less
+                                    restrictive? Are there spikes in refusals on certain days? Use this to monitor drift in AI safety policies.
+                                </p>
+                            </div>
+                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-[500px]">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Over Time
+                                </h3>
+                                {longitudinalData.length > 1 ? (
+                                    <ResponsiveContainer width="100%" height="90%">
+                                        <LineChart data={longitudinalData} margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
+                                            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                                            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                                            <YAxis unit="%" domain={[0, 100]} />
+                                            <RechartsTooltip
+                                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                                                formatter={(value: any) => [`${value.toFixed(1)}%`, 'Refusal Rate']}
+                                            />
+                                            <Legend />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="refusalRate"
+                                                stroke="#6366f1"
+                                                strokeWidth={3}
+                                                dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
+                                                activeDot={{ r: 6, fill: '#4f46e5' }}
+                                                name="Refusal Rate"
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-80 text-slate-400">
+                                        <TrendingUp className="h-12 w-12 mb-4 opacity-50" />
+                                        <p>Need data from multiple dates to show longitudinal trends.</p>
+                                        <p className="text-sm">Run audits on different days to see changes over time.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
 
@@ -327,10 +468,25 @@ function CustomTooltip({ active, payload }: any) {
     return null;
 }
 
-
-
 function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
-    if (clusters.length === 0) return <div className="p-8 text-center text-slate-500">No semantic clustering data available.</div>;
+    if (clusters.length === 0) return (
+        <div className="space-y-6">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4" /> What are Semantic Clusters?
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                    Semantic clustering groups similar refusal responses together based on their meaning.
+                    This helps identify <strong>common themes</strong> in how models refuse requests—for example,
+                    "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
+                    and an example response to help you understand the pattern.
+                </p>
+            </div>
+            <div className="p-8 text-center text-slate-500">No semantic clustering data available.</div>
+        </div>
+    );
+
+    const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
     const pieData = clusters.map((c, i) => ({
         name: `Cluster ${i + 1}`,
@@ -339,40 +495,53 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     }));
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 col-span-1">
-                <h2 className="text-lg font-bold mb-4">Refusal Themes</h2>
-                <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                            </Pie>
-                            <RechartsTooltip />
-                            <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
+        <div className="space-y-6">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4" /> What are Semantic Clusters?
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                    Semantic clustering groups similar refusal responses together based on their meaning.
+                    This helps identify <strong>common themes</strong> in how models refuse requests—for example,
+                    "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
+                    and an example response to help you understand the pattern.
+                </p>
             </div>
-            <div className="col-span-2 space-y-4">
-                {clusters.map((c, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex gap-4">
-                        <div className="h-full w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                        <div className="flex-1">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-bold text-lg">Cluster {idx + 1} ({c.size} cases)</h3>
-                                <div className="flex flex-wrap gap-1">
-                                    {c.keywords.map(k => (
-                                        <span key={k} className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full font-mono flex items-center gap-1">
-                                            <Tag className="h-3 w-3" /> {k}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg text-sm text-slate-600 dark:text-slate-400 font-mono mb-3">"{c.exemplar}"</div>
-                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 col-span-1">
+                    <h2 className="text-lg font-bold mb-4">Refusal Themes</h2>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                </Pie>
+                                <RechartsTooltip />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </div>
-                ))}
+                </div>
+                <div className="col-span-2 space-y-4">
+                    {clusters.map((c, idx) => (
+                        <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex gap-4">
+                            <div className="h-full w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                            <div className="flex-1">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="font-bold text-lg">Cluster {idx + 1} ({c.size} cases)</h3>
+                                    <div className="flex flex-wrap gap-1">
+                                        {c.keywords.map(k => (
+                                            <span key={k} className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full font-mono flex items-center gap-1">
+                                                <Tag className="h-3 w-3" /> {k}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg text-sm text-slate-600 dark:text-slate-400 font-mono mb-3">"{c.exemplar}"</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
