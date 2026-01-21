@@ -1,52 +1,83 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
 import path from 'path';
-import Database from 'better-sqlite3';
-
-const DB_PATH = path.join(process.cwd(), '../audit.db');
 
 export async function GET() {
     try {
-        const db = new Database(DB_PATH, { readonly: true });
+        // Read from CSV file in public folder
+        const csvPath = path.join(process.cwd(), 'public', 'audit_log.csv');
 
-        // Select all audit results
-        const stmt = db.prepare(`
-            SELECT 
-                r.timestamp,
-                r.model_id as model,
-                r.run_id as case_id,
-                p.category,
-                r.verdict,
-                p.text as prompt,
-                r.response_text as response,
-                r.cost,
-                r.prompt_tokens + r.completion_tokens as latency_ms, 
-                r.prompt_tokens + r.completion_tokens as tokens_used,
-                r.policy_version
-            FROM audit_results r
-            LEFT JOIN prompts p ON r.prompt_id = p.id
-            ORDER BY r.timestamp DESC
-        `);
-        // Note: latency_ms is actually not stored in DB currently (column not in schema provided earlier? I didn't verify it in src/database.py view)
-        // Schema view in Step 907 showed: cost, prompt_tokens, completion_tokens. NO latency_ms column.
-        // I should stick to 'tokens_used' or use a placeholder for latency if missing. 
-        // Logic: r.timestamp is when it finished. DB doesn't track duration? 
-        // audit_runner.py doesn't seem to calculate duration explicitly for DB save?
-        // Re-reading Step 945: audit_runner.py line 248... it saves verdict, response_text, cost.
-        // It does NOT save latency/duration.
-        // The CSV *did* have it?
-        // ParseCSV in Step 852: `latency_ms: row.latency_ms`.
-        // So the DB schema is MISSING latency_ms!
+        if (!fs.existsSync(csvPath)) {
+            return NextResponse.json({ data: [], error: 'No audit data found' });
+        }
 
-        // I should ADD latency_ms to the DB schema if I can, but I already made the migration script.
-        // For now, I will omit latency or set to 0.
+        const csvContent = fs.readFileSync(csvPath, 'utf-8');
+        const lines = csvContent.trim().split('\n');
 
-        const rows = stmt.all();
-        db.close();
+        if (lines.length < 2) {
+            return NextResponse.json({ data: [] });
+        }
 
-        return NextResponse.json({ data: rows });
+        // Parse header
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+        // Parse rows
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = parseCSVLine(lines[i]);
+            if (values.length !== headers.length) continue;
+
+            const row: Record<string, any> = {};
+            headers.forEach((header, idx) => {
+                row[header] = values[idx];
+            });
+
+            // Map to expected format
+            data.push({
+                timestamp: row.timestamp || row.date || '',
+                model: row.model || row.model_id || '',
+                case_id: row.case_id || row.run_id || '',
+                category: row.category || '',
+                verdict: row.verdict || '',
+                prompt: row.prompt || row.text || '',
+                response: row.response || row.response_text || '',
+                cost: parseFloat(row.cost) || 0,
+                tokens_used: parseInt(row.tokens_used) || parseInt(row.prompt_tokens) + parseInt(row.completion_tokens) || 0,
+                latency_ms: parseInt(row.latency_ms) || 0,
+            });
+        }
+
+        return NextResponse.json({ data });
     } catch (error) {
-        console.error('Database Error:', error);
-        // Fallback or empty?
-        return NextResponse.json({ error: 'Failed to read audit log' }, { status: 500 });
+        console.error('Error reading audit data:', error);
+        return NextResponse.json({ error: 'Failed to read audit log', data: [] }, { status: 500 });
     }
+}
+
+// Helper to parse CSV lines handling quoted fields
+function parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+
+    return result;
 }
