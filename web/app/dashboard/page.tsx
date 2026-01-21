@@ -10,6 +10,7 @@ import { ActivityFeed } from '@/components/ui/ActivityFeed';
 import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
 import { Activity, DollarSign, CheckCircle, Zap, Filter, LayoutGrid, List } from 'lucide-react';
+import HeatmapTable from '@/components/HeatmapTable';
 
 export type AuditRow = {
   timestamp: string;
@@ -355,11 +356,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                import HeatmapTable from '@/components/HeatmapTable';
 
-                // ... existing imports ...
-
-                // In proper location (around line 355 or so, after the VerdictPieChart section)
 
                 {/* Heatmap Visualization */}
                 {filteredData.length > 0 && (
