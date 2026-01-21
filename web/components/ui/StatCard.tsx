@@ -7,7 +7,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 interface StatCardProps {
     title: string;
     value: string | number;
-    description?: string; // Optional description text
+    description?: string | ReactNode; // Optional description text
     change?: number; // Percentage change (e.g., 5.2 for +5.2%)
     icon?: ReactNode;
     delay?: number; // Animation delay
