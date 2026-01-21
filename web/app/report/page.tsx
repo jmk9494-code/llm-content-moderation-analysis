@@ -168,18 +168,7 @@ export default function ReportPage() {
                 <hr className="border-slate-200 dark:border-slate-700" />
 
                 {/* Scorecard */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-2 mb-2">
-                            <ShieldCheck className="h-5 w-5 text-slate-400" />
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Overall Safety Score</h3>
-                        </div>
-                        <div className={`text-5xl font-extrabold ${getGradeColor(stats?.safetyScore || 0)}`}>
-                            {stats?.safetyScore.toFixed(1)}
-                        </div>
-                        <p className="text-sm text-slate-400 mt-2">100 minus refusal rate • Higher = more permissive</p>
-                    </div>
-
+                <div className="max-w-md">
                     <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-2 mb-2">
                             <AlertTriangle className="h-5 w-5 text-slate-400" />
