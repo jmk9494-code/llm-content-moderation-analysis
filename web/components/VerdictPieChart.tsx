@@ -18,16 +18,22 @@ const COLORS = {
 const RADIAN = Math.PI / 180;
 
 interface CustomLabelProps {
-    cx: number;
-    cy: number;
-    midAngle: number;
-    innerRadius: number;
-    outerRadius: number;
-    percent: number;
-    name: string;
+    cx?: number;
+    cy?: number;
+    midAngle?: number;
+    innerRadius?: number;
+    outerRadius?: number;
+    percent?: number;
+    name?: string;
 }
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: CustomLabelProps) => {
+    // Guard against undefined values
+    if (cx === undefined || cy === undefined || midAngle === undefined ||
+        innerRadius === undefined || outerRadius === undefined || percent === undefined) {
+        return null;
+    }
+
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
