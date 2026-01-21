@@ -19,7 +19,7 @@ import { ArrowUpDown, Shield, Download, ChevronLeft, ChevronRight, MessageSquare
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Link from 'next/link';
-import TimeLapseChart from './TimeLapseChart';
+
 import BiasChart from './BiasChart';
 import ModelLogo from '@/components/ModelLogo';
 
@@ -102,7 +102,7 @@ type ModelMetadata = {
 export default function Home() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [summary, setSummary] = useState<ModelSummary[]>([]);
-  const [trends, setTrends] = useState<any[]>([]);
+
   const [biasData, setBiasData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<string>('');
@@ -205,19 +205,7 @@ export default function Home() {
         setLoading(false);
       });
 
-    // 3. Fetch Trends (Keep CSV for now if API doesn't support trends yet)
-    // Note: To fully migrate, we'd need a trends API too.
-    const p2 = new Promise<void>((resolve) => {
-      Papa.parse<any>('/trends.csv', {
-        download: true,
-        header: true,
-        complete: (results) => {
-          setTrends(results.data.filter(r => r.model));
-          resolve();
-        },
-        error: () => resolve()
-      });
-    });
+
 
     // 4. Fetch Bias Log
     const p3 = new Promise<void>((resolve) => {
@@ -778,17 +766,7 @@ export default function Home() {
         </div>
 
 
-        {/* Full Width Time-Travel Chart */}
-        {/* Full Width Time-Travel Chart - Slider Integrated */}
-        <div className="mb-8">
-          <TimeLapseChart data={trends} />
-        </div>
 
-        {/* Cost & Latency Charts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <PriceChart data={filteredSummary.map(s => ({ model: s.model, cost: s.total_cost }))} />
-          <LatencyChart data={filteredSummary.map(s => ({ model: s.model, latency: s.avg_latency }))} />
-        </div>
 
         {/* Radar Chart Removed (Censorship Profile) as requested */}
 
@@ -994,94 +972,6 @@ function CategoryChart({ data }: { data: CategoryData[] }) {
           <Bar dataKey="rate" name="Refusal Rate" radius={[0, 4, 4, 0]}>
             {sortedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={index < 3 ? '#ef4444' : '#f97316'} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-type PriceData = {
-  model: string;
-  cost: number;
-};
-
-function PriceChart({ data }: { data: PriceData[] }) {
-  // Sort by cost descending
-  const sortedData = [...data].sort((a, b) => b.cost - a.cost);
-
-  return (
-    <div className="w-full h-[300px] bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-        <span>💰</span> Estimated Cost by Model
-      </h3>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={sortedData}
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-          <XAxis type="number" tickFormatter={(val) => `$${val.toFixed(4)}`} />
-          <YAxis
-            type="category"
-            dataKey="model"
-            width={100}
-            tick={{ fontSize: 11 }}
-            tickFormatter={(value) => value.split('/')[1] || value}
-          />
-          <Tooltip
-            formatter={(value: any) => [`$${Number(value).toFixed(6)}`, 'Cost']}
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-          />
-          <Bar dataKey="cost" name="Total Cost" radius={[0, 4, 4, 0]}>
-            {sortedData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#6366f1'} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-type LatencyData = {
-  model: string;
-  latency: number;
-};
-
-function LatencyChart({ data }: { data: LatencyData[] }) {
-  // Sort by latency ascending (lower is better)
-  const sortedData = [...data].sort((a, b) => a.latency - b.latency);
-
-  return (
-    <div className="w-full h-[300px] bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-        <span>⚡</span> Avg API Latency (ms)
-      </h3>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={sortedData}
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-          <XAxis type="number" unit="ms" />
-          <YAxis
-            type="category"
-            dataKey="model"
-            width={100}
-            tick={{ fontSize: 11 }}
-            tickFormatter={(value) => value.split('/')[1] || value}
-          />
-          <Tooltip
-            formatter={(value: any) => [`${value} ms`, 'Latency']}
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-          />
-          <Bar dataKey="latency" name="Latency" radius={[0, 4, 4, 0]}>
-            {sortedData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={index < 3 ? '#10b981' : '#f59e0b'} />
             ))}
           </Bar>
         </BarChart>
