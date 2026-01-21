@@ -2,19 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Box, LayoutDashboard, Crosshair, ArrowLeftRight, Home, FileText, FileBarChart, Clock, Shield, CheckCircle, Trophy, BarChart3, Beaker, Moon, Sun } from 'lucide-react';
+import { Box, LayoutDashboard, FileBarChart, Trophy, BarChart3, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/providers/ThemeProvider';
 
 const navItems = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Trends', href: '/trends', icon: Clock },
+    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
-    { name: 'Analysis', href: '/analysis', icon: BarChart3 },
-    { name: 'Compare', href: '/compare', icon: ArrowLeftRight },
-    { name: 'A/B Test', href: '/compare-policies', icon: Beaker },
-    { name: 'Grading', href: '/grading', icon: CheckCircle },
+    { name: 'Deep Dive', href: '/analysis', icon: BarChart3 },
     { name: 'Report', href: '/report', icon: FileBarChart },
 ];
 

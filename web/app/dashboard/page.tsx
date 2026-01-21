@@ -141,8 +141,8 @@ function AuditCard({ row }: { row: AuditRow }) {
       </div>
       <div className="flex items-center gap-2 mb-2">
         <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${row.verdict === 'safe' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-            row.verdict === 'unsafe' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-              'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+          row.verdict === 'unsafe' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
           }`}>
           {row.verdict}
         </span>
@@ -240,9 +240,9 @@ export default function DashboardPage() {
         <header className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Moderation Dashboard</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Overview</h1>
               <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-                Live view of content moderation performance. Press <kbd className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 rounded">⌘K</kbd> to search.
+                Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -317,8 +317,8 @@ export default function DashboardPage() {
                   key={btn.value}
                   onClick={() => setActiveFilter(btn.value)}
                   className={`inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeFilter === btn.value
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                 >
                   {btn.icon}
