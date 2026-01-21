@@ -60,7 +60,7 @@ export default function LatencyChart({ data }: { data: LatencyData[] }) {
                         name="Latency"
                         radius={[0, 4, 4, 0]}
                         cursor="pointer"
-                        onClick={(data) => handleClick(data)}
+                        onClick={(data) => data?.payload && handleClick(data.payload as LatencyData)}
                     >
                         {sortedData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index < 3 ? '#10b981' : '#f59e0b'} />
