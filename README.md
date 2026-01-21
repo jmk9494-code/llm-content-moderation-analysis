@@ -97,6 +97,7 @@ python src/policy_tuner.py --category creative_writing
 - Simplified **Compare** and **Dashboard** pages for faster builds and reduced TypeScript errors.
 - Added `--policy` CLI flag to `audit_runner.py` for A/B policy testing.
 - Included a `Dockerfile` for containerized deployment of the audit runner.
+- Included `web/Dockerfile` for production deployment of the dashboard.
 
 ## 🧹 Cleanup
 

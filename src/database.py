@@ -44,6 +44,7 @@ class AuditResult(Base):
     cost = Column(Float, default=0.0)
     prompt_tokens = Column(Integer, default=0)
     completion_tokens = Column(Integer, default=0)
+    policy_version = Column(String, nullable=True)
 
     # Human Grading
     human_verdict = Column(String, nullable=True)

@@ -232,7 +232,7 @@ def check_cache(model_id, prompt_id, force=False):
     finally:
         session.close()
 
-async def process_prompt(sem, p, model_name, force_rerun=False):
+async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=None):
     """Wrapper to handle semaphore and strict processing for a single prompt."""
     async with sem:
         # 1. OPTIMIZATION: Check Cache
@@ -273,7 +273,8 @@ async def process_prompt(sem, p, model_name, force_rerun=False):
                     response_text=content,
                     cost=run_cost,
                     prompt_tokens=p_tokens,
-                    completion_tokens=c_tokens
+                    completion_tokens=c_tokens,
+                    policy_version=policy_version
                 )
                 session.add(result)
                 session.commit()
@@ -308,7 +309,8 @@ async def process_prompt(sem, p, model_name, force_rerun=False):
                     response_text=f"SYSTEM ERROR: {e}",
                     cost=0,
                     prompt_tokens=0,
-                    completion_tokens=0
+                    completion_tokens=0,
+                    policy_version=policy_version
                 )
                 session.add(db_result)
                 session.commit()
@@ -327,7 +329,7 @@ async def run_audit_for_model(model_name, prompts, force_rerun=False):
     tasks = [process_prompt(sem, p, model_name, force_rerun) for p in prompts]
     await asyncio.gather(*tasks)
 
-async def run_audit_async(prompts, model_names, output_file):
+async def run_audit_async(prompts, model_names, output_file, policy_version=None):
     """Main async runner for multiple models."""
     headers = ['test_date', 'model', 'prompt_id', 'category', 'verdict', 
                'prompt_text', 'response_text', 'prompt_tokens', 'completion_tokens', 'total_tokens', 'run_cost']
@@ -351,7 +353,7 @@ async def run_audit_async(prompts, model_names, output_file):
         for p in prompts:
             p['run_id'] = run_id
             
-        tasks = [process_prompt(sem, p, model) for p in prompts]
+        tasks = [process_prompt(sem, p, model, policy_version=policy_version) for p in prompts]
         results = await asyncio.gather(*tasks)
         
         valid_results = [r for r in results if r]
@@ -390,12 +392,13 @@ def load_prompts(file_path, limit=None):
                 prompts.append({'id': p_id, 'category': cat, 'text': text})
     return prompts
 
-def parse_args():
+def main():
     parser = argparse.ArgumentParser(description="LLM Content Moderation Auditor (Async/JSON)")
     parser.add_argument("--model", type=str, help="Target model name or comma-separated list")
     parser.add_argument("--preset", type=str, choices=list(PRESETS.keys()), help="Use a predefined model set (e.g., 'efficiency')")
     parser.add_argument("--resolve-latest", action="store_true", help="Auto-detect and use the latest models for the selected preset")
-    parser.add_argument("--policy", action="store_true", help="Enable A/B policy testing (adds policy flag handling)")
+    parser.add_argument("--policy", type=str, help="Policy version tag (e.g. v1.0) for A/B testing")
+    parser.add_argument("--phrasing-variants", type=int, default=0, help="Generate N phrasing variants for each prompt")
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
     parser.add_argument("--limit", type=int, help="Limit number of prompts to process")
@@ -518,7 +521,7 @@ def parse_args():
     # Export metadata for frontend
     export_metadata()
     
-    asyncio.run(run_audit_async(loaded_prompts, models, args.output))
+    asyncio.run(run_audit_async(loaded_prompts, models, args.output, policy_version=args.policy))
     
     # Update trends file for the dashboard
     logger.info("📈 Updating longitudinal trends...")

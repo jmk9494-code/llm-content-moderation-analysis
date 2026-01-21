@@ -20,7 +20,8 @@ export async function GET() {
                 r.response_text as response,
                 r.cost,
                 r.prompt_tokens + r.completion_tokens as latency_ms, 
-                r.prompt_tokens + r.completion_tokens as tokens_used 
+                r.prompt_tokens + r.completion_tokens as tokens_used,
+                r.policy_version
             FROM audit_results r
             LEFT JOIN prompts p ON r.prompt_id = p.id
             ORDER BY r.timestamp DESC
