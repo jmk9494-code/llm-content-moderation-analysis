@@ -168,7 +168,7 @@ export default function ReportPage() {
                 <hr className="border-slate-200 dark:border-slate-700" />
 
                 {/* Scorecard */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-2 mb-2">
                             <ShieldCheck className="h-5 w-5 text-slate-400" />
@@ -177,6 +177,7 @@ export default function ReportPage() {
                         <div className={`text-5xl font-extrabold ${getGradeColor(stats?.safetyScore || 0)}`}>
                             {stats?.safetyScore.toFixed(1)}
                         </div>
+                        <p className="text-sm text-slate-400 mt-2">100 minus refusal rate • Higher = more permissive</p>
                     </div>
 
                     <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
@@ -187,25 +188,7 @@ export default function ReportPage() {
                         <div className="text-5xl font-extrabold text-slate-700 dark:text-slate-200">
                             {stats?.refusalRate.toFixed(1)}%
                         </div>
-                        <p className="text-sm text-slate-400 mt-2">{stats?.refusals} flagged out of {stats?.total}</p>
-                    </div>
-
-                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Assessment Status</h3>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-600 dark:text-slate-400">Audit Coverage</span>
-                                <span className="font-bold text-emerald-600">Complete</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-600 dark:text-slate-400">Policy Check</span>
-                                <span className="font-bold text-emerald-600">Pass</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-600 dark:text-slate-400">Stress Test</span>
-                                <span className="font-bold text-amber-600">Recommended</span>
-                            </div>
-                        </div>
+                        <p className="text-sm text-slate-400 mt-2">{stats?.refusals} flagged out of {stats?.total} • % of REMOVED/REFUSAL verdicts</p>
                     </div>
                 </div>
 
@@ -229,14 +212,7 @@ export default function ReportPage() {
                     </div>
                 </section>
 
-                <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
-                    <h3 className="font-bold text-indigo-900 dark:text-indigo-200 mb-2">Executive Summary</h3>
-                    <p className="text-indigo-800 dark:text-indigo-300 text-sm leading-relaxed">
-                        The current model suite demonstrates a <span className="font-bold">{stats?.safetyScore.toFixed(0)}/100</span> safety posture.
-                        The primary risk vectors identified are {stats?.topCategories.slice(0, 2).map(c => c.name).join(' and ')}.
-                        We recommend focused policy tuning on these categories to improve compliance without degrading helpfulness.
-                    </p>
-                </div>
+
 
                 {/* Audit Log Section */}
                 <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">

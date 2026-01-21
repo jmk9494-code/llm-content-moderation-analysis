@@ -300,24 +300,40 @@ export default function ComparePage() {
                                             <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">
                                                 {diff.category}
                                             </span>
-                                            {/* <span className="text-xs text-slate-400 font-mono">ID: {idx}</span> */}
                                         </div>
                                         <div className="p-4 space-y-4">
-                                            <div className="text-sm text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-100 dark:border-slate-800">
-                                                {diff.prompt}
+                                            {/* Prompt */}
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Prompt</p>
+                                                <div className="text-sm text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-100 dark:border-slate-800 max-h-32 overflow-y-auto">
+                                                    {diff.prompt}
+                                                </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div className={`p-2 rounded flex justify-between items-center ${diff.rowA.verdict === 'safe' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                                                    }`}>
-                                                    <span className="font-bold truncate w-24">{modelA}</span>
-                                                    <span className="font-bold">{diff.rowA.verdict === 'safe' ? 'ALLOWED' : 'REMOVED'}</span>
+                                            {/* Model A Response */}
+                                            <div className={`rounded-lg border ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
+                                                <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
+                                                    <span className="font-bold text-sm">{modelA?.split('/')[1] || modelA}</span>
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                                        {diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
+                                                    </span>
                                                 </div>
-                                                <div className={`p-2 rounded flex justify-between items-center ${diff.rowB.verdict === 'safe' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                                                    }`}>
-                                                    <span className="font-bold truncate w-24">{modelB}</span>
-                                                    <span className="font-bold">{diff.rowB.verdict === 'safe' ? 'ALLOWED' : 'REMOVED'}</span>
+                                                <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-24 overflow-y-auto">
+                                                    {diff.rowA.response || 'No response recorded'}
+                                                </p>
+                                            </div>
+
+                                            {/* Model B Response */}
+                                            <div className={`rounded-lg border ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
+                                                <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
+                                                    <span className="font-bold text-sm">{modelB?.split('/')[1] || modelB}</span>
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                                        {diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
+                                                    </span>
                                                 </div>
+                                                <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-24 overflow-y-auto">
+                                                    {diff.rowB.response || 'No response recorded'}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
