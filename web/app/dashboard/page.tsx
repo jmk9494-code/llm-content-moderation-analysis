@@ -29,8 +29,8 @@ export default function DashboardPage() {
   // Filter states
   const [selectedModel, setSelectedModel] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<string>('all');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
+  const [selectedDate, setSelectedDate] = useState<string>('all');
   const [keyword, setKeyword] = useState<string>('');
 
   useEffect(() => {
@@ -55,8 +55,31 @@ export default function DashboardPage() {
   const filterOptions = useMemo(() => {
     const models = Array.from(new Set(data.map(d => d.model))).sort();
     const categories = Array.from(new Set(data.map(d => d.category))).sort();
-    const providers = Array.from(new Set(data.map(d => d.model.split('/')[0]))).sort();
-    return { models, categories, providers };
+    const dates = Array.from(new Set(data.map(d => d.timestamp.split('T')[0]))).sort().reverse();
+
+    // Map provider to region based on company HQ
+    const providerRegionMap: Record<string, string> = {
+      'openai': 'US',
+      'anthropic': 'US',
+      'google': 'US',
+      'meta-llama': 'US',
+      'x-ai': 'US',
+      'cohere': 'Canada',
+      'deepseek': 'China',
+      '01-ai': 'China',
+      'qwen': 'China',
+      'mistralai': 'EU',
+      'microsoft': 'US',
+    };
+
+    const getRegion = (model: string) => {
+      const provider = model.split('/')[0];
+      return providerRegionMap[provider] || 'Other';
+    };
+
+    const regions = Array.from(new Set(data.map(d => getRegion(d.model)))).sort();
+
+    return { models, categories, dates, regions, getRegion };
   }, [data]);
 
   // Filtered data based on all filters
@@ -68,9 +91,9 @@ export default function DashboardPage() {
       filtered = filtered.filter(d => d.model === selectedModel);
     }
 
-    // Provider filter (derived from model name)
-    if (selectedProvider !== 'all') {
-      filtered = filtered.filter(d => d.model.startsWith(selectedProvider + '/'));
+    // Region filter (derived from model name)
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(d => filterOptions.getRegion(d.model) === selectedRegion);
     }
 
     // Category filter
@@ -78,18 +101,9 @@ export default function DashboardPage() {
       filtered = filtered.filter(d => d.category === selectedCategory);
     }
 
-    // Date range filter
-    if (dateRange !== 'all') {
-      const now = new Date();
-      let cutoff = new Date();
-      switch (dateRange) {
-        case '7d': cutoff.setDate(now.getDate() - 7); break;
-        case '30d': cutoff.setDate(now.getDate() - 30); break;
-        case '90d': cutoff.setDate(now.getDate() - 90); break;
-      }
-      if (dateRange !== 'all') {
-        filtered = filtered.filter(d => new Date(d.timestamp) >= cutoff);
-      }
+    // Date filter (specific date)
+    if (selectedDate !== 'all') {
+      filtered = filtered.filter(d => d.timestamp.split('T')[0] === selectedDate);
     }
 
     // Keyword filter (searches prompt and response)
@@ -103,7 +117,7 @@ export default function DashboardPage() {
     }
 
     return filtered;
-  }, [data, selectedModel, selectedCategory, selectedProvider, dateRange, keyword]);
+  }, [data, selectedModel, selectedCategory, selectedRegion, selectedDate, keyword, filterOptions]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -121,12 +135,12 @@ export default function DashboardPage() {
   const clearFilters = () => {
     setSelectedModel('all');
     setSelectedCategory('all');
-    setSelectedProvider('all');
-    setDateRange('all');
+    setSelectedRegion('all');
+    setSelectedDate('all');
     setKeyword('');
   };
 
-  const hasActiveFilters = selectedModel !== 'all' || selectedCategory !== 'all' || selectedProvider !== 'all' || dateRange !== 'all' || keyword.trim() !== '';
+  const hasActiveFilters = selectedModel !== 'all' || selectedCategory !== 'all' || selectedRegion !== 'all' || selectedDate !== 'all' || keyword.trim() !== '';
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
@@ -209,15 +223,15 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                {/* Provider Filter */}
+                {/* Region Filter */}
                 <select
-                  value={selectedProvider}
-                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
                   className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="all">All Providers</option>
-                  {filterOptions.providers.map(p => (
-                    <option key={p} value={p}>{p}</option>
+                  <option value="all">All Regions</option>
+                  {filterOptions.regions.map(r => (
+                    <option key={r} value={r}>{r === 'US' ? '🇺🇸 US' : r === 'EU' ? '🇪🇺 EU' : r === 'China' ? '🇨🇳 China' : r === 'Canada' ? '🇨🇦 Canada' : r}</option>
                   ))}
                 </select>
 
@@ -245,16 +259,16 @@ export default function DashboardPage() {
                   ))}
                 </select>
 
-                {/* Date Range Filter */}
+                {/* Date Filter (specific dates) */}
                 <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
                   className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="all">All Time</option>
-                  <option value="7d">Last 7 Days</option>
-                  <option value="30d">Last 30 Days</option>
-                  <option value="90d">Last 90 Days</option>
+                  <option value="all">All Run Dates</option>
+                  {filterOptions.dates.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
                 </select>
 
                 {/* Clear Filters */}

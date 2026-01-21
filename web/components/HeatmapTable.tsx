@@ -169,13 +169,23 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                         <p className="text-sm text-slate-500 mb-4">{modalEntries.length} entries</p>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                             {modalEntries.slice(0, 20).map((entry, idx) => (
-                                <div key={idx} className={`p-3 rounded-lg border ${entry.verdict === 'safe' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                                <div key={idx} className={`p-3 rounded-lg border ${entry.verdict === 'safe' || entry.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                                     <div className="flex justify-between text-xs mb-2">
-                                        <span className={`font-bold ${entry.verdict === 'safe' ? 'text-green-700' : 'text-red-700'}`}>
+                                        <span className={`font-bold ${entry.verdict === 'safe' || entry.verdict === 'ALLOWED' ? 'text-green-700' : 'text-red-700'}`}>
                                             {entry.verdict}
                                         </span>
+                                        <span className="text-slate-500">{entry.case_id}</span>
                                     </div>
-                                    <p className="text-sm text-slate-700 line-clamp-3">{entry.prompt || entry.prompt_text || 'No prompt'}</p>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-600 mb-1">Prompt:</p>
+                                            <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-3">{entry.prompt || 'No prompt'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-600 mb-1">Response:</p>
+                                            <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-4">{entry.response || 'No response'}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                             {modalEntries.length > 20 && (

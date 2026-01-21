@@ -142,7 +142,10 @@ export default function ComparePage() {
                 {/* Header */}
                 <header>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-                        <ArrowRightLeft className="h-8 w-8 text-indigo-600" />
+                        <div className="flex items-center gap-2">
+                            <Shield className="h-8 w-8 text-indigo-600" />
+                            <ArrowRightLeft className="h-6 w-6 text-slate-400" />
+                        </div>
                         Model Comparison
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-2">
