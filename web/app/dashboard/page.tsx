@@ -3,9 +3,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
-import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Filter, CheckCircle, Zap, Calendar, Clock, RefreshCw } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
 
@@ -22,20 +21,23 @@ export type AuditRow = {
   latency_ms: number;
 };
 
-type FilterType = 'all' | 'safe' | 'unsafe' | 'recent';
-
 export default function DashboardPage() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const { addToast } = useToast();
+
+  // Filter states
+  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('all');
+  const [keyword, setKeyword] = useState<string>('');
 
   useEffect(() => {
     fetch('/api/audit')
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          // Filter out ERROR verdicts (broken models like yi-34b-chat)
           const cleanData = json.data.filter((d: AuditRow) => d.verdict !== 'ERROR');
           setData(cleanData);
           addToast({ type: 'success', title: 'Data loaded', message: `${cleanData.length} audit records` });
@@ -49,47 +51,82 @@ export default function DashboardPage() {
       });
   }, []);
 
-  // Filtered data based on active filter
+  // Extract unique values for filters
+  const filterOptions = useMemo(() => {
+    const models = Array.from(new Set(data.map(d => d.model))).sort();
+    const categories = Array.from(new Set(data.map(d => d.category))).sort();
+    const providers = Array.from(new Set(data.map(d => d.model.split('/')[0]))).sort();
+    return { models, categories, providers };
+  }, [data]);
+
+  // Filtered data based on all filters
   const filteredData = useMemo(() => {
-    if (activeFilter === 'all') return data;
-    if (activeFilter === 'safe') return data.filter(d => d.verdict === 'safe');
-    if (activeFilter === 'unsafe') return data.filter(d => d.verdict === 'unsafe');
-    if (activeFilter === 'recent') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      return data.filter(d => new Date(d.timestamp) >= sevenDaysAgo);
+    let filtered = data;
+
+    // Model filter
+    if (selectedModel !== 'all') {
+      filtered = filtered.filter(d => d.model === selectedModel);
     }
-    return data;
-  }, [data, activeFilter]);
+
+    // Provider filter (derived from model name)
+    if (selectedProvider !== 'all') {
+      filtered = filtered.filter(d => d.model.startsWith(selectedProvider + '/'));
+    }
+
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(d => d.category === selectedCategory);
+    }
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const now = new Date();
+      let cutoff = new Date();
+      switch (dateRange) {
+        case '7d': cutoff.setDate(now.getDate() - 7); break;
+        case '30d': cutoff.setDate(now.getDate() - 30); break;
+        case '90d': cutoff.setDate(now.getDate() - 90); break;
+      }
+      if (dateRange !== 'all') {
+        filtered = filtered.filter(d => new Date(d.timestamp) >= cutoff);
+      }
+    }
+
+    // Keyword filter (searches prompt and response)
+    if (keyword.trim()) {
+      const kw = keyword.toLowerCase();
+      filtered = filtered.filter(d =>
+        d.prompt?.toLowerCase().includes(kw) ||
+        d.response?.toLowerCase().includes(kw) ||
+        d.category?.toLowerCase().includes(kw)
+      );
+    }
+
+    return filtered;
+  }, [data, selectedModel, selectedCategory, selectedProvider, dateRange, keyword]);
 
   // Calculate stats
   const stats = useMemo(() => {
     const totalAudits = data.length;
     const uniqueModels = new Set(data.map(d => d.model)).size;
-
-    // Get unique dates to count audit runs
     const uniqueDates = new Set(data.map(d => d.timestamp.split('T')[0])).size;
-
-    // Get first and most recent dates
     const sortedDates = data.map(d => new Date(d.timestamp)).sort((a, b) => a.getTime() - b.getTime());
     const firstDate = sortedDates[0] || new Date();
     const lastDate = sortedDates[sortedDates.length - 1] || new Date();
-
-    // Calculate days since first collection
     const daysSinceStart = Math.floor((new Date().getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
-
-    // Calculate hours since last update
     const hoursSinceUpdate = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60));
-
     return { totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate };
   }, [data]);
 
-  const filterButtons: { label: string; value: FilterType; icon: React.ReactNode }[] = [
-    { label: 'All', value: 'all', icon: <Filter className="h-4 w-4" /> },
-    { label: 'Safe', value: 'safe', icon: <CheckCircle className="h-4 w-4 text-green-500" /> },
-    { label: 'Unsafe', value: 'unsafe', icon: <Zap className="h-4 w-4 text-red-500" /> },
-    { label: 'Recent', value: 'recent', icon: <Activity className="h-4 w-4 text-blue-500" /> },
-  ];
+  const clearFilters = () => {
+    setSelectedModel('all');
+    setSelectedCategory('all');
+    setSelectedProvider('all');
+    setDateRange('all');
+    setKeyword('');
+  };
+
+  const hasActiveFilters = selectedModel !== 'all' || selectedCategory !== 'all' || selectedProvider !== 'all' || dateRange !== 'all' || keyword.trim() !== '';
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
@@ -157,27 +194,87 @@ export default function DashboardPage() {
               />
             </StatCardGrid>
 
-            {/* AI Insights */}
-            <InsightsSummary data={data} />
+            {/* Filter Controls */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Keyword Search */}
+                <div className="relative flex-grow max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search prompts..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
 
-            {/* Quick Filters */}
-            <div className="flex flex-wrap items-center gap-2">
-              {filterButtons.map(btn => (
-                <button
-                  key={btn.value}
-                  onClick={() => setActiveFilter(btn.value)}
-                  className={`inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeFilter === btn.value
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
+                {/* Provider Filter */}
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {btn.icon}
-                  <span className="hidden sm:inline">{btn.label}</span>
-                  {activeFilter === btn.value && filteredData.length !== data.length && (
-                    <span className="ml-1 text-xs opacity-75">({filteredData.length})</span>
-                  )}
-                </button>
-              ))}
+                  <option value="all">All Providers</option>
+                  {filterOptions.providers.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+
+                {/* Model Filter */}
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Models</option>
+                  {filterOptions.models.map(m => (
+                    <option key={m} value={m}>{m.split('/')[1] || m}</option>
+                  ))}
+                </select>
+
+                {/* Category Filter */}
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Categories</option>
+                  {filterOptions.categories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+
+                {/* Date Range Filter */}
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7d">Last 7 Days</option>
+                  <option value="30d">Last 30 Days</option>
+                  <option value="90d">Last 90 Days</option>
+                </select>
+
+                {/* Clear Filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Results count */}
+              {hasActiveFilters && (
+                <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                  Showing {filteredData.length} of {data.length} records
+                </div>
+              )}
             </div>
 
             {/* Main Content Grid - Full Width */}
@@ -194,6 +291,13 @@ export default function DashboardPage() {
                   title="Category Sensitivity Heatmap"
                   description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                 />
+              )}
+
+              {filteredData.length === 0 && (
+                <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <p className="text-slate-500 dark:text-slate-400">No results match your filters.</p>
+                  <button onClick={clearFilters} className="mt-2 text-indigo-600 hover:underline">Clear filters</button>
+                </div>
               )}
             </div>
           </div>
