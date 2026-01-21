@@ -144,7 +144,9 @@ export default function ReportPage() {
             <div className="max-w-6xl mx-auto space-y-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight">Action Report</h1>
+                        <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-3">
+                            📋 Action Report
+                        </h1>
                         <p className="text-lg text-slate-500 mt-1">Executive summary, key findings, and full audit log.</p>
                         <p className="text-sm text-slate-400 mt-4">Generated on {new Date().toLocaleDateString()}</p>
                     </div>

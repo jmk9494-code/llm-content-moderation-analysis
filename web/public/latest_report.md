@@ -1,4 +1,4 @@
-# 🛡️ Weekly Executive Summary
+# 🧠 AI Analyst Summary
 
 This week’s content moderation audit analyzed a total of 7,647 prompts across various models. Notably, **qwen/qwen-2.5-7b-instruct** exhibited the highest refusal rate at **75.1%**, making it the strictest model. Conversely, **01-ai/yi-34b-chat** and **mistralai/mistral-medium** showed the most permissive behavior with a **0.0% refusal rate**, indicating that these models are more likely to allow the prompts tested.
 

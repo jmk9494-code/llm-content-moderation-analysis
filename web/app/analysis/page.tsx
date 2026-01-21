@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock
+    Info, Database, Clock, Filter, X
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -42,6 +42,10 @@ export default function DeepDivePage() {
     const [clusters, setClusters] = useState<Cluster[]>([]);
     const [reportContent, setReportContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
+
+    // Longitudinal Filters
+    const [longitudinalModel, setLongitudinalModel] = useState<string>('all');
+    const [longitudinalCategory, setLongitudinalCategory] = useState<string>('all');
 
     useEffect(() => {
         const loadAll = async () => {
@@ -130,13 +134,28 @@ export default function DeepDivePage() {
         }).filter(m => m.total > 0);
     }, [auditData]);
 
-    // Longitudinal Data (by date)
+    // Filter options for longitudinal study
+    const longitudinalFilterOptions = useMemo(() => {
+        return {
+            models: Array.from(new Set(auditData.map(d => d.model))).sort(),
+            categories: Array.from(new Set(auditData.map(d => d.category))).filter(Boolean).sort()
+        };
+    }, [auditData]);
+
+    // Longitudinal Data (by date) - with filters
     const longitudinalData = useMemo(() => {
         if (auditData.length === 0) return [];
 
+        // Apply filters
+        const filtered = auditData.filter(d => {
+            if (longitudinalModel !== 'all' && d.model !== longitudinalModel) return false;
+            if (longitudinalCategory !== 'all' && d.category !== longitudinalCategory) return false;
+            return true;
+        });
+
         const dateMap = new Map<string, { date: string; total: number; refusals: number }>();
 
-        auditData.forEach(d => {
+        filtered.forEach(d => {
             const date = d.timestamp?.split('T')[0] || 'Unknown';
             if (!dateMap.has(date)) {
                 dateMap.set(date, { date, total: 0, refusals: 0 });
@@ -151,7 +170,7 @@ export default function DeepDivePage() {
         return Array.from(dateMap.values())
             .map(d => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
             .sort((a, b) => a.date.localeCompare(b.date));
-    }, [auditData]);
+    }, [auditData, longitudinalModel, longitudinalCategory]);
 
     // AI Summary
     const aiSummary = useMemo(() => {
@@ -388,9 +407,52 @@ export default function DeepDivePage() {
                                     restrictive? Are there spikes in refusals on certain days? Use this to monitor drift in AI safety policies.
                                 </p>
                             </div>
+
+                            {/* Filters */}
+                            <div className="flex flex-wrap gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-4 w-4 text-slate-400" />
+                                    <span className="text-sm font-medium text-slate-500">Filters:</span>
+                                </div>
+                                <div className="flex-1 flex flex-wrap gap-4">
+                                    <div className="min-w-[200px]">
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model</label>
+                                        <select
+                                            value={longitudinalModel}
+                                            onChange={e => setLongitudinalModel(e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">All Models</option>
+                                            {longitudinalFilterOptions.models.map(m => <option key={m} value={m}>{m.split('/')[1] || m}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="min-w-[200px]">
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
+                                        <select
+                                            value={longitudinalCategory}
+                                            onChange={e => setLongitudinalCategory(e.target.value)}
+                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">All Categories</option>
+                                            {longitudinalFilterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                    {(longitudinalModel !== 'all' || longitudinalCategory !== 'all') && (
+                                        <button
+                                            onClick={() => { setLongitudinalModel('all'); setLongitudinalCategory('all'); }}
+                                            className="flex items-center gap-1 px-3 py-2 mt-5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg"
+                                        >
+                                            <X className="h-4 w-4" /> Clear
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Over Time
+                                    {longitudinalModel !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalModel.split('/')[1]})</span>}
+                                    {longitudinalCategory !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalCategory})</span>}
                                 </h3>
                                 {longitudinalData.length > 1 ? (
                                     <ResponsiveContainer width="100%" height="90%">

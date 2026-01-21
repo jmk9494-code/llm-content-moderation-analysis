@@ -36,35 +36,11 @@ export function CommandPalette() {
     const commands: CommandItem[] = [
         {
             id: 'dashboard',
-            title: 'Go to Dashboard',
+            title: 'Go to Overview',
             description: 'View moderation metrics and audit log',
             icon: <LayoutDashboard className="h-4 w-4" />,
             action: () => router.push('/dashboard'),
-            keywords: ['home', 'main', 'overview']
-        },
-        {
-            id: 'trends',
-            title: 'View Trends',
-            description: 'Time-series analysis of moderation patterns',
-            icon: <Clock className="h-4 w-4" />,
-            action: () => router.push('/trends'),
-            keywords: ['time', 'history', 'graph']
-        },
-        {
-            id: 'leaderboard',
-            title: 'Model Leaderboard',
-            description: 'Compare model performance rankings',
-            icon: <Trophy className="h-4 w-4" />,
-            action: () => router.push('/leaderboard'),
-            keywords: ['ranking', 'compare', 'best']
-        },
-        {
-            id: 'analysis',
-            title: 'Deep Analysis',
-            description: 'Statistical analysis and insights',
-            icon: <BarChart3 className="h-4 w-4" />,
-            action: () => router.push('/analysis'),
-            keywords: ['stats', 'statistics', 'data']
+            keywords: ['home', 'main', 'overview', 'dashboard']
         },
         {
             id: 'compare',
@@ -75,17 +51,17 @@ export function CommandPalette() {
             keywords: ['diff', 'versus', 'vs']
         },
         {
-            id: 'grading',
-            title: 'Grading Results',
-            description: 'View grading and scoring details',
-            icon: <CheckCircle className="h-4 w-4" />,
-            action: () => router.push('/grading'),
-            keywords: ['score', 'grade', 'results']
+            id: 'analysis',
+            title: 'Deep Dive Analysis',
+            description: 'Statistical analysis, clustering, and insights',
+            icon: <BarChart3 className="h-4 w-4" />,
+            action: () => router.push('/analysis'),
+            keywords: ['stats', 'statistics', 'data', 'deep']
         },
         {
             id: 'report',
-            title: 'Generate Report',
-            description: 'Create and export analysis reports',
+            title: 'Action Report',
+            description: 'Weekly summary and recommendations',
             icon: <FileText className="h-4 w-4" />,
             action: () => router.push('/report'),
             keywords: ['export', 'pdf', 'summary']
@@ -93,10 +69,10 @@ export function CommandPalette() {
         {
             id: 'admin',
             title: 'Admin Dashboard',
-            description: 'Administrative controls and settings',
+            description: 'Prompt feedback, voting, and cost management',
             icon: <Settings className="h-4 w-4" />,
             action: () => router.push('/admin'),
-            keywords: ['settings', 'config', 'manage']
+            keywords: ['settings', 'config', 'manage', 'feedback', 'voting']
         },
     ];
 
@@ -222,13 +198,13 @@ export function CommandPalette() {
                                                 }}
                                                 onMouseEnter={() => setSelectedIndex(index)}
                                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === selectedIndex
-                                                        ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                                                        : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                                    ? 'bg-indigo-50 dark:bg-indigo-900/30'
+                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                                                     }`}
                                             >
                                                 <div className={`p-2 rounded-lg ${index === selectedIndex
-                                                        ? 'bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300'
-                                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                                    ? 'bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300'
+                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                                     }`}>
                                                     {cmd.icon}
                                                 </div>

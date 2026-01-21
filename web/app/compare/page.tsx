@@ -308,8 +308,12 @@ export default function ComparePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Card A */}
                             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm border-t-4 border-t-indigo-500 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-5">
-                                    <Zap className="h-32 w-32" />
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <img
+                                        src={getProviderLogo(modelA)}
+                                        alt=""
+                                        className="h-32 w-32 object-contain"
+                                    />
                                 </div>
                                 <div className="flex items-center gap-3 mb-4">
                                     <img
@@ -340,8 +344,12 @@ export default function ComparePage() {
 
                             {/* Card B */}
                             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm border-t-4 border-t-emerald-500 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-5">
-                                    <Shield className="h-32 w-32" />
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <img
+                                        src={getProviderLogo(modelB)}
+                                        alt=""
+                                        className="h-32 w-32 object-contain"
+                                    />
                                 </div>
                                 <div className="flex items-center gap-3 mb-4">
                                     <img
