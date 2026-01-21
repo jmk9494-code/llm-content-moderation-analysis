@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { ChevronDown, BarChart2, AlertCircle, CheckCircle, Zap, Shield, ArrowRightLeft } from 'lucide-react';
+import { ChevronDown, BarChart2, AlertCircle, CheckCircle, Zap, Shield, ArrowRightLeft, Search, Filter, Calendar, X } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 type AuditRow = {
@@ -17,11 +17,21 @@ type AuditRow = {
     latency_ms: number;
 };
 
-// Simplified Model Info for Selector
-type ModelInfo = {
-    id: string;
-    name: string;
-    provider?: string;
+// Provider Logo Helper using LogoKit API
+const LOGOKIT_API_KEY = 'pk_fra468443f1ecbf16b1c64';
+const getProviderLogo = (model: string): string => {
+    const provider = model.split('/')[0]?.toLowerCase() || '';
+    const logoMap: Record<string, string> = {
+        'openai': 'openai.com',
+        'anthropic': 'anthropic.com',
+        'google': 'google.com',
+        'mistralai': 'mistral.ai',
+        'deepseek': 'deepseek.com',
+        'qwen': 'alibaba.com',
+        '01-ai': '01.ai',
+    };
+    const domain = logoMap[provider] || `${provider}.com`;
+    return `https://img.logokit.com/${domain}?token=${LOGOKIT_API_KEY}`;
 };
 
 export default function ComparePage() {
@@ -30,6 +40,11 @@ export default function ComparePage() {
     const [modelA, setModelA] = useState<string>('');
     const [modelB, setModelB] = useState<string>('');
     const [isClient, setIsClient] = useState(false);
+
+    // Filters
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedDate, setSelectedDate] = useState('all');
 
     useEffect(() => {
         setIsClient(true);
@@ -54,13 +69,33 @@ export default function ComparePage() {
             });
     }, []);
 
-    const availableModels = useMemo(() => {
-        return Array.from(new Set(data.map(d => d.model))).sort();
+    // Filter Options
+    const filterOptions = useMemo(() => {
+        const categories = Array.from(new Set(data.map(d => d.category))).filter(Boolean).sort();
+        const dates = Array.from(new Set(data.map(d => d.timestamp?.split('T')[0]))).filter(Boolean).sort().reverse();
+        return { categories, dates };
     }, [data]);
+
+    const availableModels = useMemo(() => {
+        // Filter out models with 0 data
+        const modelCounts = new Map<string, number>();
+        data.forEach(d => modelCounts.set(d.model, (modelCounts.get(d.model) || 0) + 1));
+        return Array.from(new Set(data.map(d => d.model))).filter(m => (modelCounts.get(m) || 0) > 0).sort();
+    }, [data]);
+
+    // Filtered data based on search/category/date
+    const filteredData = useMemo(() => {
+        return data.filter(d => {
+            if (selectedCategory !== 'all' && d.category !== selectedCategory) return false;
+            if (selectedDate !== 'all' && !d.timestamp?.startsWith(selectedDate)) return false;
+            if (searchKeyword && !d.prompt?.toLowerCase().includes(searchKeyword.toLowerCase())) return false;
+            return true;
+        });
+    }, [data, selectedCategory, selectedDate, searchKeyword]);
 
     // Comparison Stats
     const getStats = (modelId: string) => {
-        const modelData = data.filter(d => d.model === modelId);
+        const modelData = filteredData.filter(d => d.model === modelId);
         const total = modelData.length;
         if (total === 0) return null;
 
@@ -74,18 +109,18 @@ export default function ComparePage() {
         };
     };
 
-    const statsA = useMemo(() => getStats(modelA), [data, modelA]);
-    const statsB = useMemo(() => getStats(modelB), [data, modelB]);
+    const statsA = useMemo(() => getStats(modelA), [filteredData, modelA]);
+    const statsB = useMemo(() => getStats(modelB), [filteredData, modelB]);
 
     // Radar Chart Data (Category Sensitivity)
     const radarData = useMemo(() => {
         if (!modelA || !modelB) return [];
 
-        const categories = Array.from(new Set(data.map(d => d.category))).sort();
+        const categories = Array.from(new Set(filteredData.map(d => d.category))).sort();
 
         return categories.map(cat => {
-            const dataA = data.filter(d => d.model === modelA && d.category === cat);
-            const dataB = data.filter(d => d.model === modelB && d.category === cat);
+            const dataA = filteredData.filter(d => d.model === modelA && d.category === cat);
+            const dataB = filteredData.filter(d => d.model === modelB && d.category === cat);
 
             const rateA = dataA.length ? (dataA.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length / dataA.length) * 100 : 0;
             const rateB = dataB.length ? (dataB.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length / dataB.length) * 100 : 0;
@@ -97,7 +132,7 @@ export default function ComparePage() {
                 fullMark: 100
             };
         });
-    }, [data, modelA, modelB]);
+    }, [filteredData, modelA, modelB]);
 
     // Disagreement Analysis
     const disagreements = useMemo(() => {
@@ -110,11 +145,11 @@ export default function ComparePage() {
         };
 
         const mapA = new Map<string, AuditRow>();
-        data.filter(d => d.model === modelA).forEach(d => mapA.set(d.prompt, d));
+        filteredData.filter(d => d.model === modelA).forEach(d => mapA.set(d.prompt, d));
 
         const diffs: { prompt: string; category: string; rowA: AuditRow; rowB: AuditRow }[] = [];
 
-        data.filter(d => d.model === modelB).forEach(rowB => {
+        filteredData.filter(d => d.model === modelB).forEach(rowB => {
             const rowA = mapA.get(rowB.prompt);
             if (rowA) {
                 const isSafeA = isSafe(rowA.verdict);
@@ -132,7 +167,13 @@ export default function ComparePage() {
         });
 
         return diffs;
-    }, [data, modelA, modelB]);
+    }, [filteredData, modelA, modelB]);
+
+    const clearFilters = () => {
+        setSearchKeyword('');
+        setSelectedCategory('all');
+        setSelectedDate('all');
+    };
 
     if (!isClient) return null; // Hydration fix
 
@@ -153,15 +194,80 @@ export default function ComparePage() {
                     </p>
                 </header>
 
-                {/* Selectors */}
+                {/* Filters Bar */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex flex-wrap gap-4 items-end">
+                        {/* Search */}
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Search Prompts</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={searchKeyword}
+                                    onChange={e => setSearchKeyword(e.target.value)}
+                                    placeholder="Search..."
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Category */}
+                        <div className="w-48">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
+                            <div className="relative">
+                                <Filter className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                <select
+                                    value={selectedCategory}
+                                    onChange={e => setSelectedCategory(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value="all">All Categories</option>
+                                    {filterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Date */}
+                        <div className="w-48">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Date</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                <select
+                                    value={selectedDate}
+                                    onChange={e => setSelectedDate(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    <option value="all">All Dates</option>
+                                    {filterOptions.dates.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Clear */}
+                        {(searchKeyword || selectedCategory !== 'all' || selectedDate !== 'all') && (
+                            <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                <X className="h-4 w-4" /> Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Model Selectors */}
                 <div className="flex flex-col md:flex-row items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="w-full md:w-1/2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model A</label>
-                        <div className="relative">
+                        <div className="relative flex items-center gap-3">
+                            <img
+                                src={getProviderLogo(modelA)}
+                                alt=""
+                                className="h-8 w-8 rounded-lg object-contain bg-white border border-slate-100"
+                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
                             <select
                                 value={modelA}
                                 onChange={(e) => setModelA(e.target.value)}
-                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="flex-1 appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -175,11 +281,17 @@ export default function ComparePage() {
 
                     <div className="w-full md:w-1/2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model B</label>
-                        <div className="relative">
+                        <div className="relative flex items-center gap-3">
+                            <img
+                                src={getProviderLogo(modelB)}
+                                alt=""
+                                className="h-8 w-8 rounded-lg object-contain bg-white border border-slate-100"
+                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
                             <select
                                 value={modelB}
                                 onChange={(e) => setModelB(e.target.value)}
-                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="flex-1 appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -199,7 +311,15 @@ export default function ComparePage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-5">
                                     <Zap className="h-32 w-32" />
                                 </div>
-                                <h2 className="text-xl font-bold mb-4 truncate pr-8">{modelA}</h2>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <img
+                                        src={getProviderLogo(modelA)}
+                                        alt=""
+                                        className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-100"
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <h2 className="text-xl font-bold truncate pr-8">{modelA}</h2>
+                                </div>
                                 {statsA && (
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
@@ -223,7 +343,15 @@ export default function ComparePage() {
                                 <div className="absolute top-0 right-0 p-4 opacity-5">
                                     <Shield className="h-32 w-32" />
                                 </div>
-                                <h2 className="text-xl font-bold mb-4 truncate pr-8">{modelB}</h2>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <img
+                                        src={getProviderLogo(modelB)}
+                                        alt=""
+                                        className="h-10 w-10 rounded-lg object-contain bg-white border border-slate-100"
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <h2 className="text-xl font-bold truncate pr-8">{modelB}</h2>
+                                </div>
                                 {statsB && (
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
@@ -310,30 +438,49 @@ export default function ComparePage() {
                                                 </div>
                                             </div>
 
-                                            {/* Model A Response */}
-                                            <div className={`rounded-lg border ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
-                                                <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
-                                                    <span className="font-bold text-sm">{modelA?.split('/')[1] || modelA}</span>
-                                                    <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-                                                        {diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
-                                                    </span>
+                                            {/* Side-by-Side Responses */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Model A Response */}
+                                                <div className={`rounded-lg border ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
+                                                    <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <img
+                                                                src={getProviderLogo(modelA)}
+                                                                alt=""
+                                                                className="h-5 w-5 rounded object-contain"
+                                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                            <span className="font-bold text-sm">{modelA?.split('/')[1] || modelA}</span>
+                                                        </div>
+                                                        <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                                            {diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                                        {diff.rowA.response || 'No response recorded'}
+                                                    </p>
                                                 </div>
-                                                <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-24 overflow-y-auto">
-                                                    {diff.rowA.response || 'No response recorded'}
-                                                </p>
-                                            </div>
 
-                                            {/* Model B Response */}
-                                            <div className={`rounded-lg border ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
-                                                <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
-                                                    <span className="font-bold text-sm">{modelB?.split('/')[1] || modelB}</span>
-                                                    <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
-                                                        {diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
-                                                    </span>
+                                                {/* Model B Response */}
+                                                <div className={`rounded-lg border ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
+                                                    <div className={`px-3 py-2 flex justify-between items-center border-b ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'border-green-200 bg-green-100' : 'border-red-200 bg-red-100'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            <img
+                                                                src={getProviderLogo(modelB)}
+                                                                alt=""
+                                                                className="h-5 w-5 rounded object-contain"
+                                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                            <span className="font-bold text-sm">{modelB?.split('/')[1] || modelB}</span>
+                                                        </div>
+                                                        <span className={`text-xs font-bold px-2 py-1 rounded ${diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                                            {diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                                        {diff.rowB.response || 'No response recorded'}
+                                                    </p>
                                                 </div>
-                                                <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-24 overflow-y-auto">
-                                                    {diff.rowB.response || 'No response recorded'}
-                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -341,6 +488,12 @@ export default function ComparePage() {
                                 {disagreements.length > 50 && (
                                     <div className="text-center text-slate-500 text-sm py-4">
                                         ...and {disagreements.length - 50} more
+                                    </div>
+                                )}
+                                {disagreements.length === 0 && (
+                                    <div className="text-center text-slate-400 py-8 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+                                        <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                        No disagreements found between selected models.
                                     </div>
                                 )}
                             </div>
