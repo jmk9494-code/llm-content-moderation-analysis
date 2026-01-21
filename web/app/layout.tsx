@@ -4,6 +4,9 @@ import "./globals.css";
 import { NavBar } from "@/components/ui/NavBar";
 import { Footer } from "@/components/ui/Footer";
 import SkipLink from "@/components/SkipLink";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
+import { CommandPalette } from "@/components/ui/CommandPalette";
 
 
 const geistSans = Geist({
@@ -27,16 +30,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white text-slate-900 transition-colors duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300`}
       >
-        <SkipLink />
-        <NavBar />
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <ThemeProvider>
+          <ToastProvider>
+            <CommandPalette />
+            <SkipLink />
+            <NavBar />
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
