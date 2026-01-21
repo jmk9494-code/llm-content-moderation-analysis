@@ -1,0 +1,101 @@
+name: Audit (Expensive Tier)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 1 1,7 *' # Jan 1 and July 1 at 04:00 UTC
+
+concurrency:
+  group: expensive-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240 
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        env:
+          OPENROUTER_API_KEY: "mock_key_for_ci"
+        run: |
+          python -m pytest -W ignore::DeprecationWarning
+
+      - name: Run Model Collection (High Tier)
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
+        run: |
+          # Use --preset high for expensive run
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          DELAY=30
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "=== Attempt $ATTEMPT of $MAX_ATTEMPTS ==="
+            
+            if python src/audit_runner.py --preset high --resolve-latest; then
+              echo "✅ Model collection completed successfully"
+              exit 0
+            else
+              echo "❌ Attempt $ATTEMPT failed"
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                sleep $DELAY
+                DELAY=$((DELAY * 2))
+              fi
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+          exit 1
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git stash push -m "New analysis data" --include-untracked
+          git pull --rebase origin main
+          git stash pop || echo "Warning: Stash pop reported conflicts."
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-update: High Tier Audit for $(date +%Y-%m-%d)"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p web/public/data
+          cp audit_log.csv web/public/
+          cp audit.db web/audit.db
+          if [ -f "data/latest_report.md" ]; then
+            cp data/latest_report.md web/public/
+          fi
+          npx vercel deploy --prod --token=$VERCEL_TOKEN --yes
