@@ -61,7 +61,7 @@ export default function PriceChart({ data }: { data: PriceData[] }) {
                         name="Total Cost"
                         radius={[0, 4, 4, 0]}
                         cursor="pointer"
-                        onClick={(data) => handleClick(data)}
+                        onClick={(data) => data?.payload && handleClick(data.payload as PriceData)}
                     >
                         {sortedData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#6366f1'} />
