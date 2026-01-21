@@ -1,0 +1,10 @@
+
+node_modules
+.next
+.git
+__pycache__
+*.pyc
+.env
+.DS_Store
+audit_log.csv
+human_grades.csv

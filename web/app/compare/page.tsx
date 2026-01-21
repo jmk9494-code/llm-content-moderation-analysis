@@ -238,118 +238,152 @@ export default function ComparePage() {
                 </div>
             </div>
 
-            {/* Comparison Radar */}
-            <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="text-lg font-semibold mb-6">Side-by-Side Censorship Profile</h3>
-                <div className="h-96 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                            <PolarGrid />
-                            <PolarAngleAxis dataKey="subject" />
-                            <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                            <Radar name={metaA?.name} dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
-                            <Radar name={metaB?.name} dataKey="B" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                            <Legend />
-                            <Tooltip />
-                        </RadarChart>
-                    </ResponsiveContainer>
+        </div>
+            </div >
+
+        {/* Disagreement Rate Card */ }
+    {
+        statsA && statsB && (() => {
+            const promptsA = new Set(statsA.subset.map(r => r.prompt_text));
+            const overlapCount = statsB.subset.filter(r => promptsA.has(r.prompt_text)).length;
+            if (overlapCount === 0) return null;
+            const rate = (divergences.length / overlapCount) * 100;
+
+            return (
+                <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 rounded-2xl shadow-lg border border-slate-700 text-white flex items-center justify-between relative overflow-hidden mb-8">
+                    <div className="relative z-10">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                            <ArrowLeftRight className="h-5 w-5 text-indigo-400" />
+                            Model Disagreement Rate
+                        </h3>
+                        <p className="text-slate-400 text-sm mt-1 max-w-xl">
+                            The frequency at which these two models return <strong>contradictory verdicts</strong> for the exact same prompt ({rate.toFixed(1)}%).
+                        </p>
+                    </div>
+                    <div className="relative z-10 text-right">
+                        <div className="text-4xl font-extrabold text-indigo-300">{rate.toFixed(1)}%</div>
+                        <div className="text-xs text-slate-500 font-mono uppercase tracking-wider">{divergences.length} / {overlapCount} prompts</div>
+                    </div>
+                    <div className="absolute -right-10 -bottom-10 h-32 w-32 bg-indigo-500 opacity-10 rounded-full blur-3xl"></div>
                 </div>
-            </section>
+            );
+        })()
+    }
 
-            {/* Divergences / Diff Viewer */}
-            <section>
-                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <Minimize2 className="h-6 w-6 text-slate-400" />
-                    Disagreement Analysis ({divergences.length})
-                </h3>
-                <p className="text-slate-500 mb-6">
-                    Showing instances where one model refused while the other allowed (and vice versa).
-                </p>
+    {/* Comparison Radar */ }
+    <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 className="text-lg font-semibold mb-6">Side-by-Side Censorship Profile</h3>
+        <div className="h-96 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="subject" />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                    <Radar name={metaA?.name} dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+                    <Radar name={metaB?.name} dataKey="B" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                    <Legend />
+                    <Tooltip />
+                </RadarChart>
+            </ResponsiveContainer>
+        </div>
+    </section>
 
-                <div className="space-y-4">
-                    {divergences.slice(0, 50).map((d, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
-                        >
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{d.category}</span>
-                                <span className="text-xs text-indigo-600 opacity-0 group-hover:opacity-100 font-semibold transition-opacity">View Details →</span>
-                            </div>
-                            <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
-                                {d.prompt}
-                            </div>
+    {/* Divergences / Diff Viewer */ }
+    <section>
+        <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <Minimize2 className="h-6 w-6 text-slate-400" />
+            Disagreement Analysis ({divergences.length})
+        </h3>
+        <p className="text-slate-500 mb-6">
+            Showing instances where one model refused while the other allowed (and vice versa).
+        </p>
 
-                            <div className="flex items-center gap-4">
-                                <div className={cn("flex-1 p-2 rounded text-center text-xs font-bold border", d.verdictA === 'REMOVED' ? "bg-red-50 border-red-100 text-red-700" : "bg-emerald-50 border-emerald-100 text-emerald-700")}>
-                                    {metaA?.name}: {d.verdictA}
-                                </div>
-                                <div className="text-slate-300">vs</div>
-                                <div className={cn("flex-1 p-2 rounded text-center text-xs font-bold border", d.verdictB === 'REMOVED' ? "bg-red-50 border-red-100 text-red-700" : "bg-emerald-50 border-emerald-100 text-emerald-700")}>
-                                    {metaB?.name}: {d.verdictB}
-                                </div>
-                            </div>
+        <div className="space-y-4">
+            {divergences.slice(0, 50).map((d, idx) => (
+                <div
+                    key={idx}
+                    className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
+                >
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{d.category}</span>
+                        <span className="text-xs text-indigo-600 opacity-0 group-hover:opacity-100 font-semibold transition-opacity">View Details →</span>
+                    </div>
+                    <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
+                        {d.prompt}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className={cn("flex-1 p-2 rounded text-center text-xs font-bold border", d.verdictA === 'REMOVED' ? "bg-red-50 border-red-100 text-red-700" : "bg-emerald-50 border-emerald-100 text-emerald-700")}>
+                            {metaA?.name}: {d.verdictA}
                         </div>
-                    ))}
-                    {divergences.length === 0 && (
-                        <div className="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 border-dashed">
-                            No disagreements found! These models behaved identically on the loaded dataset.
+                        <div className="text-slate-300">vs</div>
+                        <div className={cn("flex-1 p-2 rounded text-center text-xs font-bold border", d.verdictB === 'REMOVED' ? "bg-red-50 border-red-100 text-red-700" : "bg-emerald-50 border-emerald-100 text-emerald-700")}>
+                            {metaB?.name}: {d.verdictB}
                         </div>
-                    )}
+                    </div>
                 </div>
-            </section>
+            ))}
+            {divergences.length === 0 && (
+                <div className="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 border-dashed">
+                    No disagreements found! These models behaved identically on the loaded dataset.
+                </div>
+            )}
+        </div>
+    </section>
 
-            {/* Modal */}
-            {selectedDivergence && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={() => setSelectedDivergence(null)}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">Disagreement Detail</h3>
-                                <p className="text-sm text-slate-500">{selectedDivergence.category}</p>
+    {/* Modal */ }
+    {
+        selectedDivergence && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm" onClick={() => setSelectedDivergence(null)}>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-900">Disagreement Detail</h3>
+                            <p className="text-sm text-slate-500">{selectedDivergence.category}</p>
+                        </div>
+                        <button onClick={() => setSelectedDivergence(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                            <XIcon className="h-5 w-5 text-slate-500" />
+                        </button>
+                    </div>
+
+                    <div className="p-6 overflow-y-auto">
+                        <div className="mb-8">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">User Prompt</h4>
+                            <div className="bg-slate-100 p-4 rounded-xl text-slate-800 font-mono text-sm whitespace-pre-wrap border border-slate-200">
+                                {selectedDivergence.prompt}
                             </div>
-                            <button onClick={() => setSelectedDivergence(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-                                <XIcon className="h-5 w-5 text-slate-500" />
-                            </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-                            <div className="mb-8">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">User Prompt</h4>
-                                <div className="bg-slate-100 p-4 rounded-xl text-slate-800 font-mono text-sm whitespace-pre-wrap border border-slate-200">
-                                    {selectedDivergence.prompt}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-slate-900">{metaA?.name}</span>
+                                    <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictA === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                                        {selectedDivergence.verdictA}
+                                    </span>
+                                </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
+                                    {selectedDivergence.responseA || <span className="italic text-slate-400">No response text available.</span>}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-900">{metaA?.name}</span>
-                                        <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictA === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-                                            {selectedDivergence.verdictA}
-                                        </span>
-                                    </div>
-                                    <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
-                                        {selectedDivergence.responseA || <span className="italic text-slate-400">No response text available.</span>}
-                                    </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-slate-900">{metaB?.name}</span>
+                                    <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictB === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
+                                        {selectedDivergence.verdictB}
+                                    </span>
                                 </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-900">{metaB?.name}</span>
-                                        <span className={cn("text-xs font-bold px-2 py-1 rounded", selectedDivergence.verdictB === 'REMOVED' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")}>
-                                            {selectedDivergence.verdictB}
-                                        </span>
-                                    </div>
-                                    <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
-                                        {selectedDivergence.responseB || <span className="italic text-slate-400">No response text available.</span>}
-                                    </div>
+                                <div className="p-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 leading-relaxed h-[300px] overflow-y-auto">
+                                    {selectedDivergence.responseB || <span className="italic text-slate-400">No response text available.</span>}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
-        </main>
+            </div>
+        )
+    }
+        </main >
     );
 }

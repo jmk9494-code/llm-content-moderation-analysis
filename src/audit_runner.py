@@ -210,9 +210,37 @@ def parse_response(response_text):
         logger.debug(f"JSON Parse Error: {response_text[:100]}...")
         return "ERROR"
 
-async def process_prompt(sem, p, model_name):
+def check_cache(model_id, prompt_id, force=False):
+    """
+    Checks if a valid audit result exists in the last 7 days.
+    Returns the result object if found, else None.
+    """
+    if force: return None
+    
+    session = Session()
+    try:
+        seven_days_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+        cached = session.query(AuditResult).filter(
+            AuditResult.model_id == model_id,
+            AuditResult.prompt_id == prompt_id,
+            AuditResult.timestamp >= seven_days_ago
+        ).order_by(AuditResult.timestamp.desc()).first()
+        return cached
+    except Exception as e:
+        logger.error(f"Cache check failed: {e}")
+        return None
+    finally:
+        session.close()
+
+async def process_prompt(sem, p, model_name, force_rerun=False):
     """Wrapper to handle semaphore and strict processing for a single prompt."""
     async with sem:
+        # 1. OPTIMIZATION: Check Cache
+        cached = check_cache(model_name, p['id'], force=force_rerun)
+        if cached:
+            logger.info(f"[{model_name}] Cache Hit for {p['id']} (skipped cost)")
+            return
+            
         logger.info(f"[{model_name}] Testing {p['id']}...")
         try:
             content, usage = await call_target_model_async(model_name, p['text'])
@@ -228,16 +256,16 @@ async def process_prompt(sem, p, model_name):
             try:
                 session = Session()
                 # Ensure Prompt Exists
-                if not session.get(Prompt, p['id']):
-                    session.add(Prompt(id=p['id'], category=p['category'], text=p['text']))
-                    
-                # Ensure Model Exists
-                if not session.get(ModelRegistry, model_name):
-                    session.add(ModelRegistry(id=model_name, family=model_name.split('/')[0]))
-                    
-                # Save Result
-                db_result = AuditResult(
-                    run_id=p.get('run_id'),
+                if not session.query(Prompt).get(p['id']):
+                    session.merge(Prompt(id=p['id'], category=p['category'], text=p['text']))
+                
+                # Check for Model (add if missing)
+                if not session.query(ModelRegistry).get(model_name):
+                    fam = model_name.split('/')[0] if '/' in model_name else 'unknown'
+                    session.merge(ModelRegistry(id=model_name, family=fam))
+
+                result = AuditResult(
+                    run_id=str(uuid.uuid4()),
                     timestamp=datetime.datetime.now(),
                     model_id=model_name,
                     prompt_id=p['id'],
@@ -247,27 +275,16 @@ async def process_prompt(sem, p, model_name):
                     prompt_tokens=p_tokens,
                     completion_tokens=c_tokens
                 )
-                session.add(db_result)
+                session.add(result)
                 session.commit()
-                session.close()
             except Exception as e:
-                logger.error(f"DB Error: {e}")
-            # --- End DB Save ---
+                logger.error(f"DB Save Error: {e}")
+                session.rollback()
+            finally:
+                session.close() # Ensure session is closed!
 
-            return {
-                'test_date': time.strftime("%Y-%m-%d"),
-                'model': model_name,
-                "prompt_id": p['id'],
-                "category": p['category'],
-                "verdict": verdict,
-                "prompt_text": p['text'],
-                "response_text": content,
-                'prompt_tokens': p_tokens,
-                'completion_tokens': c_tokens,
-                'total_tokens': t_tokens,
-                'run_cost': run_cost
-            }
         except Exception as e:
+            logger.error(f"Failed to process {p['id']} on {model_name}: {e}")
             # Classify API Errors as BLOCKED if they are content filters
             error_msg = str(e).lower()
             verdict = "ERROR"
@@ -283,7 +300,7 @@ async def process_prompt(sem, p, model_name):
             try:
                 session = Session()
                 db_result = AuditResult(
-                    run_id=p.get('run_id'),
+                    run_id=str(uuid.uuid4()),
                     timestamp=datetime.datetime.now(),
                     model_id=model_name,
                     prompt_id=p['id'],
@@ -295,24 +312,20 @@ async def process_prompt(sem, p, model_name):
                 )
                 session.add(db_result)
                 session.commit()
+            except Exception as db_err:
+                logger.error(f"DB Save Error (on failure): {db_err}")
+                session.rollback()
+            finally:
                 session.close()
-            except:
-                pass
             # --- End DB Save Error ---
 
-            return {
-                'test_date': time.strftime("%Y-%m-%d"),
-                'model': model_name,
-                "prompt_id": p['id'],
-                "category": p['category'],
-                "verdict": verdict,
-                "prompt_text": p['text'],
-                "response_text": f"SYSTEM ERROR: {e}",
-                'prompt_tokens': 0,
-                'completion_tokens': 0,
-                'total_tokens': 0,
-                'run_cost': 0
-            }
+async def run_audit_for_model(model_name, prompts, force_rerun=False):
+    """Runs the audit for a single model against a list of prompts."""
+    # Slower semaphore to avoid Rate Limits
+    sem = asyncio.Semaphore(2) 
+    
+    tasks = [process_prompt(sem, p, model_name, force_rerun) for p in prompts]
+    await asyncio.gather(*tasks)
 
 async def run_audit_async(prompts, model_names, output_file):
     """Main async runner for multiple models."""
@@ -363,11 +376,13 @@ def export_metadata(output_path="web/public/models.json"):
 
 # --- Loaders and Entry Point ---
 
-def load_prompts(file_path):
+def load_prompts(file_path, limit=None):
     prompts = []
     with open(file_path, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        for row in reader:
+        for i, row in enumerate(reader):
+            if limit and i >= limit:
+                break
             p_id = row.get('Prompt_ID') or row.get('id')
             cat = row.get('Category') or row.get('category')
             text = row.get('Prompt_Text') or row.get('text')
@@ -375,13 +390,15 @@ def load_prompts(file_path):
                 prompts.append({'id': p_id, 'category': cat, 'text': text})
     return prompts
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(description="LLM Content Moderation Auditor (Async/JSON)")
     parser.add_argument("--model", type=str, help="Target model name or comma-separated list")
     parser.add_argument("--preset", type=str, choices=list(PRESETS.keys()), help="Use a predefined model set (e.g., 'efficiency')")
     parser.add_argument("--resolve-latest", action="store_true", help="Auto-detect and use the latest models for the selected preset")
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
+    parser.add_argument("--limit", type=int, help="Limit number of prompts to process")
+    parser.add_argument("--force", action="store_true", help="Force re-run (ignore cache)")
     
     # Methodology Enhancement Flags
     parser.add_argument("--consistency", type=int, default=1, metavar="N", 

@@ -1,0 +1,28 @@
+
+version: '3.8'
+
+services:
+  # Python Backend / Analyst
+  analyst:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    command: tail -f /dev/null # Keep alive for manual execution
+    # Or use: python src/audit_runner.py --limit 10
+
+  # Next.js Dashboard
+  dashboard:
+    image: node:18-alpine
+    working_dir: /app/web
+    volumes:
+      - ./web:/app/web
+      - ./data:/app/data
+      - ./audit.db:/app/audit.db # Share DB
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
+    command: sh -c "npm install && npm run dev"
+

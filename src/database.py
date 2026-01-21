@@ -44,6 +44,10 @@ class AuditResult(Base):
     cost = Column(Float, default=0.0)
     prompt_tokens = Column(Integer, default=0)
     completion_tokens = Column(Integer, default=0)
+
+    # Human Grading
+    human_verdict = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
     
     # Relationships
     model = relationship("ModelRegistry", back_populates="results")

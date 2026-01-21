@@ -1,0 +1,23 @@
+
+services:
+  # Python Backend / Worker
+  - type: worker
+    name: audit-worker
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python src/audit_runner.py --limit 100"
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+  # Next.js Frontend
+  - type: web
+    name: moderation-dashboard
+    env: node
+    buildCommand: "cd web && npm install && npm run build"
+    startCommand: "cd web && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: /api
