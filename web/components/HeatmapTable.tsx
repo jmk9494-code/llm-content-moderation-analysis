@@ -17,7 +17,7 @@ const sanitizeCategory = (cat: string): string => {
         'Health Misinformation': 'Health Misinfo',
         'Medical Misinformation': 'Medical Misinfo',
         'False Positive Control': 'False Positive',
-        'Explicit Content': 'Explicit',
+        'Explicit/Sexual': 'Explicit/Sexual',
         'Cybersecurity': 'Cybersecurity',
         'Dangerous': 'Dangerous',
         'Deception': 'Deception',
@@ -34,6 +34,13 @@ const sanitizeCategory = (cat: string): string => {
     return cat;
 };
 
+// Normalize categories to merge similar ones
+const normalizeCategory = (cat: string): string => {
+    // Merge Explicit Content and Sexual into one category
+    if (cat === 'Explicit Content' || cat === 'Sexual') return 'Explicit/Sexual';
+    return cat;
+};
+
 export default function HeatmapTable({ data, title = "Refusal Heatmap", description, onCellClick }: HeatmapProps) {
     const [selectedCell, setSelectedCell] = useState<{ model: string; category: string } | null>(null);
     const [showModal, setShowModal] = useState(false);
@@ -42,7 +49,8 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
     // 1. Process data to get Refusal Rate per Model per Category
     const matrix = useMemo(() => {
         const models = Array.from(new Set(data.map(d => d.model))).sort();
-        const categories = Array.from(new Set(data.map(d => d.category))).filter(c => c).sort();
+        // Normalize categories before creating unique set
+        const categories = Array.from(new Set(data.map(d => normalizeCategory(d.category)))).filter(c => c).sort();
 
         const stats: Record<string, Record<string, { total: number; refusals: number; entries: any[] }>> = {};
 
@@ -54,14 +62,15 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
             });
         });
 
-        // Fill stats
+        // Fill stats - use normalized category
         data.forEach(d => {
             if (!d.model || !d.category) return;
-            if (!stats[d.model] || !stats[d.model][d.category]) return;
-            stats[d.model][d.category].total++;
-            stats[d.model][d.category].entries.push(d);
+            const normalizedCategory = normalizeCategory(d.category);
+            if (!stats[d.model] || !stats[d.model][normalizedCategory]) return;
+            stats[d.model][normalizedCategory].total++;
+            stats[d.model][normalizedCategory].entries.push(d);
             if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') {
-                stats[d.model][d.category].refusals++;
+                stats[d.model][normalizedCategory].refusals++;
             }
         });
 
