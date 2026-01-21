@@ -1,17 +1,94 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 import { ShieldCheck, AlertTriangle, Printer, Loader2 } from 'lucide-react';
 
 type AuditRow = {
+    timestamp: string;
     model: string;
-    verdict: string;
+    case_id: string;
     category: string;
+    verdict: string;
+    prompt: string;
+    response: string;
 };
+
+// Define columns for the DataTable
+const columns: ColumnDef<AuditRow>[] = [
+    {
+        accessorKey: 'timestamp',
+        header: ({ column }) => <SortableHeader column={column} title="Date" />,
+        cell: ({ row }) => new Date(row.getValue('timestamp')).toLocaleDateString(),
+    },
+    {
+        accessorKey: 'model',
+        header: ({ column }) => <SortableHeader column={column} title="Model" />,
+        cell: ({ row }) => {
+            const model = row.getValue('model') as string;
+            return <span className="font-medium">{model?.split('/')[1] || model}</span>;
+        }
+    },
+    {
+        accessorKey: 'category',
+        header: ({ column }) => <SortableHeader column={column} title="Category" />,
+        cell: ({ row }) => (
+            <span className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 rounded-full">
+                {row.getValue('category')}
+            </span>
+        ),
+    },
+    {
+        accessorKey: 'verdict',
+        header: ({ column }) => <SortableHeader column={column} title="Verdict" />,
+        cell: ({ row }) => {
+            const verdict = row.getValue('verdict') as string;
+            const isRefusal = verdict === 'REMOVED' || verdict === 'REFUSAL' || verdict === 'unsafe';
+            return (
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${isRefusal ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    }`}>
+                    {verdict}
+                </span>
+            );
+        },
+    },
+    {
+        accessorKey: 'prompt',
+        header: 'Prompt',
+        cell: ({ row }) => {
+            const prompt = row.getValue('prompt') as string;
+            return (
+                <div className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400" title={prompt}>
+                    {prompt || 'N/A'}
+                </div>
+            );
+        },
+    },
+];
+
+// Expanded row renderer
+function ExpandedRowContent({ row }: { row: AuditRow }) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">Prompt</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
+                    {row.prompt || 'No prompt available'}
+                </p>
+            </div>
+            <div>
+                <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">Response</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
+                    {row.response || 'No response available'}
+                </p>
+            </div>
+        </div>
+    );
+}
 
 export default function ReportPage() {
     const [data, setData] = useState<AuditRow[]>([]);
@@ -34,13 +111,13 @@ export default function ReportPage() {
         if (!data.length) return null;
 
         const total = data.length;
-        const refusals = data.filter(r => r.verdict === 'REFUSAL' || r.verdict === 'REMOVED').length;
+        const refusals = data.filter(r => r.verdict === 'REFUSAL' || r.verdict === 'REMOVED' || r.verdict === 'unsafe').length;
         const refusalRate = (refusals / total) * 100;
-        const safetyScore = Math.max(0, 100 - refusalRate); // Simplistic Score
+        const safetyScore = Math.max(0, 100 - refusalRate);
 
         // Categories
         const catCounts: Record<string, number> = {};
-        data.filter(r => r.verdict === 'REFUSAL' || r.verdict === 'REMOVED').forEach(r => {
+        data.filter(r => r.verdict === 'REFUSAL' || r.verdict === 'REMOVED' || r.verdict === 'unsafe').forEach(r => {
             catCounts[r.category] = (catCounts[r.category] || 0) + 1;
         });
 
@@ -61,13 +138,12 @@ export default function ReportPage() {
     };
 
     return (
-        <main className="min-h-screen bg-white text-slate-900 font-sans p-8 md:p-12 print:p-0">
-            {/* Print Header */}
-            <div className="max-w-4xl mx-auto space-y-8">
+        <main className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans p-8 md:p-12 print:p-0">
+            <div className="max-w-6xl mx-auto space-y-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Action Report</h1>
-                        <p className="text-lg text-slate-500 mt-1">Executive summary and key findings for stakeholders.</p>
+                        <h1 className="text-4xl font-extrabold tracking-tight">Action Report</h1>
+                        <p className="text-lg text-slate-500 mt-1">Executive summary, key findings, and full audit log.</p>
                         <p className="text-sm text-slate-400 mt-4">Generated on {new Date().toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2 print:hidden">
@@ -87,11 +163,11 @@ export default function ReportPage() {
                     </div>
                 </div>
 
-                <hr className="border-slate-200" />
+                <hr className="border-slate-200 dark:border-slate-700" />
 
                 {/* Scorecard */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 print:border-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-2 mb-2">
                             <ShieldCheck className="h-5 w-5 text-slate-400" />
                             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Overall Safety Score</h3>
@@ -101,30 +177,30 @@ export default function ReportPage() {
                         </div>
                     </div>
 
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 print:border-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-2 mb-2">
                             <AlertTriangle className="h-5 w-5 text-slate-400" />
                             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Refusal Rate</h3>
                         </div>
-                        <div className="text-5xl font-extrabold text-slate-700">
+                        <div className="text-5xl font-extrabold text-slate-700 dark:text-slate-200">
                             {stats?.refusalRate.toFixed(1)}%
                         </div>
                         <p className="text-sm text-slate-400 mt-2">{stats?.refusals} flagged out of {stats?.total}</p>
                     </div>
 
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 print:border-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">Assessment Status</h3>
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-600">Audit Coverage</span>
+                                <span className="text-slate-600 dark:text-slate-400">Audit Coverage</span>
                                 <span className="font-bold text-emerald-600">Complete</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-600">Policy Check</span>
+                                <span className="text-slate-600 dark:text-slate-400">Policy Check</span>
                                 <span className="font-bold text-emerald-600">Pass</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-600">Stress Test</span>
+                                <span className="text-slate-600 dark:text-slate-400">Stress Test</span>
                                 <span className="font-bold text-amber-600">Recommended</span>
                             </div>
                         </div>
@@ -132,9 +208,9 @@ export default function ReportPage() {
                 </div>
 
                 {/* Findings */}
-                <section className="mt-12">
+                <section>
                     <h2 className="text-2xl font-bold mb-6">Top Safety Risks</h2>
-                    <div className="h-80 w-full bg-white border border-slate-100 rounded-xl p-4 print:border-slate-300">
+                    <div className="h-80 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl p-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={stats?.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -149,19 +225,28 @@ export default function ReportPage() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    <p className="text-slate-500 text-sm mt-4 italic text-center">
-                        *Chart shows the most frequent categories triggering safety refusals across all tested models.
-                    </p>
                 </section>
 
-                <div className="mt-12 p-6 bg-indigo-50 rounded-xl border border-indigo-100 print:bg-white print:border-slate-200">
-                    <h3 className="font-bold text-indigo-900 mb-2">Executive Summary</h3>
-                    <p className="text-indigo-800 text-sm leading-relaxed">
+                <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                    <h3 className="font-bold text-indigo-900 dark:text-indigo-200 mb-2">Executive Summary</h3>
+                    <p className="text-indigo-800 dark:text-indigo-300 text-sm leading-relaxed">
                         The current model suite demonstrates a <span className="font-bold">{stats?.safetyScore.toFixed(0)}/100</span> safety posture.
                         The primary risk vectors identified are {stats?.topCategories.slice(0, 2).map(c => c.name).join(' and ')}.
                         We recommend focused policy tuning on these categories to improve compliance without degrading helpfulness.
                     </p>
                 </div>
+
+                {/* Audit Log Section */}
+                <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
+                    <h2 className="text-2xl font-bold mb-6">Audit Log</h2>
+                    <DataTable
+                        columns={columns}
+                        data={data}
+                        searchKey="prompt"
+                        renderExpanded={(row) => <ExpandedRowContent row={row} />}
+                        exportFilename="audit_log"
+                    />
+                </section>
             </div>
 
             {/* Print Footer */}

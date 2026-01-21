@@ -29,9 +29,15 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
 
         const results: Insight[] = [];
 
+        // Helper to check if verdict is "safe" (not refused)
+        const isSafe = (verdict: string) => {
+            const v = verdict?.toUpperCase();
+            return v !== 'REMOVED' && v !== 'REFUSAL' && v !== 'UNSAFE';
+        };
+
         // Calculate overall pass rate
-        const safeCount = data.filter(d => d.verdict === 'safe').length;
-        const unsafeCount = data.filter(d => d.verdict === 'unsafe').length;
+        const safeCount = data.filter(d => isSafe(d.verdict)).length;
+        const unsafeCount = data.filter(d => !isSafe(d.verdict)).length;
         const passRate = data.length > 0 ? (safeCount / data.length * 100) : 0;
 
         // 1. Overall status insight
@@ -57,7 +63,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             const model = d.model?.split('/')[1] || d.model || 'Unknown';
             if (!modelStats[model]) modelStats[model] = { safe: 0, total: 0 };
             modelStats[model].total++;
-            if (d.verdict === 'safe') modelStats[model].safe++;
+            if (isSafe(d.verdict)) modelStats[model].safe++;
         });
 
         const modelRates = Object.entries(modelStats)
@@ -96,7 +102,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             const cat = d.category || 'unknown';
             if (!categoryStats[cat]) categoryStats[cat] = { safe: 0, total: 0 };
             categoryStats[cat].total++;
-            if (d.verdict === 'safe') categoryStats[cat].safe++;
+            if (isSafe(d.verdict)) categoryStats[cat].safe++;
         });
 
         const problemCategories = Object.entries(categoryStats)

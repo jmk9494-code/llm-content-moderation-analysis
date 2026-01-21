@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { ActivityFeed } from '@/components/ui/ActivityFeed';
 import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Filter, LayoutGrid, List, CheckCircle, Zap } from 'lucide-react';
+import { Activity, Filter, CheckCircle, Zap } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
 
@@ -26,126 +24,11 @@ export type AuditRow = {
 };
 
 type FilterType = 'all' | 'safe' | 'unsafe' | 'recent';
-type ViewMode = 'table' | 'cards';
-
-// Define columns for the DataTable (removed cost and token columns)
-const columns: ColumnDef<AuditRow>[] = [
-  {
-    accessorKey: 'timestamp',
-    header: ({ column }) => <SortableHeader column={column} title="Date" />,
-    cell: ({ row }) => new Date(row.getValue('timestamp')).toLocaleDateString(),
-  },
-  {
-    accessorKey: 'model',
-    header: ({ column }) => <SortableHeader column={column} title="Model" />,
-    cell: ({ row }) => {
-      const model = row.getValue('model') as string;
-      return <span className="font-medium">{model?.split('/')[1] || model}</span>;
-    }
-  },
-  {
-    accessorKey: 'category',
-    header: ({ column }) => <SortableHeader column={column} title="Category" />,
-    cell: ({ row }) => (
-      <span className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 rounded-full">
-        {row.getValue('category')}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'verdict',
-    header: ({ column }) => <SortableHeader column={column} title="Verdict" />,
-    cell: ({ row }) => {
-      const verdict = row.getValue('verdict') as string;
-      const styles = {
-        safe: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-        unsafe: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-        default: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-      };
-      const style = styles[verdict as keyof typeof styles] || styles.default;
-      return <span className={`px-2 py-1 text-xs font-medium rounded-full ${style}`}>{verdict}</span>;
-    },
-  },
-  {
-    accessorKey: 'prompt',
-    header: 'Prompt',
-    cell: ({ row }) => {
-      const prompt = row.getValue('prompt') as string;
-      return (
-        <div className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400" title={prompt}>
-          {prompt || 'N/A'}
-        </div>
-      );
-    },
-  },
-];
-
-// Expanded row renderer
-function ExpandedRowContent({ row }: { row: AuditRow }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-          Prompt
-        </h4>
-        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
-          {row.prompt || 'No prompt available'}
-        </p>
-      </div>
-      <div>
-        <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          Response
-        </h4>
-        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
-          {row.response || 'No response available'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Card view for mobile
-function AuditCard({ row }: { row: AuditRow }) {
-  const verdictStyle = {
-    safe: 'border-l-green-500 bg-green-50/50 dark:bg-green-900/10',
-    unsafe: 'border-l-red-500 bg-red-50/50 dark:bg-red-900/10',
-    default: 'border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10'
-  };
-  const style = verdictStyle[row.verdict as keyof typeof verdictStyle] || verdictStyle.default;
-
-  return (
-    <div className={`p-4 rounded-lg border-l-4 border border-slate-200 dark:border-slate-700 ${style}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-medium text-slate-900 dark:text-white">
-          {row.model?.split('/')[1] || row.model}
-        </span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {new Date(row.timestamp).toLocaleDateString()}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${row.verdict === 'safe' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-          row.verdict === 'unsafe' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-          }`}>
-          {row.verdict}
-        </span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">{row.category}</span>
-      </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-        {row.prompt || 'N/A'}
-      </p>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -204,22 +87,6 @@ export default function DashboardPage() {
                 Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                aria-label="Table view"
-              >
-                <List className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`p-2 rounded-lg ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                aria-label="Card view"
-              >
-                <LayoutGrid className="h-5 w-5" />
-              </button>
-            </div>
           </div>
         </header>
 
@@ -234,23 +101,20 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Single Stat Card */}
+            {/* Single Stat Card with Tooltip */}
             <StatCardGrid>
               <StatCard
                 title="Total Audits"
                 value={stats.totalAudits.toLocaleString()}
                 icon={<Activity className="h-5 w-5 text-indigo-600" />}
-                description={`${stats.uniqueModels} models tested`}
+                description={
+                  <span title="Safe = Model provided helpful response. Unsafe/Removed = Model refused or flagged content. Higher refusal rates may indicate over-censorship.">
+                    {stats.uniqueModels} models tested ⓘ
+                  </span>
+                }
                 delay={0}
               />
             </StatCardGrid>
-
-            {/* What This Means - Inline info (not a card) */}
-            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-indigo-500">
-              <strong className="text-emerald-600">Safe</strong> = Model provided helpful response.
-              <strong className="text-red-600 ml-4">Unsafe/Removed</strong> = Model refused or flagged content.
-              <span className="block mt-2 text-slate-500">Higher refusal rates may indicate over-censorship. Lower rates might mean the model is more permissive.</span>
-            </div>
 
             {/* AI Insights */}
             <InsightsSummary data={data} />
@@ -292,27 +156,6 @@ export default function DashboardPage() {
                     description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                   />
                 )}
-
-                {/* Table/Cards Section */}
-                <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 md:p-6">
-                  <h2 className="text-lg font-semibold mb-4">Audit Log</h2>
-
-                  {viewMode === 'table' ? (
-                    <DataTable
-                      columns={columns}
-                      data={filteredData}
-                      searchKey="prompt"
-                      renderExpanded={(row) => <ExpandedRowContent row={row} />}
-                      exportFilename="audit_log"
-                    />
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto">
-                      {filteredData.slice(0, 50).map((row, idx) => (
-                        <AuditCard key={idx} row={row} />
-                      ))}
-                    </div>
-                  )}
-                </section>
               </div>
 
               {/* Activity Feed - Sidebar */}
