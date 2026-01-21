@@ -350,7 +350,6 @@ export default function ComparePage() {
                     </div>
                 </div>
             )}
-        </div>
-        </main >
+        </main>
     );
 }
