@@ -183,11 +183,11 @@ export default function DashboardPage() {
               />
               <StatCard
                 title="Data Freshness"
-                value={stats.hoursSinceUpdate < 24 ? 'Fresh' : stats.hoursSinceUpdate < 72 ? 'Stale' : 'Outdated'}
-                icon={<Clock className={`h-5 w-5 ${stats.hoursSinceUpdate < 24 ? 'text-green-600' : stats.hoursSinceUpdate < 72 ? 'text-yellow-600' : 'text-red-600'}`} />}
+                value={stats.hoursSinceUpdate < 168 ? 'Fresh' : stats.hoursSinceUpdate < 336 ? 'Stale' : 'Outdated'}
+                icon={<Clock className={`h-5 w-5 ${stats.hoursSinceUpdate < 168 ? 'text-green-600' : stats.hoursSinceUpdate < 336 ? 'text-yellow-600' : 'text-red-600'}`} />}
                 description={
-                  <span className={`font-medium ${stats.hoursSinceUpdate < 24 ? 'text-green-600' : stats.hoursSinceUpdate < 72 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {stats.hoursSinceUpdate < 24 ? `${stats.hoursSinceUpdate}h ago` : `${Math.floor(stats.hoursSinceUpdate / 24)}d ago`}
+                  <span className={`font-medium ${stats.hoursSinceUpdate < 168 ? 'text-green-600' : stats.hoursSinceUpdate < 336 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {stats.hoursSinceUpdate < 24 ? `${stats.hoursSinceUpdate}h ago` : `${Math.floor(stats.hoursSinceUpdate / 24)}d ago`} • Stale after 7 days
                   </span>
                 }
                 delay={0.3}

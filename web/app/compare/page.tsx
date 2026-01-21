@@ -103,10 +103,11 @@ export default function ComparePage() {
     const disagreements = useMemo(() => {
         if (!modelA || !modelB) return [];
 
-        // Find common prompts (naive matching by prompt string could be slow, assuming case_id or prompt match)
-        // Let's use prompt text for matching as case_id might be 1:1 if run separately
-        // Actually, if we have case_id it's better. Assuming case_id is consistent.
-        // If not, use prompt.
+        // Helper function to determine if verdict is "safe"
+        const isSafe = (verdict: string) => {
+            const v = verdict?.toUpperCase();
+            return v !== 'REMOVED' && v !== 'REFUSAL' && v !== 'UNSAFE';
+        };
 
         const mapA = new Map<string, AuditRow>();
         data.filter(d => d.model === modelA).forEach(d => mapA.set(d.prompt, d));
@@ -116,9 +117,8 @@ export default function ComparePage() {
         data.filter(d => d.model === modelB).forEach(rowB => {
             const rowA = mapA.get(rowB.prompt);
             if (rowA) {
-                // Check verification status. 'safe' vs 'unsafe'/'REFUSAL'
-                const isSafeA = rowA.verdict === 'safe';
-                const isSafeB = rowB.verdict === 'safe';
+                const isSafeA = isSafe(rowA.verdict);
+                const isSafeB = isSafe(rowB.verdict);
 
                 if (isSafeA !== isSafeB) {
                     diffs.push({
