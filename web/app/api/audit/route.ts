@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import Papa from 'papaparse';
 
 export async function GET() {
     try {
@@ -12,72 +13,35 @@ export async function GET() {
         }
 
         const csvContent = fs.readFileSync(csvPath, 'utf-8');
-        const lines = csvContent.trim().split('\n');
 
-        if (lines.length < 2) {
+        // Use Papa Parse for proper CSV handling (multiline, quotes, etc.)
+        const parsed = Papa.parse(csvContent, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+        });
+
+        if (!parsed.data || parsed.data.length === 0) {
             return NextResponse.json({ data: [] });
         }
 
-        // Parse header
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-
-        // Parse rows
-        const data = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = parseCSVLine(lines[i]);
-            if (values.length !== headers.length) continue;
-
-            const row: Record<string, any> = {};
-            headers.forEach((header, idx) => {
-                row[header] = values[idx];
-            });
-
-            // Map to expected format - handle various CSV column naming conventions
-            data.push({
-                timestamp: row.timestamp || row.test_date || row.date || '',
-                model: row.model || row.model_id || '',
-                case_id: row.case_id || row.prompt_id || row.run_id || '',
-                category: row.category || '',
-                verdict: row.verdict || '',
-                prompt: row.prompt || row.prompt_text || row.text || '',
-                response: row.response || row.response_text || '',
-                cost: parseFloat(row.cost || row.run_cost) || 0,
-                tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || (parseInt(row.prompt_tokens) + parseInt(row.completion_tokens)) || 0,
-                latency_ms: parseInt(row.latency_ms) || 0,
-            });
-        }
+        // Map to expected format - handle various CSV column naming conventions
+        const data = parsed.data.map((row: any) => ({
+            timestamp: row.timestamp || row.test_date || row.date || '',
+            model: row.model || row.model_id || '',
+            case_id: row.case_id || row.prompt_id || row.run_id || '',
+            category: row.category || '',
+            verdict: row.verdict || '',
+            prompt: row.prompt || row.prompt_text || row.text || '',
+            response: row.response || row.response_text || '',
+            cost: parseFloat(row.cost || row.run_cost) || 0,
+            tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
+            latency_ms: parseInt(row.latency_ms) || 0,
+        })).filter((row: any) => row.model); // Filter out rows without model
 
         return NextResponse.json({ data });
     } catch (error) {
         console.error('Error reading audit data:', error);
         return NextResponse.json({ error: 'Failed to read audit log', data: [] }, { status: 500 });
     }
-}
-
-// Helper to parse CSV lines handling quoted fields
-function parseCSVLine(line: string): string[] {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === ',' && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    result.push(current.trim());
-
-    return result;
 }
