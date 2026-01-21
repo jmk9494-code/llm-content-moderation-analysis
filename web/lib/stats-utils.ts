@@ -177,3 +177,116 @@ export function interpretEffectSize(h: number): string {
     if (h < 0.8) return 'medium';
     return 'large';
 }
+
+/**
+ * Monte Carlo bootstrap confidence interval for a proportion
+ * @param successes Number of successes
+ * @param total Total observations
+ * @param iterations Number of bootstrap iterations (default 1000 for performance)
+ * @returns Object with lower, estimate, upper bounds
+ */
+export function bootstrapProportionCI(
+    successes: number,
+    total: number,
+    iterations: number = 1000,
+    confidenceLevel: number = 0.95
+): { lower: number; estimate: number; upper: number } {
+    if (total === 0) return { lower: 0, estimate: 0, upper: 0 };
+
+    const proportions: number[] = [];
+    const p = successes / total;
+
+    // Generate bootstrap samples
+    for (let i = 0; i < iterations; i++) {
+        let count = 0;
+        for (let j = 0; j < total; j++) {
+            if (Math.random() < p) count++;
+        }
+        proportions.push((count / total) * 100);
+    }
+
+    // Sort and get percentiles
+    proportions.sort((a, b) => a - b);
+    const alpha = 1 - confidenceLevel;
+    const lowerIdx = Math.floor((alpha / 2) * iterations);
+    const upperIdx = Math.floor((1 - alpha / 2) * iterations);
+
+    return {
+        lower: proportions[lowerIdx],
+        estimate: (successes / total) * 100,
+        upper: proportions[upperIdx]
+    };
+}
+
+/**
+ * Simple power analysis approximation for proportions
+ * Returns recommended sample size for given effect size
+ */
+export function powerAnalysis(
+    effectSize: number = 0.5,
+    alpha: number = 0.05,
+    power: number = 0.80
+): number {
+    // Using approximation: n ≈ (z_alpha + z_beta)^2 / h^2
+    const zAlpha = alpha === 0.05 ? 1.96 : 2.576;
+    const zBeta = power === 0.80 ? 0.84 : 1.28;
+    return Math.ceil(Math.pow(zAlpha + zBeta, 2) / Math.pow(effectSize, 2));
+}
+
+/**
+ * Check if sample size is adequate for statistical analysis
+ */
+export function checkSampleAdequacy(
+    nSamples: number,
+    nCategories: number,
+    minPerCell: number = 5
+): { adequate: boolean; minimum: number; warning: string | null } {
+    const minimum = minPerCell * nCategories;
+    const adequate = nSamples >= minimum;
+    return {
+        adequate,
+        minimum,
+        warning: adequate ? null : `Need at least ${minimum} samples for ${nCategories} categories`
+    };
+}
+
+/**
+ * Calculate odds ratio between two groups
+ */
+export function oddsRatio(
+    group1Success: number, group1Total: number,
+    group2Success: number, group2Total: number
+): { or: number; ciLower: number; ciUpper: number; significant: boolean } {
+    // Add 0.5 to avoid division by zero (Haldane-Anscombe correction)
+    const a = group1Success + 0.5;
+    const b = (group1Total - group1Success) + 0.5;
+    const c = group2Success + 0.5;
+    const d = (group2Total - group2Success) + 0.5;
+
+    const or = (a * d) / (b * c);
+    const seLogOr = Math.sqrt(1 / a + 1 / b + 1 / c + 1 / d);
+    const logOr = Math.log(or);
+
+    const ciLower = Math.exp(logOr - 1.96 * seLogOr);
+    const ciUpper = Math.exp(logOr + 1.96 * seLogOr);
+
+    return {
+        or,
+        ciLower,
+        ciUpper,
+        significant: ciLower > 1 || ciUpper < 1
+    };
+}
+
+/**
+ * Interpret Kappa values
+ */
+export function interpretKappa(kappa: number): string {
+    if (kappa < 0) return 'Poor (worse than chance)';
+    if (kappa < 0.20) return 'Slight agreement';
+    if (kappa < 0.40) return 'Fair agreement';
+    if (kappa < 0.60) return 'Moderate agreement';
+    if (kappa < 0.80) return 'Substantial agreement';
+    return 'Almost perfect agreement';
+}
+

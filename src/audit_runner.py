@@ -16,7 +16,11 @@ import datetime
 from src.analyst import generate_weekly_report
 from src.database import init_db, ModelRegistry, Prompt, AuditResult
 from src.config import settings
+from src.config import settings
 from src.logger import logger
+from src.prompt_variants import generate_variants
+# Global temperature override (set via CLI)
+TEMPERATURE_OVERRIDE = None
 
 # Initialize DB
 Session = init_db()
@@ -157,6 +161,10 @@ async def call_target_model_async(model_name, prompt_text):
             "X-Title": "LLM Content Moderation Analysis",
         }
     }
+    
+    # Apply temperature override if set
+    if TEMPERATURE_OVERRIDE is not None:
+        params["temperature"] = TEMPERATURE_OVERRIDE
     
     # OpenAI: Use System Role + JSON Mode
     if "openai/" in model_name or "gpt" in model_name:
@@ -375,6 +383,12 @@ def main():
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
     
+    # Methodology Enhancement Flags
+    parser.add_argument("--consistency", type=int, default=1, metavar="N", 
+                        help="Run each prompt N times to measure response consistency (default: 1)")
+    parser.add_argument("--temperature", type=float, default=None, metavar="T",
+                        help="Set model temperature (0.0-2.0). None uses model default.")
+    
     # Check if sys.argv is passed or if we need to parse specific args. 
     # argparse uses sys.argv by default.
     args = parser.parse_args()
@@ -414,6 +428,72 @@ def main():
         models = ["openai/gpt-4o-mini"] # Default
     
     loaded_prompts = load_prompts(args.input)
+    
+    # --- Expand Prompts for Phrasing Variants ---
+    if args.phrasing_variants > 0:
+        logger.info(f"Generating {args.phrasing_variants} phrasing variants for each prompt...")
+        variant_prompts = []
+        
+        # We process in batches to avoid rate limits if needed, but doing purely sequential here for simplicity or small batches
+        # For a full run, this is slow. 
+        async def _expand_variants():
+            tasks = []
+            for p in loaded_prompts:
+                tasks.append(generate_variants(p['text'], n=args.phrasing_variants))
+            
+            # Run in chunks to be safe? Or just all at once if list is small?
+            # Creating 100s of requests might hit rate limits.
+            # Let's use a semaphore for generation too?
+            # For now, simplistic gather.
+            results = await asyncio.gather(*tasks)
+            return results
+
+        # Run async generation loop
+        try:
+            logger.info("Starting variant generation (this may take a while)...")
+            all_variants = asyncio.run(_expand_variants())
+            
+            for p, variants in zip(loaded_prompts, all_variants):
+                # Add original
+                variant_prompts.append(p)
+                # Add variants
+                for i, v_text in enumerate(variants):
+                    v_id = f"{p['id']}-V{i+1}"
+                    variant_prompts.append({
+                        "id": v_id,
+                        "category": p["category"],
+                        "text": v_text,
+                        "original_id": p.get("original_id", p["id"]), # Track lineage
+                        "is_variant": True
+                    })
+            logger.info(f"Expanded prompts from {len(loaded_prompts)} to {len(variant_prompts)} with variants.")
+            loaded_prompts = variant_prompts
+            
+        except Exception as e:
+            logger.error(f"Failed to generate variants: {e}")
+            # Continue with original prompts
+            pass
+
+    # --- Expand Prompts for Consistency ---
+    if args.consistency > 1:
+        logger.info(f"🔄 Consistency mode: Running each prompt {args.consistency}x")
+        expanded_prompts = []
+        for p in loaded_prompts:
+            for run_num in range(args.consistency):
+                expanded_prompts.append({
+                    **p,
+                    'id': f"{p['id']}_run{run_num+1}",
+                    'original_id': p['id'],
+                    'run_number': run_num + 1
+                })
+        loaded_prompts = expanded_prompts
+        logger.info(f"   Expanded to {len(loaded_prompts)} total prompts")
+    
+    if args.temperature is not None:
+        logger.info(f"🌡️ Temperature set to: {args.temperature}")
+        # Store globally for use in API calls
+        global TEMPERATURE_OVERRIDE
+        TEMPERATURE_OVERRIDE = args.temperature
     
     start_time = time.time()
     

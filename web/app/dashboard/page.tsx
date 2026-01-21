@@ -24,6 +24,7 @@ import BiasChart from './BiasChart';
 import ModelLogo from '@/components/ModelLogo';
 
 import DownloadReportButton from './DownloadReportButton';
+import ExportButton from '@/components/ExportButton';
 import ReactMarkdown from 'react-markdown';
 import { ChartErrorBoundary } from '@/components/ui/ChartErrorBoundary';
 import { generateReport } from '@/lib/analyst';
@@ -59,6 +60,7 @@ type ModelSummary = {
   avg_len: number;
   least_sensitive_topic: string; // New field
   total_cost: number; // For PriceChart
+  avg_latency: number; // For LatencyChart
 };
 
 type HeatmapCell = {
@@ -174,10 +176,12 @@ export default function Home() {
                 refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
                 avg_len: 0,
                 least_sensitive_topic: 'N/A',
-                total_cost: 0
+                total_cost: 0,
+                avg_latency: 0
               };
               agg[r.model].total++;
               agg[r.model].total_cost += (r.cost || 0);
+              agg[r.model].avg_latency += (r.latency_ms || 0);
               if (r.verdict === 'REMOVED') agg[r.model].refusals++;
               if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
               if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
@@ -189,7 +193,8 @@ export default function Home() {
               refusal_rate: s.total > 0 ? (s.refusals / s.total) * 100 : 0,
               soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
               block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
-              avg_len: Math.round(s.avg_len / s.total)
+              avg_len: Math.round(s.avg_len / s.total),
+              avg_latency: Math.round(s.avg_latency / s.total)
             })));
 
             setLoading(false);
@@ -320,7 +325,8 @@ export default function Home() {
         refusal_rate: 0, soft_refusal_rate: 0, block_rate: 0,
         avg_len: 0,
         least_sensitive_topic: 'N/A',
-        total_cost: 0
+        total_cost: 0,
+        avg_latency: 0
       };
 
       // Category Agg
@@ -338,6 +344,7 @@ export default function Home() {
       if (r.verdict === 'REFUSAL') agg[r.model].soft_refusals++;
       if (r.verdict === 'BLOCKED') agg[r.model].blocks++;
       agg[r.model].avg_len += r.response_text ? r.response_text.length : 0;
+      agg[r.model].avg_latency += (r.latency_ms || 0);
     });
 
     return Object.values(agg).map(s => {
@@ -367,6 +374,7 @@ export default function Home() {
         soft_refusal_rate: s.total > 0 ? (s.soft_refusals / s.total) * 100 : 0,
         block_rate: s.total > 0 ? (s.blocks / s.total) * 100 : 0,
         avg_len: Math.round(s.avg_len / s.total),
+        avg_latency: Math.round(s.avg_latency / s.total),
         least_sensitive_topic: leastSensitive
       };
     });
@@ -587,6 +595,7 @@ export default function Home() {
             </div>
 
             <div className="flex gap-2">
+              <ExportButton targetId="dashboard-content" filename="moderation-bias-dashboard" />
               <DownloadReportButton />
             </div>
           </div>
@@ -773,6 +782,12 @@ export default function Home() {
         {/* Full Width Time-Travel Chart - Slider Integrated */}
         <div className="mb-8">
           <TimeLapseChart data={trends} />
+        </div>
+
+        {/* Cost & Latency Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <PriceChart data={filteredSummary.map(s => ({ model: s.model, cost: s.total_cost }))} />
+          <LatencyChart data={filteredSummary.map(s => ({ model: s.model, latency: s.avg_latency }))} />
         </div>
 
         {/* Radar Chart Removed (Censorship Profile) as requested */}
@@ -1023,6 +1038,50 @@ function PriceChart({ data }: { data: PriceData[] }) {
           <Bar dataKey="cost" name="Total Cost" radius={[0, 4, 4, 0]}>
             {sortedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#6366f1'} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type LatencyData = {
+  model: string;
+  latency: number;
+};
+
+function LatencyChart({ data }: { data: LatencyData[] }) {
+  // Sort by latency ascending (lower is better)
+  const sortedData = [...data].sort((a, b) => a.latency - b.latency);
+
+  return (
+    <div className="w-full h-[300px] bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <span>⚡</span> Avg API Latency (ms)
+      </h3>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={sortedData}
+          layout="vertical"
+          margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+          <XAxis type="number" unit="ms" />
+          <YAxis
+            type="category"
+            dataKey="model"
+            width={100}
+            tick={{ fontSize: 11 }}
+            tickFormatter={(value) => value.split('/')[1] || value}
+          />
+          <Tooltip
+            formatter={(value: any) => [`${value} ms`, 'Latency']}
+            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          />
+          <Bar dataKey="latency" name="Latency" radius={[0, 4, 4, 0]}>
+            {sortedData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={index < 3 ? '#10b981' : '#f59e0b'} />
             ))}
           </Bar>
         </BarChart>

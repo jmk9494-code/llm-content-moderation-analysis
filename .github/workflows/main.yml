@@ -48,11 +48,39 @@ jobs:
           # We ignore depreciation warnings that might clutter logs
           python -m pytest -W ignore::DeprecationWarning
 
-      - name: Run Model Collection (Efficiency Suite with dynamic resolution)
+      - name: Run Model Collection (with retry on transient failures)
+        id: audit
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PYTHONPATH: .
-        run: python src/audit_runner.py --preset all --resolve-latest
+        run: |
+          # Retry logic: up to 3 attempts with exponential backoff
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          DELAY=30
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "=== Attempt $ATTEMPT of $MAX_ATTEMPTS ==="
+            
+            if python src/audit_runner.py --preset all --resolve-latest; then
+              echo "✅ Model collection completed successfully on attempt $ATTEMPT"
+              exit 0
+            else
+              EXIT_CODE=$?
+              echo "❌ Attempt $ATTEMPT failed with exit code $EXIT_CODE"
+              
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "⏳ Waiting ${DELAY}s before retry..."
+                sleep $DELAY
+                DELAY=$((DELAY * 2))  # Exponential backoff
+              fi
+            fi
+            
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+          
+          echo "❌ All $MAX_ATTEMPTS attempts failed"
+          exit 1
 
       # Logic for analysis is now embedded or we just commit the raw audit log for the dashboard
       # - name: Run Automated Analysis
