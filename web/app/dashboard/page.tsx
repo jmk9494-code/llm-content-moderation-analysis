@@ -3,13 +3,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
-import VerdictPieChart from '@/components/VerdictPieChart';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { ActivityFeed } from '@/components/ui/ActivityFeed';
 import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, DollarSign, CheckCircle, Zap, Filter, LayoutGrid, List } from 'lucide-react';
+import { Activity, Filter, LayoutGrid, List, CheckCircle, Zap } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
 
@@ -29,7 +28,7 @@ export type AuditRow = {
 type FilterType = 'all' | 'safe' | 'unsafe' | 'recent';
 type ViewMode = 'table' | 'cards';
 
-// Define columns for the DataTable
+// Define columns for the DataTable (removed cost and token columns)
 const columns: ColumnDef<AuditRow>[] = [
   {
     accessorKey: 'timestamp',
@@ -68,29 +67,16 @@ const columns: ColumnDef<AuditRow>[] = [
     },
   },
   {
-    accessorKey: 'cost',
-    header: ({ column }) => <SortableHeader column={column} title="Cost" />,
-    cell: ({ row }) => {
-      const val = row.getValue('cost') as number;
-      return val ? <span className="font-mono text-sm">${val.toFixed(5)}</span> : '-';
-    },
-  },
-  {
-    accessorKey: 'latency_ms',
-    header: ({ column }) => <SortableHeader column={column} title="Tokens" />,
-    cell: ({ row }) => {
-      const val = row.getValue('latency_ms') as number;
-      return val ? <span className="font-mono text-sm">{val.toLocaleString()}</span> : '-';
-    },
-  },
-  {
     accessorKey: 'prompt',
     header: 'Prompt',
-    cell: ({ row }) => (
-      <div className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400" title={row.getValue('prompt')}>
-        {row.getValue('prompt')}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const prompt = row.getValue('prompt') as string;
+      return (
+        <div className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400" title={prompt}>
+          {prompt || 'N/A'}
+        </div>
+      );
+    },
   },
 ];
 
@@ -149,7 +135,7 @@ function AuditCard({ row }: { row: AuditRow }) {
         <span className="text-xs text-slate-500 dark:text-slate-400">{row.category}</span>
       </div>
       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-        {row.prompt}
+        {row.prompt || 'N/A'}
       </p>
     </div>
   );
@@ -195,36 +181,9 @@ export default function DashboardPage() {
   // Calculate stats
   const stats = useMemo(() => {
     const totalAudits = data.length;
-    const safeCount = data.filter(d => d.verdict === 'safe').length;
-    const passRate = totalAudits > 0 ? (safeCount / totalAudits * 100) : 0;
-    const totalCost = data.reduce((sum, d) => sum + (d.cost || 0), 0);
     const uniqueModels = new Set(data.map(d => d.model)).size;
-
-    // Find top model by count
-    const modelCounts: Record<string, number> = {};
-    data.forEach(d => {
-      modelCounts[d.model] = (modelCounts[d.model] || 0) + 1;
-    });
-    const topModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-    return { totalAudits, passRate, totalCost, topModel, uniqueModels };
+    return { totalAudits, uniqueModels };
   }, [data]);
-
-  const chartData = useMemo(() => {
-    const agg: Record<string, { cost: number; latency: number; count: number }> = {};
-    filteredData.forEach(d => {
-      if (!agg[d.model]) agg[d.model] = { cost: 0, latency: 0, count: 0 };
-      agg[d.model].cost += (d.cost || 0);
-      agg[d.model].latency += (d.latency_ms || 0);
-      agg[d.model].count += 1;
-    });
-
-    return Object.entries(agg).map(([model, s]) => ({
-      model,
-      cost: s.cost,
-      latency: s.count > 0 ? Math.round(s.latency / s.count) : 0
-    }));
-  }, [filteredData]);
 
   const filterButtons: { label: string; value: FilterType; icon: React.ReactNode }[] = [
     { label: 'All', value: 'all', icon: <Filter className="h-4 w-4" /> },
@@ -266,9 +225,7 @@ export default function DashboardPage() {
 
         {loading ? (
           <div className="space-y-6">
-            <StatCardGrid>
-              {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
-            </StatCardGrid>
+            <SkeletonCard />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SkeletonChart />
               <SkeletonChart />
@@ -277,7 +234,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Stat Cards */}
+            {/* Single Stat Card */}
             <StatCardGrid>
               <StatCard
                 title="Total Audits"
@@ -286,26 +243,14 @@ export default function DashboardPage() {
                 description={`${stats.uniqueModels} models tested`}
                 delay={0}
               />
-              <StatCard
-                title="Pass Rate"
-                value={`${stats.passRate.toFixed(1)}%`}
-                change={stats.passRate > 80 ? 2.1 : -1.5}
-                icon={<CheckCircle className="h-5 w-5 text-green-600" />}
-                delay={0.1}
-              />
-              <StatCard
-                title="Total Cost"
-                value={`$${stats.totalCost.toFixed(4)}`}
-                icon={<DollarSign className="h-5 w-5 text-yellow-600" />}
-                delay={0.2}
-              />
-              <StatCard
-                title="Top Model"
-                value={stats.topModel.split('/')[1] || stats.topModel}
-                icon={<Zap className="h-5 w-5 text-purple-600" />}
-                delay={0.3}
-              />
             </StatCardGrid>
+
+            {/* What This Means - Inline info (not a card) */}
+            <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 p-4 rounded-lg border-l-4 border-indigo-500">
+              <strong className="text-emerald-600">Safe</strong> = Model provided helpful response.
+              <strong className="text-red-600 ml-4">Unsafe/Removed</strong> = Model refused or flagged content.
+              <span className="block mt-2 text-slate-500">Higher refusal rates may indicate over-censorship. Lower rates might mean the model is more permissive.</span>
+            </div>
 
             {/* AI Insights */}
             <InsightsSummary data={data} />
@@ -334,32 +279,6 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Charts and Table - Main area */}
               <div className="lg:col-span-3 space-y-6">
-                {/* Key Visualization */}
-                {filteredData.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <VerdictPieChart data={filteredData} title="How do models respond?" />
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                        <span>📊</span> What This Means
-                      </h3>
-                      <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
-                        <p>
-                          <strong className="text-emerald-600">Safe</strong> = Model provided helpful response
-                        </p>
-                        <p>
-                          <strong className="text-red-600">Unsafe/Removed</strong> = Model refused or flagged content
-                        </p>
-                        <p className="text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-700">
-                          Higher refusal rates may indicate over-censorship. Lower rates might mean the model is more permissive—or more susceptible to jailbreaks.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-
-
-
                 {/* Model Comparison */}
                 {filteredData.length > 0 && (
                   <ModelComparison data={filteredData} />

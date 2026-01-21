@@ -8,7 +8,6 @@ import { useTheme } from '@/components/providers/ThemeProvider';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Leaderboard', href: '/leaderboard', icon: Trophy },
     { name: 'Compare', href: '/compare', icon: ArrowRightLeft },
     { name: 'Deep Dive', href: '/analysis', icon: BarChart3 },
     { name: 'Report', href: '/report', icon: FileBarChart },
