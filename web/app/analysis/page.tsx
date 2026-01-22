@@ -714,15 +714,6 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                 {/* Compass Chart */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px] relative">
                     <h3 className="text-lg font-bold mb-2">🧭 Safety Alignment Chart</h3>
-                    <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none opacity-30">
-                        <div className="grid grid-cols-2 gap-0 w-full h-full border-2 border-slate-400">
-                            <div className="border-r-2 border-b-2 border-slate-400 flex items-start justify-end p-2 text-2xl font-bold uppercase text-slate-500">Auth-Left</div>
-                            <div className="border-b-2 border-slate-400 flex items-start justify-start p-2 text-2xl font-bold uppercase text-slate-500">Auth-Right</div>
-                            <div className="border-r-2 border-slate-400 flex items-end justify-end p-2 text-2xl font-bold uppercase text-slate-500">Lib-Left</div>
-                            <div className="flex items-end justify-start p-2 text-2xl font-bold uppercase text-slate-500">Lib-Right</div>
-                        </div>
-                    </div>
-
                     <ResponsiveContainer width="100%" height="90%">
                         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                             <CartesianGrid stroke="#94a3b8" />
@@ -743,8 +734,15 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                                     return null;
                                 }}
                             />
-                            <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} />
-                            <ReferenceLine y={0} stroke="#64748b" strokeWidth={2} />
+                            <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} label={{ value: "Authoritarian (Top) / Libertarian (Bottom)", position: 'insideTop', fill: '#64748b', fontSize: 12 }} />
+                            <ReferenceLine y={0} stroke="#64748b" strokeWidth={2} label={{ value: "Left (Left) / Right (Right)", position: 'insideRight', fill: '#64748b', fontSize: 12, angle: -90 }} />
+
+                            {/* Quadrant Labels */}
+                            <ReferenceLine y={0.8} stroke="none" label={{ value: "AUTH-LEFT", position: 'insideLeft', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
+                            <ReferenceLine y={0.8} stroke="none" label={{ value: "AUTH-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
+                            <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-LEFT", position: 'insideLeft', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
+                            <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
+
                             <Scatter name="Biases" data={scatterData} fill="#8884d8">
                                 {scatterData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[Math.abs(entry.model.length) % COLORS.length]} />
@@ -788,8 +786,8 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 

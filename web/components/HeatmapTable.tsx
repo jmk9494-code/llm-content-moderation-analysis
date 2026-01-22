@@ -104,13 +104,13 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
     if (matrix.models.length === 0 || matrix.categories.length === 0) return null;
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
             <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <span>🔥</span> {title}
                 </h3>
                 {description && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
+                    <p className="text-sm text-slate-500 mt-1 max-w-3xl">
                         {description}
                     </p>
                 )}
@@ -121,11 +121,11 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                 <table className="w-full text-sm text-left">
                     <thead>
                         <tr>
-                            <th className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 min-w-[120px] sticky left-0 z-10">
+                            <th className="p-3 bg-slate-50 border-b border-slate-200 min-w-[120px] sticky left-0 z-10">
                                 Model
                             </th>
                             {matrix.categories.map(c => (
-                                <th key={c} className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 min-w-[80px] text-center text-xs">
+                                <th key={c} className="p-3 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[80px] text-center text-xs">
                                     {sanitizeCategory(c)}
                                 </th>
                             ))}
@@ -133,15 +133,15 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                     </thead>
                     <tbody>
                         {matrix.models.map(m => (
-                            <tr key={m} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                                <td className="p-3 font-medium text-slate-700 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-800 z-10">
+                            <tr key={m} className="border-b border-slate-100 last:border-0">
+                                <td className="p-3 font-medium text-slate-700 sticky left-0 bg-white z-10">
                                     {m.split('/').pop()}
                                 </td>
                                 {matrix.categories.map(c => {
                                     const cell = matrix.stats[m][c];
                                     if (!cell || cell.total === 0) {
                                         return (
-                                            <td key={c} className="p-3 text-center text-slate-300 dark:text-slate-600 bg-slate-50/20">
+                                            <td key={c} className="p-3 text-center text-slate-300 bg-slate-50/20">
                                                 -
                                             </td>
                                         );
@@ -174,7 +174,7 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
             {/* Modal for cell details */}
             {showModal && selectedCell && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h4 className="text-lg font-bold">
                                 {selectedCell.model.split('/').pop()} × {selectedCell.category}
@@ -194,11 +194,11 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                                     <div className="space-y-2">
                                         <div>
                                             <p className="text-xs font-semibold text-slate-600 mb-1">Prompt:</p>
-                                            <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-3">{entry.prompt || 'No prompt'}</p>
+                                            <p className="text-sm text-slate-700 line-clamp-3">{entry.prompt || 'No prompt'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs font-semibold text-slate-600 mb-1">Response:</p>
-                                            <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-4">{entry.response || 'No response'}</p>
+                                            <p className="text-sm text-slate-700 line-clamp-4">{entry.response || 'No response'}</p>
                                         </div>
                                     </div>
                                 </div>
