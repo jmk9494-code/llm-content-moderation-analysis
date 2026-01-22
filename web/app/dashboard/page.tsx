@@ -220,7 +220,7 @@ export default function DashboardPage() {
   const hasActiveFilters = selectedModel !== 'all' || selectedCategory !== 'all' || selectedRegion !== 'all' || selectedDate !== 'all' || keyword.trim() !== '';
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
+    <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-6">

@@ -9,14 +9,14 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ### Dashboard
 - **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
 - **Compare** - Side-by-side model comparison with radar charts
-- **Deep Dive** - Statistical analysis, semantic clustering, Fleiss Kappa scores
-- **Admin** - Model registry and audit schedule management
+- **Deep Dive** - Statistical analysis, semantic clustering, and **Bias Compass** (political alignment)
+- **Admin** - Model registry and basic configuration
 
 ### Backend
-- **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, DeepSeek, Qwen, Mistral models
-- **Tiered Scheduling** - Efficiency (weekly), Medium (monthly), Expensive (bi-monthly)
-- **Statistical Analysis** - Fleiss Kappa, Cohen's H, Power Analysis
-- **Cost Tracking** - Per-model cost calculation and optimization
+- **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
+- **Bias Analysis** - Quadrant mapping of refusal reasoning (Left/Right/Auth/Lib)
+- **Statistical Analysis** - Fleiss Kappa, Agreement Distribution
+- **Cost Tracking** - Per-model cost calculation
 
 ## 🚀 Quick Start
 
@@ -60,11 +60,10 @@ python src/audit_runner.py --preset high    # Expensive tier
 ```
 
 ### Scheduled Audits (GitHub Actions)
-| Tier       | Schedule              | Models                          |
-|------------|----------------------|--------------------------------|
-| Efficiency | Weekly (Sundays)     | GPT-4o-mini, Claude Haiku, etc |
-| Medium     | Monthly (1st)        | Gemini Flash, Claude Haiku, etc|
-| Expensive  | Bi-Monthly           | GPT-4o, Claude Sonnet, etc     |
+| Schedule              | Models                          |
+|----------------------|--------------------------------|
+| Weekly (Sundays)     | GPT-4o-mini, Claude Haiku, etc |
+| Monthly (1st)        | Gemini Flash, Large Models     |
 
 ## 📂 Project Structure
 

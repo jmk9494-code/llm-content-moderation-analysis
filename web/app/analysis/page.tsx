@@ -3,13 +3,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X
+    Info, Database, Clock, Filter, X, Compass, Grip
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    Legend, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line
+    Legend, PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, ReferenceLine
 } from 'recharts';
 import { calculateFleissKappa } from '@/lib/statistics';
+import Papa from 'papaparse';
 
 // --- Types ---
 type AuditRow = {
@@ -32,14 +33,22 @@ type Cluster = {
     models: Record<string, number>;
 };
 
+type BiasRow = {
+    model: string;
+    prompt_id: string;
+    leaning: string;
+    judge_reasoning: string;
+};
+
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function DeepDivePage() {
-    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters'>('datalog');
+    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters' | 'bias'>('datalog');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
     const [clusters, setClusters] = useState<Cluster[]>([]);
+    const [biasData, setBiasData] = useState<BiasRow[]>([]);
     const [reportContent, setReportContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
@@ -48,7 +57,6 @@ export default function DeepDivePage() {
     const [longitudinalCategory, setLongitudinalCategory] = useState<string>('all');
     const [longitudinalKeyword, setLongitudinalKeyword] = useState<string>('');
     const [longitudinalModelSize, setLongitudinalModelSize] = useState<string>('all');
-    const [selectedDatePrompts, setSelectedDatePrompts] = useState<{ date: string; prompts: AuditRow[] } | null>(null);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -70,6 +78,21 @@ export default function DeepDivePage() {
                     const j3 = await r3.json();
                     if (j3.content) setReportContent(j3.content);
                 } catch (e) { console.warn("Report not found"); }
+
+                // 4. Bias Log (CSV)
+                try {
+                    const r4 = await fetch('/bias_log.csv');
+                    if (r4.ok) {
+                        const csvText = await r4.text();
+                        Papa.parse(csvText, {
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results) => {
+                                setBiasData(results.data as BiasRow[]);
+                            }
+                        });
+                    }
+                } catch (e) { console.warn("Bias log not found"); }
 
             } catch (err) {
                 console.error("Failed to load data", err);
@@ -201,33 +224,8 @@ export default function DeepDivePage() {
             .sort((a, b) => a.date.localeCompare(b.date));
     }, [auditData, longitudinalModel, longitudinalCategory]);
 
-    // AI Summary
-    const aiSummary = useMemo(() => {
-        if (!stats || efficiencyData.length === 0) return null;
-
-        const avgRefusal = efficiencyData.reduce((sum, m) => sum + m.refusalRate, 0) / efficiencyData.length;
-        const mostCautious = efficiencyData.reduce((a, b) => a.refusalRate > b.refusalRate ? a : b);
-        const leastCautious = efficiencyData.reduce((a, b) => a.refusalRate < b.refusalRate ? a : b);
-        const cheapest = efficiencyData.reduce((a, b) => a.costPer1k < b.costPer1k ? a : b);
-
-        return {
-            avgRefusal: avgRefusal.toFixed(1),
-            kappaScore: stats.reliability.score.toFixed(3),
-            kappaInterpretation: stats.reliability.interpretation,
-            mostCautious: mostCautious.name,
-            mostCautiousRate: mostCautious.refusalRate.toFixed(1),
-            leastCautious: leastCautious.name,
-            leastCautiousRate: leastCautious.refusalRate.toFixed(1),
-            cheapest: cheapest.name,
-            cheapestCost: cheapest.costPer1k.toFixed(4),
-            totalPrompts: stats.prompts.length,
-            totalModels: stats.models.length,
-            clusterCount: clusters.length
-        };
-    }, [stats, efficiencyData, clusters]);
-
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50">
             <div className="flex flex-col items-center gap-2">
                 <Brain className="h-8 w-8 animate-pulse text-indigo-500" />
                 <span>Loading analysis data...</span>
@@ -236,7 +234,7 @@ export default function DeepDivePage() {
     );
 
     return (
-        <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
+        <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
@@ -244,15 +242,18 @@ export default function DeepDivePage() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                         🔬 Deep Dive Analysis
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">
+                    <p className="text-slate-500 text-sm md:text-base mt-1">
                         Advanced metrics, efficiency benchmarking, and automated research insights.
                     </p>
                 </header>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">
                     <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>
                         Data Log
+                    </TabButton>
+                    <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>
+                        Bias Compass
                     </TabButton>
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>
                         Reliability & Consensus
@@ -271,19 +272,19 @@ export default function DeepDivePage() {
                 {/* Content */}
                 <div className="min-h-[60vh]">
                     {activeTab === 'datalog' && (
-                        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                                     <Info className="w-4 h-4" /> What is the Data Log?
                                 </h3>
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                <p className="text-sm text-blue-700">
                                     The Data Log displays the raw AI-generated analysis report. It summarizes key findings from the moderation audit,
                                     including model rankings, statistical insights, and recommendations. This report is auto-generated by running
                                     the Python analysis script on the audit data.
                                 </p>
                             </div>
                             {reportContent ? (
-                                <article className="prose prose-slate dark:prose-invert max-w-none">
+                                <article className="prose prose-slate max-w-none">
                                     {reportContent.split('\n').map((line, i) => {
                                         if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
                                         if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold mt-6 mb-3 flex items-center gap-2">{line.includes('Leaderboard') ? '🏆' : line.includes('Statistical') ? '📊' : ''} {line.replace('## ', '')}</h2>;
@@ -301,26 +302,28 @@ export default function DeepDivePage() {
                         </div>
                     )}
 
+                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} />}
+
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                                     <Info className="w-4 h-4" /> What is Reliability & Consensus?
                                 </h3>
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                <p className="text-sm text-blue-700">
                                     This tab measures how consistently different AI models agree on safety verdicts.
                                     <strong> Fleiss' Kappa</strong> is a statistical measure of inter-rater reliability—higher scores mean models agree more often.
                                     The <strong>Agreement Distribution</strong> shows what percentage of prompts had unanimous vs. split decisions across models.
                                 </p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                     <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
                                     <div className="flex items-end gap-4">
-                                        <span className="text-5xl font-black text-indigo-600 dark:text-indigo-400">
+                                        <span className="text-5xl font-black text-indigo-600">
                                             {stats.reliability.score.toFixed(3)}
                                         </span>
-                                        <span className="text-lg text-slate-500 mb-2 font-medium bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full">
+                                        <span className="text-lg text-slate-500 mb-2 font-medium bg-slate-100 px-3 py-1 rounded-full">
                                             {stats.reliability.interpretation}
                                         </span>
                                     </div>
@@ -329,7 +332,7 @@ export default function DeepDivePage() {
                                         Scores above 0.4 indicate fair agreement; above 0.6 is moderate.
                                     </p>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                     <h3 className="text-lg font-bold mb-4">Agreement Distribution</h3>
                                     {stats.distribution && stats.distribution.length > 0 ? (
                                         <div className="h-48 text-xs">
@@ -347,7 +350,7 @@ export default function DeepDivePage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center justify-center h-32 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-slate-400 text-sm">
+                                        <div className="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-400 text-sm">
                                             Not enough data for distribution
                                         </div>
                                     )}
@@ -358,21 +361,21 @@ export default function DeepDivePage() {
 
                     {activeTab === 'efficiency' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                                     <Info className="w-4 h-4" /> What is Efficiency & Cost?
                                 </h3>
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                <p className="text-sm text-blue-700">
                                     This tab visualizes the trade-off between <strong>cost</strong> and <strong>safety</strong> across models.
                                     The X-axis shows the cost per 1,000 prompts (in USD), while the Y-axis shows the refusal rate (%).
                                     Ideally, you want a model in the <strong>bottom-left</strong> (low cost, low unnecessary refusals) or
                                     <strong>top-left</strong> (low cost, high safety) depending on your use case.
                                 </p>
                             </div>
-                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-[500px]">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
                                     <span>Cost vs. Safety Trade-off</span>
-                                    <span className="text-xs font-normal text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">X: Cost ($/1k) • Y: Refusal Rate (%)</span>
+                                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">X: Cost ($/1k) • Y: Refusal Rate (%)</span>
                                 </h3>
                                 <ResponsiveContainer width="100%" height="90%">
                                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -405,11 +408,11 @@ export default function DeepDivePage() {
 
                     {activeTab === 'longitudinal' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                                     <Info className="w-4 h-4" /> What is the Longitudinal Study?
                                 </h3>
-                                <p className="text-sm text-blue-700 dark:text-blue-400">
+                                <p className="text-sm text-blue-700">
                                     This tab tracks <strong>model behavior over time</strong>. It shows how the overall refusal rate
                                     changes across different audit dates. This helps identify trends—are models becoming more or less
                                     restrictive? Are there spikes in refusals on certain days? Use this to monitor drift in AI safety policies.
@@ -417,7 +420,7 @@ export default function DeepDivePage() {
                             </div>
 
                             {/* Filters */}
-                            <div className="flex flex-wrap gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="flex flex-wrap gap-4 p-4 bg-white rounded-xl border border-slate-200">
                                 <div className="flex items-center gap-2">
                                     <Filter className="h-4 w-4 text-slate-400" />
                                     <span className="text-sm font-medium text-slate-500">Filters:</span>
@@ -428,7 +431,7 @@ export default function DeepDivePage() {
                                         <select
                                             value={longitudinalModel}
                                             onChange={e => setLongitudinalModel(e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="all">All Models</option>
                                             {longitudinalFilterOptions.models.map(m => <option key={m} value={m}>{m.split('/')[1] || m}</option>)}
@@ -439,7 +442,7 @@ export default function DeepDivePage() {
                                         <select
                                             value={longitudinalCategory}
                                             onChange={e => setLongitudinalCategory(e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="all">All Categories</option>
                                             {longitudinalFilterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -448,7 +451,7 @@ export default function DeepDivePage() {
                                     {(longitudinalModel !== 'all' || longitudinalCategory !== 'all') && (
                                         <button
                                             onClick={() => { setLongitudinalModel('all'); setLongitudinalCategory('all'); }}
-                                            className="flex items-center gap-1 px-3 py-2 mt-5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg"
+                                            className="flex items-center gap-1 px-3 py-2 mt-5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg"
                                         >
                                             <X className="h-4 w-4" /> Clear
                                         </button>
@@ -456,7 +459,7 @@ export default function DeepDivePage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 h-[500px]">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Over Time
                                     {longitudinalModel !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalModel.split('/')[1]})</span>}
@@ -512,8 +515,8 @@ function TabButton({ active, onClick, children, icon }: any) {
             className={`
                 flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-all
                 ${active
-                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20 dark:text-indigo-400'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'}
+                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
             `}
         >
             {icon}
@@ -526,11 +529,11 @@ function CustomTooltip({ active, payload }: any) {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-white dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 shadow-lg rounded-lg text-sm">
+            <div className="bg-white p-3 border border-slate-200 shadow-lg rounded-lg text-sm">
                 <p className="font-bold mb-1">{data.name}</p>
-                <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                    <p>Refusal Rate: <span className="font-mono text-slate-700 dark:text-slate-200">{data.refusalRate.toFixed(1)}%</span></p>
-                    <p>Cost/1k: <span className="font-mono text-slate-700 dark:text-slate-200">${data.costPer1k.toFixed(4)}</span></p>
+                <div className="space-y-1 text-xs text-slate-500">
+                    <p>Refusal Rate: <span className="font-mono text-slate-700">{data.refusalRate.toFixed(1)}%</span></p>
+                    <p>Cost/1k: <span className="font-mono text-slate-700">${data.costPer1k.toFixed(4)}</span></p>
                 </div>
             </div>
         );
@@ -541,11 +544,11 @@ function CustomTooltip({ active, payload }: any) {
 function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     if (clusters.length === 0) return (
         <div className="space-y-6">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                     <Info className="w-4 h-4" /> What are Semantic Clusters?
                 </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-400">
+                <p className="text-sm text-blue-700">
                     Semantic clustering groups similar refusal responses together based on their meaning.
                     This helps identify <strong>common themes</strong> in how models refuse requests—for example,
                     "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
@@ -566,11 +569,11 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
 
     return (
         <div className="space-y-6">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                <h3 className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
                     <Info className="w-4 h-4" /> What are Semantic Clusters?
                 </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-400">
+                <p className="text-sm text-blue-700">
                     Semantic clustering groups similar refusal responses together based on their meaning.
                     This helps identify <strong>common themes</strong> in how models refuse requests—for example,
                     "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
@@ -578,7 +581,7 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
                 </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 col-span-1">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 col-span-1">
                     <h2 className="text-lg font-bold mb-4">Refusal Themes</h2>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
@@ -594,20 +597,20 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
                 </div>
                 <div className="col-span-2 space-y-4">
                     {clusters.map((c, idx) => (
-                        <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex gap-4">
+                        <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex gap-4">
                             <div className="h-full w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
                             <div className="flex-1">
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-bold text-lg">Cluster {idx + 1} ({c.size} cases)</h3>
                                     <div className="flex flex-wrap gap-1">
                                         {c.keywords.map(k => (
-                                            <span key={k} className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-full font-mono flex items-center gap-1">
+                                            <span key={k} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-mono flex items-center gap-1">
                                                 <Tag className="h-3 w-3" /> {k}
                                             </span>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg text-sm text-slate-600 dark:text-slate-400 font-mono mb-3">"{c.exemplar}"</div>
+                                <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono mb-3">"{c.exemplar}"</div>
                             </div>
                         </div>
                     ))}
@@ -616,3 +619,137 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
         </div>
     );
 }
+
+function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
+    if (biasData.length === 0) return (
+        <div className="p-12 text-center text-slate-500">
+            <Compass className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No bias analysis data found.</p>
+            <p className="text-sm">Run 'src/analyze_bias.py' to generate this data.</p>
+        </div>
+    );
+
+    // Prepare scatter data
+    // Map leanings to coordinates
+    const leaningCoords: Record<string, { x: number, y: number }> = {
+        'Left-Libertarian': { x: -0.7, y: -0.5 },
+        'Left-Authoritarian': { x: -0.7, y: 0.5 },
+        'Right-Libertarian': { x: 0.7, y: -0.5 },
+        'Right-Authoritarian': { x: 0.7, y: 0.5 },
+        'Neutral-Safety': { x: 0, y: 0 }
+    };
+
+    const scatterData = biasData.map((row, i) => {
+        const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
+        // Add jitter
+        const jitterX = (Math.random() - 0.5) * 0.4;
+        const jitterY = (Math.random() - 0.5) * 0.4;
+        return {
+            ...row,
+            x: base.x + jitterX,
+            y: base.y + jitterY,
+            z: 1 // for scatter size
+        };
+    });
+
+    const modelCounts = biasData.reduce((acc, curr) => {
+        acc[curr.model] = (acc[curr.model] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    return (
+        <div className="space-y-8">
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                <h3 className="font-bold text-purple-800 flex items-center gap-2 mb-2">
+                    <Compass className="w-4 h-4" /> What is the Bias Compass?
+                </h3>
+                <p className="text-sm text-purple-700">
+                    This visualization maps the <strong>reasoning behind refusals</strong> to a political/philosophical compass.
+                    Instead of just saying "Refused", we analyze <em>why</em>. Is the model protecting marginalized groups (Left-Libertarian)?
+                    Upholding traditional values (Right-Authoritarian)? Or just following generic safety rules (Neutral)?
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Compass Chart */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px] relative">
+                    <h3 className="text-lg font-bold mb-2">🧭 Safety Alignment Chart</h3>
+                    <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none opacity-10">
+                        <div className="grid grid-cols-2 gap-0 w-full h-full border-2 border-slate-300">
+                            <div className="border-r-2 border-b-2 border-slate-300 flex items-start justify-end p-2 text-2xl font-bold uppercase text-slate-400">Auth-Left</div>
+                            <div className="border-b-2 border-slate-300 flex items-start justify-start p-2 text-2xl font-bold uppercase text-slate-400">Auth-Right</div>
+                            <div className="border-r-2 border-slate-300 flex items-end justify-end p-2 text-2xl font-bold uppercase text-slate-400">Lib-Left</div>
+                            <div className="flex items-end justify-start p-2 text-2xl font-bold uppercase text-slate-400">Lib-Right</div>
+                        </div>
+                    </div>
+
+                    <ResponsiveContainer width="100%" height="90%">
+                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                            <CartesianGrid />
+                            <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
+                            <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
+                            <RechartsTooltip
+                                content={({ active, payload }: any) => {
+                                    if (active && payload && payload.length) {
+                                        const d = payload[0].payload;
+                                        return (
+                                            <div className="bg-white p-3 border border-slate-200 shadow-lg rounded-lg text-sm max-w-xs z-50">
+                                                <p className="font-bold text-indigo-600 mb-1">{d.model.split('/').pop()}</p>
+                                                <p className="font-semibold text-slate-700 mb-1">{d.leaning}</p>
+                                                <p className="text-xs text-slate-500 italic">"{d.judge_reasoning}"</p>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                            />
+                            <ReferenceLine x={0} stroke="#cbd5e1" />
+                            <ReferenceLine y={0} stroke="#cbd5e1" />
+                            <Scatter name="Biases" data={scatterData} fill="#8884d8">
+                                {scatterData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[Math.abs(entry.model.length) % COLORS.length]} />
+                                ))}
+                            </Scatter>
+                        </ScatterChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* Legend & Stats */}
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 className="text-lg font-bold mb-4">Refusal Breakdown by Leaning</h3>
+                        <div className="space-y-4">
+                            {Object.entries(leaningCoords).map(([key, _]) => {
+                                const count = biasData.filter(d => d.leaning === key).length;
+                                if (count === 0) return null;
+                                const pct = (count / biasData.length) * 100;
+                                return (
+                                    <div key={key}>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-medium text-slate-700">{key}</span>
+                                            <span className="text-slate-500">{count} ({pct.toFixed(1)}%)</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-indigo-500" style={{ width: `${pct}%` }}></div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 className="text-lg font-bold mb-4">Analyzed Models</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {Object.keys(modelCounts).map(m => (
+                                <span key={m} className="px-3 py-1 bg-slate-100 rounded-full text-sm text-slate-600">
+                                    {m.split('/').pop()} <span className="text-slate-400 text-xs">({modelCounts[m]})</span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+

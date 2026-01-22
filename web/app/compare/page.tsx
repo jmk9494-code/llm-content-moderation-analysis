@@ -178,7 +178,7 @@ export default function ComparePage() {
     if (!isClient) return null; // Hydration fix
 
     return (
-        <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
+        <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header */}
                 <header className="mb-6">

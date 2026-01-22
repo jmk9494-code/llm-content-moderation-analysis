@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,13 +8,8 @@ import {
     LayoutDashboard,
     BarChart3,
     Settings,
-    FileText,
     ArrowRight,
-    Command,
-    Clock,
-    Trophy,
-    Beaker,
-    CheckCircle
+    Beaker
 } from 'lucide-react';
 
 interface CommandItem {
@@ -53,26 +48,18 @@ export function CommandPalette() {
         {
             id: 'analysis',
             title: 'Deep Dive Analysis',
-            description: 'Statistical analysis, clustering, and insights',
+            description: 'Statistical analysis, clusterings, and bias compass',
             icon: <BarChart3 className="h-4 w-4" />,
             action: () => router.push('/analysis'),
-            keywords: ['stats', 'statistics', 'data', 'deep']
-        },
-        {
-            id: 'report',
-            title: 'Action Report',
-            description: 'Weekly summary and recommendations',
-            icon: <FileText className="h-4 w-4" />,
-            action: () => router.push('/report'),
-            keywords: ['export', 'pdf', 'summary']
+            keywords: ['stats', 'statistics', 'data', 'deep', 'bias']
         },
         {
             id: 'admin',
             title: 'Admin Dashboard',
-            description: 'Prompt feedback, voting, and cost management',
+            description: 'Manage models and settings',
             icon: <Settings className="h-4 w-4" />,
             action: () => router.push('/admin'),
-            keywords: ['settings', 'config', 'manage', 'feedback', 'voting']
+            keywords: ['settings', 'config', 'manage']
         },
     ];
 
@@ -134,11 +121,11 @@ export function CommandPalette() {
             {/* Trigger hint - shown in navbar area */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-500 bg-slate-100 rounded-lg border border-slate-200 hover:bg-slate-200 transition-colors"
             >
                 <Search className="h-3.5 w-3.5" />
                 <span>Search...</span>
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs font-mono bg-white dark:bg-slate-900 rounded border border-slate-300 dark:border-slate-600">
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs font-mono bg-white rounded border border-slate-300">
                     ⌘K
                 </kbd>
             </button>
@@ -153,7 +140,7 @@ export function CommandPalette() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50"
                         />
 
                         {/* Palette */}
@@ -164,9 +151,9 @@ export function CommandPalette() {
                             transition={{ duration: 0.15 }}
                             className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg z-50"
                         >
-                            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div className="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
                                 {/* Search Input */}
-                                <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200">
                                     <Search className="h-5 w-5 text-slate-400" />
                                     <input
                                         ref={inputRef}
@@ -175,9 +162,9 @@ export function CommandPalette() {
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         onKeyDown={handleKeyDown}
-                                        className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 outline-none text-base"
+                                        className="flex-1 bg-transparent text-slate-900 placeholder-slate-400 outline-none text-base"
                                     />
-                                    <kbd className="px-2 py-1 text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 rounded">
+                                    <kbd className="px-2 py-1 text-xs font-mono text-slate-400 bg-slate-100 rounded">
                                         ESC
                                     </kbd>
                                 </div>
@@ -185,7 +172,7 @@ export function CommandPalette() {
                                 {/* Commands List */}
                                 <div className="max-h-[300px] overflow-y-auto py-2">
                                     {filteredCommands.length === 0 ? (
-                                        <div className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                                        <div className="px-4 py-8 text-center text-slate-500">
                                             No commands found
                                         </div>
                                     ) : (
@@ -198,27 +185,27 @@ export function CommandPalette() {
                                                 }}
                                                 onMouseEnter={() => setSelectedIndex(index)}
                                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === selectedIndex
-                                                    ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                                                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                                    ? 'bg-indigo-50'
+                                                    : 'hover:bg-slate-50'
                                                     }`}
                                             >
                                                 <div className={`p-2 rounded-lg ${index === selectedIndex
-                                                    ? 'bg-indigo-100 dark:bg-indigo-800 text-indigo-600 dark:text-indigo-300'
-                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                                    ? 'bg-indigo-100 text-indigo-600'
+                                                    : 'bg-slate-100 text-slate-500'
                                                     }`}>
                                                     {cmd.icon}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-slate-900 dark:text-white">
+                                                    <div className="font-medium text-slate-900">
                                                         {cmd.title}
                                                     </div>
                                                     {cmd.description && (
-                                                        <div className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                                                        <div className="text-sm text-slate-500 truncate">
                                                             {cmd.description}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <ArrowRight className={`h-4 w-4 ${index === selectedIndex ? 'text-indigo-500' : 'text-slate-300 dark:text-slate-600'
+                                                <ArrowRight className={`h-4 w-4 ${index === selectedIndex ? 'text-indigo-500' : 'text-slate-300'
                                                     }`} />
                                             </button>
                                         ))
@@ -226,18 +213,14 @@ export function CommandPalette() {
                                 </div>
 
                                 {/* Footer */}
-                                <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 flex items-center gap-4 text-xs text-slate-400">
+                                <div className="px-4 py-2 border-t border-slate-200 flex items-center gap-4 text-xs text-slate-400">
                                     <span className="flex items-center gap-1">
-                                        <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded">↑↓</kbd>
+                                        <kbd className="px-1.5 py-0.5 bg-slate-100 rounded">↑↓</kbd>
                                         navigate
                                     </span>
                                     <span className="flex items-center gap-1">
-                                        <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded">↵</kbd>
+                                        <kbd className="px-1.5 py-0.5 bg-slate-100 rounded">↵</kbd>
                                         select
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded">esc</kbd>
-                                        close
                                     </span>
                                 </div>
                             </div>
