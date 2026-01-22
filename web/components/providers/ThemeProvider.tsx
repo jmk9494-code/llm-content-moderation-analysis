@@ -17,48 +17,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
     const [mounted, setMounted] = useState(false);
 
-    // Load saved theme from localStorage on mount
+    // Force light mode always
     useEffect(() => {
         setMounted(true);
-        const saved = localStorage.getItem('theme') as Theme | null;
-        if (saved && ['light', 'dark', 'system'].includes(saved)) {
-            setThemeState(saved);
-        }
+        setThemeState('light');
     }, []);
 
-    // Apply theme changes
+    // Apply theme changes (Always light)
     useEffect(() => {
         if (!mounted) return;
-
         const root = window.document.documentElement;
-
-        const applyTheme = (isDark: boolean) => {
-            if (isDark) {
-                root.classList.add('dark');
-                root.style.colorScheme = 'dark';
-                setResolvedTheme('dark');
-            } else {
-                root.classList.remove('dark');
-                root.style.colorScheme = 'light';
-                setResolvedTheme('light');
-            }
-        };
-
-        if (theme === 'system') {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            applyTheme(mediaQuery.matches);
-
-            const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
-            mediaQuery.addEventListener('change', handler);
-            return () => mediaQuery.removeEventListener('change', handler);
-        } else {
-            applyTheme(theme === 'dark');
-        }
-    }, [theme, mounted]);
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+        setResolvedTheme('light');
+        // Clear any saved theme
+        localStorage.removeItem('theme');
+    }, [mounted]);
 
     const setTheme = (newTheme: Theme) => {
-        setThemeState(newTheme);
-        localStorage.setItem('theme', newTheme);
+        // No-op or just set light
+        setThemeState('light');
     };
 
     // Prevent hydration mismatch by not rendering until mounted

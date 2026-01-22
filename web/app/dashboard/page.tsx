@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle, Printer } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
@@ -233,12 +233,6 @@ export default function DashboardPage() {
                 Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors print:hidden"
-            >
-              <Printer className="h-4 w-4" /> Print PDF
-            </button>
           </div>
         </header>
 
@@ -267,26 +261,34 @@ export default function DashboardPage() {
                 delay={0}
               />
               <StatCard
-                title="Data Collection"
-                value={stats.firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                icon={<Calendar className="h-5 w-5 text-emerald-600" />}
-                description={`${stats.daysSinceStart} days of monitoring`}
+                title="Efficiency Tier"
+                value={stats.efficiencyTier.daysSince > 7 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.efficiencyTier.daysSince > 7 ? 'text-yellow-600' : 'text-green-600'}`} />}
+                description={
+                  <span className={stats.efficiencyTier.daysSince > 7 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.efficiencyTier.daysSince}d ago (Weekly)
+                  </span>
+                }
                 delay={0.1}
               />
               <StatCard
-                title="Audit Runs"
-                value={stats.uniqueDates.toString()}
-                icon={<RefreshCw className="h-5 w-5 text-blue-600" />}
-                description="Total audit sessions"
+                title="Medium Tier"
+                value={stats.mediumTier.daysSince > 32 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.mediumTier.daysSince > 32 ? 'text-yellow-600' : 'text-green-600'}`} />}
+                description={
+                  <span className={stats.mediumTier.daysSince > 32 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.mediumTier.daysSince}d ago (Monthly)
+                  </span>
+                }
                 delay={0.2}
               />
               <StatCard
-                title="Data Freshness"
-                value={stats.hoursSinceUpdate < 168 ? 'Fresh' : stats.hoursSinceUpdate < 336 ? 'Stale' : 'Outdated'}
-                icon={<Clock className={`h-5 w-5 ${stats.hoursSinceUpdate < 168 ? 'text-green-600' : stats.hoursSinceUpdate < 336 ? 'text-yellow-600' : 'text-red-600'}`} />}
+                title="Expensive Tier"
+                value={stats.expensiveTier.daysSince > 62 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.expensiveTier.daysSince > 62 ? 'text-yellow-600' : 'text-green-600'}`} />}
                 description={
-                  <span className={`font-medium ${stats.hoursSinceUpdate < 168 ? 'text-green-600' : stats.hoursSinceUpdate < 336 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {stats.hoursSinceUpdate < 24 ? `${stats.hoursSinceUpdate}h ago` : `${Math.floor(stats.hoursSinceUpdate / 24)}d ago`} • Stale after 7 days
+                  <span className={stats.expensiveTier.daysSince > 62 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.expensiveTier.daysSince}d ago (Bi-Monthly)
                   </span>
                 }
                 delay={0.3}
@@ -427,12 +429,6 @@ export default function DashboardPage() {
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">📋 Audit Log</h3>
-                    <button
-                      onClick={() => window.print()}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors print:hidden"
-                    >
-                      <Printer className="h-4 w-4" /> Print PDF
-                    </button>
                   </div>
                   <DataTable columns={auditColumns} data={filteredData} exportFilename="audit_log" />
                 </div>
