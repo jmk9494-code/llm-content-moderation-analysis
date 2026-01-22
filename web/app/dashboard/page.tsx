@@ -6,6 +6,7 @@ import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skel
 import { useToast } from '@/components/ui/Toast';
 import { Activity, Calendar, Clock, RefreshCw, Search, X, LayoutDashboard } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
+import ModelComparison from '@/components/ModelComparison';
 
 export type AuditRow = {
   timestamp: string;
@@ -295,6 +296,11 @@ export default function DashboardPage() {
 
             {/* Main Content Grid - Full Width */}
             <div className="space-y-6">
+
+              {/* Model Comparison */}
+              {filteredData.length > 0 && (
+                <ModelComparison data={filteredData} />
+              )}
 
               {/* Heatmap Visualization */}
               {filteredData.length > 0 && (

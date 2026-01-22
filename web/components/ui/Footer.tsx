@@ -32,8 +32,12 @@ export function Footer() {
                         <img
                             src="https://img.logo.dev/uchicago.edu?token=pk_JCpYIPZHQjiSB9uwIkO50A&size=200&format=png"
                             alt="The University of Chicago"
-                            className="h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity dark:brightness-0 dark:invert"
+                            className="h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity dark:opacity-100"
+                            style={{ filter: 'var(--logo-filter, none)' }}
                         />
+                        <style jsx>{`
+                            :global(.dark) img { filter: brightness(0) invert(1) !important; }
+                        `}</style>
                     </a>
                 </div>
             </div>

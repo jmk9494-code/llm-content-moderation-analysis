@@ -181,15 +181,11 @@ export default function ComparePage() {
         <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header */}
-                <header>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                            <Shield className="h-8 w-8 text-indigo-600" />
-                            <ArrowRightLeft className="h-6 w-6 text-slate-400" />
-                        </div>
-                        Model Comparison
+                <header className="mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                        ⚖️ Model Comparison
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">
                         Side-by-side analysis of model behavior, refusal rates, and disagreements.
                     </p>
                 </header>
@@ -257,17 +253,11 @@ export default function ComparePage() {
                 <div className="flex flex-col md:flex-row items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="w-full md:w-1/2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model A</label>
-                        <div className="relative flex items-center gap-3">
-                            <img
-                                src={getProviderLogo(modelA)}
-                                alt=""
-                                className="h-8 w-8 rounded-lg object-contain bg-white border border-slate-100"
-                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
+                        <div className="relative">
                             <select
                                 value={modelA}
                                 onChange={(e) => setModelA(e.target.value)}
-                                className="flex-1 appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -281,17 +271,11 @@ export default function ComparePage() {
 
                     <div className="w-full md:w-1/2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model B</label>
-                        <div className="relative flex items-center gap-3">
-                            <img
-                                src={getProviderLogo(modelB)}
-                                alt=""
-                                className="h-8 w-8 rounded-lg object-contain bg-white border border-slate-100"
-                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
+                        <div className="relative">
                             <select
                                 value={modelB}
                                 onChange={(e) => setModelB(e.target.value)}
-                                className="flex-1 appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>

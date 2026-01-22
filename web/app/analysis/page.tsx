@@ -46,6 +46,9 @@ export default function DeepDivePage() {
     // Longitudinal Filters
     const [longitudinalModel, setLongitudinalModel] = useState<string>('all');
     const [longitudinalCategory, setLongitudinalCategory] = useState<string>('all');
+    const [longitudinalKeyword, setLongitudinalKeyword] = useState<string>('');
+    const [longitudinalModelSize, setLongitudinalModelSize] = useState<string>('all');
+    const [selectedDatePrompts, setSelectedDatePrompts] = useState<{ date: string; prompts: AuditRow[] } | null>(null);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -136,11 +139,34 @@ export default function DeepDivePage() {
 
     // Filter options for longitudinal study
     const longitudinalFilterOptions = useMemo(() => {
+        // Extract model sizes from model names (e.g., 'gpt-4' -> '4', 'claude-3-opus' -> '3')
+        const extractSize = (model: string): string => {
+            const match = model.match(/-(\d+\.?\d*)(b|B)?/);
+            if (match) return match[1] + (match[2] || '');
+            if (model.includes('mini')) return 'mini';
+            if (model.includes('small')) return 'small';
+            if (model.includes('large')) return 'large';
+            return 'unknown';
+        };
+
+        const modelSizes = Array.from(new Set(auditData.map(d => extractSize(d.model)))).filter(s => s !== 'unknown').sort();
+
         return {
             models: Array.from(new Set(auditData.map(d => d.model))).sort(),
-            categories: Array.from(new Set(auditData.map(d => d.category))).filter(Boolean).sort()
+            categories: Array.from(new Set(auditData.map(d => d.category))).filter(Boolean).sort(),
+            modelSizes
         };
     }, [auditData]);
+
+    // Helper to extract model size
+    const getModelSize = (model: string): string => {
+        const match = model.match(/-(\d+\.?\d*)(b|B)?/);
+        if (match) return match[1] + (match[2] || '');
+        if (model.includes('mini')) return 'mini';
+        if (model.includes('small')) return 'small';
+        if (model.includes('large')) return 'large';
+        return 'unknown';
+    };
 
     // Longitudinal Data (by date) - with filters
     const longitudinalData = useMemo(() => {
@@ -150,18 +176,21 @@ export default function DeepDivePage() {
         const filtered = auditData.filter(d => {
             if (longitudinalModel !== 'all' && d.model !== longitudinalModel) return false;
             if (longitudinalCategory !== 'all' && d.category !== longitudinalCategory) return false;
+            if (longitudinalModelSize !== 'all' && getModelSize(d.model) !== longitudinalModelSize) return false;
+            if (longitudinalKeyword && !d.prompt?.toLowerCase().includes(longitudinalKeyword.toLowerCase())) return false;
             return true;
         });
 
-        const dateMap = new Map<string, { date: string; total: number; refusals: number }>();
+        const dateMap = new Map<string, { date: string; total: number; refusals: number; prompts: AuditRow[] }>();
 
         filtered.forEach(d => {
             const date = d.timestamp?.split('T')[0] || 'Unknown';
             if (!dateMap.has(date)) {
-                dateMap.set(date, { date, total: 0, refusals: 0 });
+                dateMap.set(date, { date, total: 0, refusals: 0, prompts: [] });
             }
             const entry = dateMap.get(date)!;
             entry.total++;
+            entry.prompts.push(d);
             if (['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)) {
                 entry.refusals++;
             }
@@ -211,35 +240,14 @@ export default function DeepDivePage() {
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-extrabold flex items-center gap-3">
-                            <Brain className="h-8 w-8 text-indigo-600" />
-                            Deep Dive Analysis
-                        </h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            Advanced metrics, efficiency benchmarking, and automated research insights.
-                        </p>
-                    </div>
+                <header className="mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                        🔬 Deep Dive Analysis
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">
+                        Advanced metrics, efficiency benchmarking, and automated research insights.
+                    </p>
                 </header>
-
-                {/* AI Summary Panel */}
-                {aiSummary && (
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white">
-                        <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-                            <Brain className="h-5 w-5" /> AI Analyst Summary
-                        </h2>
-                        <p className="text-indigo-100 text-sm leading-relaxed">
-                            Across <strong>{aiSummary.totalModels} models</strong> and <strong>{aiSummary.totalPrompts} prompts</strong>,
-                            the average refusal rate is <strong>{aiSummary.avgRefusal}%</strong>.
-                            Inter-model agreement (Fleiss' Kappa) is <strong>{aiSummary.kappaScore}</strong> ({aiSummary.kappaInterpretation}).
-                            The most cautious model is <strong>{aiSummary.mostCautious}</strong> ({aiSummary.mostCautiousRate}% refusal rate),
-                            while <strong>{aiSummary.leastCautious}</strong> is the most permissive ({aiSummary.leastCautiousRate}%).
-                            For cost efficiency, <strong>{aiSummary.cheapest}</strong> offers the lowest cost at ${aiSummary.cheapestCost}/1k prompts.
-                            {aiSummary.clusterCount > 0 && ` Semantic analysis identified ${aiSummary.clusterCount} distinct refusal themes.`}
-                        </p>
-                    </div>
-                )}
 
                 {/* Tabs */}
                 <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700 pb-1">

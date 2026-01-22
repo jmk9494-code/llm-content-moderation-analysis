@@ -142,22 +142,15 @@ export default function ReportPage() {
     return (
         <main className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans p-8 md:p-12 print:p-0">
             <div className="max-w-6xl mx-auto space-y-8">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start mb-6">
                     <div>
-                        <h1 className="text-4xl font-extrabold tracking-tight flex items-center gap-3">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                             📋 Action Report
                         </h1>
-                        <p className="text-lg text-slate-500 mt-1">Executive summary, key findings, and full audit log.</p>
-                        <p className="text-sm text-slate-400 mt-4">Generated on {new Date().toLocaleDateString()}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">Executive summary, key findings, and full audit log.</p>
+                        <p className="text-xs text-slate-400 mt-2">Generated on {new Date().toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2 print:hidden">
-                        <a
-                            href="/api/export/csv"
-                            download
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                        >
-                            📊 Export CSV
-                        </a>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
@@ -185,7 +178,7 @@ export default function ReportPage() {
 
                 {/* Findings */}
                 <section>
-                    <h2 className="text-2xl font-bold mb-6">Top Safety Risks</h2>
+                    <h2 className="text-2xl font-bold mb-6">Top Censorship Categories</h2>
                     <div className="h-80 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl p-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={stats?.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
