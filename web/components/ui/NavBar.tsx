@@ -10,7 +10,6 @@ const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
     { name: 'Compare', href: '/compare', icon: ArrowRightLeft, emoji: '⚔️' },
     { name: 'Deep Dive', href: '/analysis', icon: Brain, emoji: '🧠' },
-    { name: 'Report', href: '/report', icon: FileBarChart, emoji: '📋' },
     { name: 'Admin', href: '/admin', icon: Settings, emoji: '⚙️' },
 ];
 

@@ -4,9 +4,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Calendar, Clock, RefreshCw, Search, X, LayoutDashboard } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle, Printer } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
 import ModelComparison from '@/components/ModelComparison';
+import { DataTable, SortableHeader } from '@/components/ui/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export type AuditRow = {
   timestamp: string;
@@ -20,6 +23,45 @@ export type AuditRow = {
   tokens_used: number;
   latency_ms: number;
 };
+
+// Columns for Audit Log table
+const auditColumns: ColumnDef<AuditRow>[] = [
+  {
+    accessorKey: 'timestamp',
+    header: ({ column }) => <SortableHeader column={column} title="Date" />,
+    cell: ({ row }) => new Date(row.getValue('timestamp')).toLocaleDateString()
+  },
+  {
+    accessorKey: 'model',
+    header: ({ column }) => <SortableHeader column={column} title="Model" />,
+    cell: ({ row }) => {
+      const model = row.getValue('model') as string;
+      return <span className="font-medium">{model?.split('/')[1] || model}</span>;
+    }
+  },
+  {
+    accessorKey: 'category',
+    header: ({ column }) => <SortableHeader column={column} title="Category" />,
+  },
+  {
+    accessorKey: 'verdict',
+    header: ({ column }) => <SortableHeader column={column} title="Verdict" />,
+    cell: ({ row }) => {
+      const verdict = row.getValue('verdict') as string;
+      const isRefusal = ['REMOVED', 'REFUSAL', 'unsafe'].includes(verdict);
+      return (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${isRefusal ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {verdict}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: 'prompt',
+    header: 'Prompt',
+    cell: ({ row }) => <div className="max-w-xs truncate text-xs text-slate-500" title={row.getValue('prompt')}>{row.getValue('prompt')}</div>,
+  },
+];
 
 export default function DashboardPage() {
   const [data, setData] = useState<AuditRow[]>([]);
@@ -129,7 +171,21 @@ export default function DashboardPage() {
     const lastDate = sortedDates[sortedDates.length - 1] || new Date();
     const daysSinceStart = Math.floor((new Date().getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
     const hoursSinceUpdate = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60));
-    return { totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate };
+
+    // Refusal stats
+    const refusals = data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length;
+    const refusalRate = totalAudits > 0 ? (refusals / totalAudits) * 100 : 0;
+
+    // Top categories by refusals
+    const catCounts: Record<string, number> = {};
+    data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe')
+      .forEach(d => { catCounts[d.category] = (catCounts[d.category] || 0) + 1; });
+    const topCategories = Object.entries(catCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value]) => ({ name, value }));
+
+    return { totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate, refusals, refusalRate, topCategories };
   }, [data]);
 
   const clearFilters = () => {
@@ -207,6 +263,13 @@ export default function DashboardPage() {
                   </span>
                 }
                 delay={0.3}
+              />
+              <StatCard
+                title="Refusal Rate"
+                value={`${stats.refusalRate.toFixed(1)}%`}
+                icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
+                description={`${stats.refusals} of ${stats.totalAudits} censored`}
+                delay={0.4}
               />
             </StatCardGrid>
 
@@ -308,6 +371,44 @@ export default function DashboardPage() {
                   title="Category Sensitivity Heatmap"
                   description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                 />
+              )}
+
+              {/* Top Censorship Categories Chart */}
+              {filteredData.length > 0 && stats.topCategories.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold mb-4">🚫 Top Censorship Categories</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fontWeight: 600 }} />
+                        <Tooltip cursor={{ fill: 'transparent' }} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
+                          {stats.topCategories.map((_: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16'][index] || '#64748b'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Audit Log Table */}
+              {filteredData.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold">📋 Audit Log</h3>
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors print:hidden"
+                    >
+                      <Printer className="h-4 w-4" /> Print PDF
+                    </button>
+                  </div>
+                  <DataTable columns={auditColumns} data={filteredData} searchKey="prompt" exportFilename="audit_log" />
+                </div>
               )}
 
               {filteredData.length === 0 && (
