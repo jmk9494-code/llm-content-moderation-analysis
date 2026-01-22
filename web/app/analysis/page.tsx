@@ -40,7 +40,7 @@ type BiasRow = {
     judge_reasoning: string;
 };
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const COLORS = ['#8b5cf6', '#10b981', '#94a3b8'];
 
 export default function DeepDivePage() {
     const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters' | 'bias'>('datalog');
@@ -361,17 +361,17 @@ export default function DeepDivePage() {
 
                     {activeTab === 'efficiency' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
+                            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                                <h3 className="font-bold text-indigo-800 flex items-center gap-2 mb-2">
                                     <Info className="w-4 h-4" /> What is Efficiency & Cost?
                                 </h3>
-                                <p className="text-sm text-blue-700">
+                                <p className="text-sm text-indigo-700">
                                     This tab visualizes the trade-off between <strong>cost</strong> and <strong>safety</strong> across models.
                                     The X-axis shows the cost per 1,000 prompts (in USD), while the Y-axis shows the refusal rate (%).
-                                    Ideally, you want a model in the <strong>bottom-left</strong> (low cost, low unnecessary refusals) or
-                                    <strong>top-left</strong> (low cost, high safety) depending on your use case.
+                                    It also includes a <strong>Model Registry</strong> listing current pricing and capabilities.
                                 </p>
                             </div>
+
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
                                     <span>Cost vs. Safety Trade-off</span>
@@ -403,6 +403,9 @@ export default function DeepDivePage() {
                                     </ScatterChart>
                                 </ResponsiveContainer>
                             </div>
+
+                            {/* Model Registry Implementation */}
+                            <ModelRegistryTable />
                         </div>
                     )}
 
@@ -508,6 +511,43 @@ export default function DeepDivePage() {
 
 // --- Sub-components ---
 
+// Model Registry Component
+function ModelRegistryTable() {
+    const [models, setModels] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/models.json').then(r => r.json()).then(setModels).catch(() => { });
+    }, []);
+
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 className="text-lg font-bold mb-4">🤖 Model Registry</h3>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-slate-200 text-slate-500">
+                            <th className="text-left py-3 px-4 font-semibold">Model</th>
+                            <th className="text-left py-3 px-4 font-semibold">Provider</th>
+                            <th className="text-right py-3 px-4 font-semibold">Cost ($/M in)</th>
+                            <th className="text-right py-3 px-4 font-semibold">Cost ($/M out)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {models.map((model) => (
+                            <tr key={model.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                <td className="py-3 px-4 font-medium text-slate-900">{model.name}</td>
+                                <td className="py-3 px-4 text-slate-600">{model.provider}</td>
+                                <td className="py-3 px-4 text-right font-mono text-slate-600">${model.cost_per_m_in.toFixed(2)}</td>
+                                <td className="py-3 px-4 text-right font-mono text-slate-600">${model.cost_per_m_out.toFixed(2)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
 function TabButton({ active, onClick, children, icon }: any) {
     return (
         <button
@@ -559,7 +599,7 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
         </div>
     );
 
-    const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+    const COLORS = ['#8b5cf6', '#10b981', '#94a3b8'];
 
     const pieData = clusters.map((c, i) => ({
         name: `Cluster ${i + 1}`,
@@ -659,11 +699,11 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
 
     return (
         <div className="space-y-8">
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                <h3 className="font-bold text-purple-800 flex items-center gap-2 mb-2">
+            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                <h3 className="font-bold text-indigo-800 flex items-center gap-2 mb-2">
                     <Compass className="w-4 h-4" /> What is the Bias Compass?
                 </h3>
-                <p className="text-sm text-purple-700">
+                <p className="text-sm text-indigo-700">
                     This visualization maps the <strong>reasoning behind refusals</strong> to a political/philosophical compass.
                     Instead of just saying "Refused", we analyze <em>why</em>. Is the model protecting marginalized groups (Left-Libertarian)?
                     Upholding traditional values (Right-Authoritarian)? Or just following generic safety rules (Neutral)?
@@ -674,18 +714,18 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                 {/* Compass Chart */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px] relative">
                     <h3 className="text-lg font-bold mb-2">🧭 Safety Alignment Chart</h3>
-                    <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none opacity-10">
-                        <div className="grid grid-cols-2 gap-0 w-full h-full border-2 border-slate-300">
-                            <div className="border-r-2 border-b-2 border-slate-300 flex items-start justify-end p-2 text-2xl font-bold uppercase text-slate-400">Auth-Left</div>
-                            <div className="border-b-2 border-slate-300 flex items-start justify-start p-2 text-2xl font-bold uppercase text-slate-400">Auth-Right</div>
-                            <div className="border-r-2 border-slate-300 flex items-end justify-end p-2 text-2xl font-bold uppercase text-slate-400">Lib-Left</div>
-                            <div className="flex items-end justify-start p-2 text-2xl font-bold uppercase text-slate-400">Lib-Right</div>
+                    <div className="absolute inset-0 flex items-center justify-center p-12 pointer-events-none opacity-30">
+                        <div className="grid grid-cols-2 gap-0 w-full h-full border-2 border-slate-400">
+                            <div className="border-r-2 border-b-2 border-slate-400 flex items-start justify-end p-2 text-2xl font-bold uppercase text-slate-500">Auth-Left</div>
+                            <div className="border-b-2 border-slate-400 flex items-start justify-start p-2 text-2xl font-bold uppercase text-slate-500">Auth-Right</div>
+                            <div className="border-r-2 border-slate-400 flex items-end justify-end p-2 text-2xl font-bold uppercase text-slate-500">Lib-Left</div>
+                            <div className="flex items-end justify-start p-2 text-2xl font-bold uppercase text-slate-500">Lib-Right</div>
                         </div>
                     </div>
 
                     <ResponsiveContainer width="100%" height="90%">
                         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                            <CartesianGrid />
+                            <CartesianGrid stroke="#94a3b8" />
                             <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
                             <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
                             <RechartsTooltip
@@ -703,8 +743,8 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                                     return null;
                                 }}
                             />
-                            <ReferenceLine x={0} stroke="#cbd5e1" />
-                            <ReferenceLine y={0} stroke="#cbd5e1" />
+                            <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} />
+                            <ReferenceLine y={0} stroke="#64748b" strokeWidth={2} />
                             <Scatter name="Biases" data={scatterData} fill="#8884d8">
                                 {scatterData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[Math.abs(entry.model.length) % COLORS.length]} />

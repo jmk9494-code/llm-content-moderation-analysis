@@ -61,6 +61,11 @@ const auditColumns: ColumnDef<AuditRow>[] = [
     header: 'Prompt',
     cell: ({ row }) => <div className="max-w-xs truncate text-xs text-slate-500" title={row.getValue('prompt')}>{row.getValue('prompt')}</div>,
   },
+  {
+    accessorKey: 'response',
+    header: 'Response',
+    cell: ({ row }) => <div className="max-w-xs truncate text-xs text-slate-500 font-mono" title={row.getValue('response')}>{row.getValue('response')}</div>,
+  },
 ];
 
 export default function DashboardPage() {
@@ -229,7 +234,7 @@ export default function DashboardPage() {
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                 📊 Overview
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
+              <p className="text-slate-500 text-sm md:text-base">
                 Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
@@ -303,7 +308,7 @@ export default function DashboardPage() {
             </StatCardGrid>
 
             {/* Filter Controls */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
               <div className="flex flex-wrap items-center gap-3">
                 {/* Keyword Search */}
                 <div className="relative flex-grow max-w-xs">
@@ -313,7 +318,7 @@ export default function DashboardPage() {
                     placeholder="Search prompts..."
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -321,7 +326,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="all">All Regions</option>
                   {filterOptions.regions.map(r => (
@@ -333,7 +338,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="all">All Models</option>
                   {filterOptions.models.map(m => (
@@ -345,7 +350,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="all">All Categories</option>
                   {filterOptions.categories.map(c => (
@@ -357,7 +362,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="all">All Run Dates</option>
                   {filterOptions.dates.map(d => (
@@ -369,7 +374,7 @@ export default function DashboardPage() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="inline-flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <X className="h-4 w-4" />
                     Clear
@@ -379,7 +384,7 @@ export default function DashboardPage() {
 
               {/* Results count */}
               {hasActiveFilters && (
-                <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                <div className="mt-3 text-sm text-slate-500">
                   Showing {filteredData.length} of {data.length} records
                 </div>
               )}
@@ -404,7 +409,7 @@ export default function DashboardPage() {
 
               {/* Top Censorship Categories Chart */}
               {filteredData.length > 0 && stats.topCategories.length > 0 && (
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="bg-white p-6 rounded-xl border border-slate-200">
                   <h3 className="text-lg font-bold mb-4">🚫 Top Censorship Categories</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -426,7 +431,7 @@ export default function DashboardPage() {
 
               {/* Audit Log Table */}
               {filteredData.length > 0 && (
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="bg-white p-6 rounded-xl border border-slate-200">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">📋 Audit Log</h3>
                   </div>
@@ -435,8 +440,8 @@ export default function DashboardPage() {
               )}
 
               {filteredData.length === 0 && (
-                <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <p className="text-slate-500 dark:text-slate-400">No results match your filters.</p>
+                <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+                  <p className="text-slate-500">No results match your filters.</p>
                   <button onClick={clearFilters} className="mt-2 text-indigo-600 hover:underline">Clear filters</button>
                 </div>
               )}

@@ -128,9 +128,9 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-700/50">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <span>🏆</span> Model Comparison
                 </h3>
             </div>
@@ -138,7 +138,7 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+                        <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">Model</th>
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">
                                 <div className="flex items-center gap-1">
@@ -156,15 +156,15 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider text-right">Prompts</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                        {stats.map((row) => (
+                    <tbody className="divide-y divide-slate-100">
+                        {stats.map((row: ModelStats) => (
                             <tr key={row.model} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-4 font-medium text-slate-900 dark:text-slate-200">
+                                <td className="p-4 font-medium text-slate-900">
                                     {row.model.split('/')[1] || row.model}
                                 </td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full max-w-[100px] overflow-hidden">
+                                        <div className="flex-1 h-2 bg-slate-100 rounded-full max-w-[100px] overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full ${row.censorshipScore > 50 ? 'bg-red-500' :
                                                     row.censorshipScore > 30 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -179,13 +179,13 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-slate-500 dark:text-slate-400 text-xs font-mono">
+                                <td className="p-4 text-slate-500 text-xs font-mono">
                                     {formatCI(row.confidenceInterval)}
                                 </td>
-                                <td className="p-4 font-mono text-slate-600 dark:text-slate-400">
+                                <td className="p-4 font-mono text-slate-600">
                                     {row.avgLength} chars
                                 </td>
-                                <td className="p-4 text-right text-slate-600 dark:text-slate-400">
+                                <td className="p-4 text-right text-slate-600">
                                     {row.count}
                                 </td>
                             </tr>

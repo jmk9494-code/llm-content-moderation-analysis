@@ -53,14 +53,6 @@ export function CommandPalette() {
             action: () => router.push('/analysis'),
             keywords: ['stats', 'statistics', 'data', 'deep', 'bias']
         },
-        {
-            id: 'admin',
-            title: 'Admin Dashboard',
-            description: 'Manage models and settings',
-            icon: <Settings className="h-4 w-4" />,
-            action: () => router.push('/admin'),
-            keywords: ['settings', 'config', 'manage']
-        },
     ];
 
     const filteredCommands = commands.filter(cmd => {

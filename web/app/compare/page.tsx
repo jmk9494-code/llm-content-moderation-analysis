@@ -185,13 +185,13 @@ export default function ComparePage() {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                         ⚖️ Model Comparison
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base mt-1">
+                    <p className="text-slate-500 text-sm md:text-base mt-1">
                         Side-by-side analysis of model behavior, refusal rates, and disagreements.
                     </p>
                 </header>
 
                 {/* Filters Bar */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex flex-wrap gap-4 items-end">
                         {/* Search */}
                         <div className="flex-1 min-w-[200px]">
@@ -203,7 +203,7 @@ export default function ComparePage() {
                                     value={searchKeyword}
                                     onChange={e => setSearchKeyword(e.target.value)}
                                     placeholder="Search..."
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
                         </div>
@@ -216,7 +216,7 @@ export default function ComparePage() {
                                 <select
                                     value={selectedCategory}
                                     onChange={e => setSelectedCategory(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <option value="all">All Categories</option>
                                     {filterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -232,7 +232,7 @@ export default function ComparePage() {
                                 <select
                                     value={selectedDate}
                                     onChange={e => setSelectedDate(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <option value="all">All Dates</option>
                                     {filterOptions.dates.map(d => <option key={d} value={d}>{d}</option>)}
@@ -242,7 +242,7 @@ export default function ComparePage() {
 
                         {/* Clear */}
                         {(searchKeyword || selectedCategory !== 'all' || selectedDate !== 'all') && (
-                            <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg">
+                            <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg">
                                 <X className="h-4 w-4" /> Clear
                             </button>
                         )}
@@ -250,14 +250,14 @@ export default function ComparePage() {
                 </div>
 
                 {/* Model Selectors */}
-                <div className="flex flex-col md:flex-row items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex flex-col md:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="w-full md:w-1/2">
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model A</label>
                         <div className="relative">
                             <select
                                 value={modelA}
                                 onChange={(e) => setModelA(e.target.value)}
-                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -265,7 +265,7 @@ export default function ComparePage() {
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center justify-center p-2 rounded-full bg-slate-100 dark:bg-slate-700 mt-6">
+                    <div className="hidden md:flex items-center justify-center p-2 rounded-full bg-slate-100 mt-6">
                         <span className="text-xs font-bold text-slate-500">VS</span>
                     </div>
 
@@ -275,7 +275,7 @@ export default function ComparePage() {
                             <select
                                 value={modelB}
                                 onChange={(e) => setModelB(e.target.value)}
-                                className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
+                                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 rounded-lg p-3 pr-8 focus:ring-2 focus:ring-indigo-500 font-medium"
                             >
                                 {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
@@ -291,7 +291,7 @@ export default function ComparePage() {
                         {/* Comparison Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Card A */}
-                            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm border-t-4 border-t-indigo-500 relative overflow-hidden">
+                            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm border-t-4 border-t-indigo-500 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <img
                                         src={getProviderLogo(modelA)}
@@ -310,15 +310,15 @@ export default function ComparePage() {
                                 </div>
                                 {statsA && (
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+                                        <div className="bg-slate-50 p-4 rounded-lg">
                                             <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Refusal Rate</div>
                                             <div className={`text-2xl font-bold ${statsA.refusalRate > 50 ? 'text-red-600' : 'text-emerald-600'}`}>
                                                 {statsA.refusalRate.toFixed(1)}%
                                             </div>
                                         </div>
-                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+                                        <div className="bg-slate-50 p-4 rounded-lg">
                                             <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Avg Verbosity</div>
-                                            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+                                            <div className="text-2xl font-bold text-slate-700">
                                                 {statsA.avgVerbosity} <span className="text-sm font-normal text-slate-400">chars</span>
                                             </div>
                                         </div>
@@ -327,7 +327,7 @@ export default function ComparePage() {
                             </div>
 
                             {/* Card B */}
-                            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm border-t-4 border-t-emerald-500 relative overflow-hidden">
+                            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm border-t-4 border-t-emerald-500 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <img
                                         src={getProviderLogo(modelB)}
@@ -346,15 +346,15 @@ export default function ComparePage() {
                                 </div>
                                 {statsB && (
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+                                        <div className="bg-slate-50 p-4 rounded-lg">
                                             <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Refusal Rate</div>
                                             <div className={`text-2xl font-bold ${statsB.refusalRate > 50 ? 'text-red-600' : 'text-emerald-600'}`}>
                                                 {statsB.refusalRate.toFixed(1)}%
                                             </div>
                                         </div>
-                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
+                                        <div className="bg-slate-50 p-4 rounded-lg">
                                             <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Avg Verbosity</div>
-                                            <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">
+                                            <div className="text-2xl font-bold text-slate-700">
                                                 {statsB.avgVerbosity} <span className="text-sm font-normal text-slate-400">chars</span>
                                             </div>
                                         </div>
@@ -364,7 +364,7 @@ export default function ComparePage() {
                         </div>
 
                         {/* Radar Chart */}
-                        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
                                 <span>🕸️</span> Side-by-Side Censorship Profile
                             </h3>
@@ -415,8 +415,8 @@ export default function ComparePage() {
 
                             <div className="grid gap-4">
                                 {disagreements.slice(0, 50).map((diff, idx) => (
-                                    <div key={idx} className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                                    <div key={idx} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="bg-slate-50 p-3 border-b border-slate-100 flex justify-between items-center">
                                             <span className="text-xs font-bold uppercase text-slate-500 tracking-wider">
                                                 {diff.category}
                                             </span>
@@ -425,7 +425,7 @@ export default function ComparePage() {
                                             {/* Prompt */}
                                             <div>
                                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Prompt</p>
-                                                <div className="text-sm text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900 p-3 rounded border border-slate-100 dark:border-slate-800 max-h-32 overflow-y-auto">
+                                                <div className="text-sm text-slate-700 font-mono bg-slate-50 p-3 rounded border border-slate-100 max-h-32 overflow-y-auto">
                                                     {diff.prompt}
                                                 </div>
                                             </div>
@@ -448,7 +448,7 @@ export default function ComparePage() {
                                                             {diff.rowA.verdict === 'safe' || diff.rowA.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
                                                         </span>
                                                     </div>
-                                                    <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                                    <p className="p-3 text-sm text-slate-700 max-h-36 overflow-y-auto">
                                                         {diff.rowA.response || 'No response recorded'}
                                                     </p>
                                                 </div>
@@ -469,7 +469,7 @@ export default function ComparePage() {
                                                             {diff.rowB.verdict === 'safe' || diff.rowB.verdict === 'ALLOWED' ? 'ALLOWED' : 'REMOVED'}
                                                         </span>
                                                     </div>
-                                                    <p className="p-3 text-sm text-slate-700 dark:text-slate-300 max-h-36 overflow-y-auto">
+                                                    <p className="p-3 text-sm text-slate-700 max-h-36 overflow-y-auto">
                                                         {diff.rowB.response || 'No response recorded'}
                                                     </p>
                                                 </div>
@@ -483,7 +483,7 @@ export default function ComparePage() {
                                     </div>
                                 )}
                                 {disagreements.length === 0 && (
-                                    <div className="text-center text-slate-400 py-8 bg-white dark:bg-slate-800 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+                                    <div className="text-center text-slate-400 py-8 bg-white rounded-lg border border-dashed border-slate-200">
                                         <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                         No disagreements found between selected models.
                                     </div>
