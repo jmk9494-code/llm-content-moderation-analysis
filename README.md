@@ -9,8 +9,8 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ### Dashboard
 - **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
 - **Compare** - Side-by-side model comparison with radar charts
-- **Deep Dive** - Statistical analysis, semantic clustering, and **Bias Compass** (political alignment)
-- **Admin** - Model registry and basic configuration
+- **Deep Dive** - Statistical analysis, semantic clustering, **Bias Compass**, and **Model Registry**
+- **Efficiency** - Cost vs. Safety trade-offs
 
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
@@ -73,7 +73,7 @@ python src/audit_runner.py --preset high    # Expensive tier
 │   ├── statistics.py     # Statistical analysis
 │   └── cluster_analysis.py
 ├── web/                  # Next.js dashboard
-│   ├── app/              # Pages (dashboard, compare, analysis, admin)
+│   ├── app/              # Pages (dashboard, compare, analysis)
 │   └── components/       # React components
 ├── data/                 # Prompts and model configs
 │   ├── prompts.csv       # Test prompts by category
