@@ -212,6 +212,12 @@ export default function DashboardPage() {
                 Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors print:hidden"
+            >
+              <Printer className="h-4 w-4" /> Print PDF
+            </button>
           </div>
         </header>
 

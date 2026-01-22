@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Box, LayoutDashboard, FileBarChart, BarChart3, Moon, Sun, ArrowRightLeft, Settings, Brain } from 'lucide-react';
+import { Box, LayoutDashboard, FileBarChart, BarChart3, ArrowRightLeft, Settings, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/components/providers/ThemeProvider';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
@@ -15,11 +14,6 @@ const navItems = [
 
 export function NavBar() {
     const pathname = usePathname();
-    const { resolvedTheme, setTheme } = useTheme();
-
-    const toggleTheme = () => {
-        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-    };
 
     return (
         <nav className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-colors duration-300">
@@ -55,19 +49,6 @@ export function NavBar() {
                                 );
                             })}
                         </div>
-
-                        {/* Dark Mode Toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                            aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
-                        >
-                            {resolvedTheme === 'dark' ? (
-                                <Sun className="h-5 w-5 text-yellow-500" />
-                            ) : (
-                                <Moon className="h-5 w-5 text-slate-600" />
-                            )}
-                        </button>
                     </div>
                 </div>
             </div>
