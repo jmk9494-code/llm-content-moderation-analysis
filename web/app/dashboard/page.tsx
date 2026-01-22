@@ -150,7 +150,6 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-                <LayoutDashboard className="h-7 w-7 text-indigo-600" />
                 📊 Overview
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">

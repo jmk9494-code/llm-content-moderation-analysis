@@ -133,7 +133,6 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <span>🏆</span> Model Comparison
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">* p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001 vs overall mean</p>
             </div>
 
             <div className="overflow-x-auto">
@@ -162,9 +161,6 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                             <tr key={row.model} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="p-4 font-medium text-slate-900 dark:text-slate-200">
                                     {row.model.split('/')[1] || row.model}
-                                    <span className="ml-1 text-amber-600 font-bold" title={row.pValue ? `p=${row.pValue.toFixed(4)}` : ''}>
-                                        {getSignificanceLabel(row.pValue)}
-                                    </span>
                                 </td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
