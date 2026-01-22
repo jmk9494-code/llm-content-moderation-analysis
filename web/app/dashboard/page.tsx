@@ -185,7 +185,28 @@ export default function DashboardPage() {
       .slice(0, 5)
       .map(([name, value]) => ({ name, value }));
 
-    return { totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate, refusals, refusalRate, topCategories };
+    // Tier freshness - based on model names/providers
+    const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];
+    const highTierModels = ['gpt-4o', 'claude-3.5-sonnet', 'mistral-large', 'deepseek', '72b'];
+
+    const getTierData = (keywords: string[]) => {
+      const tierRows = data.filter(d => keywords.some(k => d.model.toLowerCase().includes(k)));
+      if (tierRows.length === 0) return { lastUpdate: null, daysSince: 999 };
+      const dates = tierRows.map(d => new Date(d.timestamp)).sort((a, b) => b.getTime() - a.getTime());
+      const lastUpdate = dates[0];
+      const daysSince = Math.floor((new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+      return { lastUpdate, daysSince };
+    };
+
+    const efficiencyTier = getTierData(lowTierModels);
+    const mediumTier = getTierData(['flash', 'haiku', 'small', 'medium', 'plus']);
+    const expensiveTier = getTierData(highTierModels);
+
+    return {
+      totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate,
+      refusals, refusalRate, topCategories,
+      efficiencyTier, mediumTier, expensiveTier
+    };
   }, [data]);
 
   const clearFilters = () => {

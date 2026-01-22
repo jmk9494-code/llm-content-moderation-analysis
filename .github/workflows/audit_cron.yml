@@ -30,8 +30,8 @@ jobs:
       env:
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       run: |
-        # Run a limited audit to keep costs down, or full if configured
-        python src/audit_runner.py --limit 100 --output audit_log.csv --force
+        # Run full audit without limits
+        python src/audit_runner.py --output audit_log.csv --force
         
     - name: Commit Results
       run: |
