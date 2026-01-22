@@ -434,7 +434,7 @@ export default function DashboardPage() {
                       <Printer className="h-4 w-4" /> Print PDF
                     </button>
                   </div>
-                  <DataTable columns={auditColumns} data={filteredData} searchKey="prompt" exportFilename="audit_log" />
+                  <DataTable columns={auditColumns} data={filteredData} exportFilename="audit_log" />
                 </div>
               )}
 
