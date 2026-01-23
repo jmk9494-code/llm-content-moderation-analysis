@@ -60,6 +60,7 @@ PRESETS = {
 }
 
 CONCURRENCY_LIMIT = 10  # Max parallel requests
+DB_LOCK = asyncio.Lock()
 
 # --- Helpers ---
 
@@ -265,51 +266,66 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
             run_cost = calculate_cost(model_name, p_tokens, c_tokens)
             
             # --- DB Save ---
-            try:
-                session = Session()
-                # Ensure Prompt Exists
-                if not session.query(Prompt).get(p['id']):
-                    session.merge(Prompt(id=p['id'], category=p['category'], text=p['text']))
-                
-                # Check for Model (add if missing)
-                if not session.query(ModelRegistry).get(model_name):
-                    fam = model_name.split('/')[0] if '/' in model_name else 'unknown'
-                    session.merge(ModelRegistry(id=model_name, family=fam))
+            async with DB_LOCK:
+                try:
+                    session = Session()
+                    # Ensure Prompt Exists
+                    if not session.query(Prompt).get(p['id']):
+                        session.merge(Prompt(id=p['id'], category=p['category'], text=p['text']))
+                    
+                    # Check for Model (add if missing)
+                    if not session.query(ModelRegistry).get(model_name):
+                        fam = model_name.split('/')[0] if '/' in model_name else 'unknown'
+                        session.merge(ModelRegistry(id=model_name, family=fam))
 
-                result = AuditResult(
-                    run_id=str(uuid.uuid4()),
-                    timestamp=datetime.datetime.now(),
-                    model_id=model_name,
-                    prompt_id=p['id'],
-                    verdict=verdict,
-                    response_text=content,
-                    cost=run_cost,
-                    prompt_tokens=p_tokens,
-                    completion_tokens=c_tokens,
-                    policy_version=policy_version
-                )
-                session.add(result)
-                session.commit()
-                
-                # Return dict for CSV writer
-                return {
-                    'test_date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                    'model': model_name,
-                    'prompt_id': p['id'],
-                    'category': p['category'],
-                    'verdict': verdict,
-                    'prompt_text': p['text'],
-                    'response_text': content,
-                    'prompt_tokens': p_tokens,
-                    'completion_tokens': c_tokens,
-                    'total_tokens': t_tokens,
-                    'run_cost': run_cost
-                }
-            except Exception as e:
-                logger.error(f"DB Save Error: {e}")
-                session.rollback()
-            finally:
-                session.close() # Ensure session is closed!
+                    result = AuditResult(
+                        run_id=str(uuid.uuid4()),
+                        timestamp=datetime.datetime.now(),
+                        model_id=model_name,
+                        prompt_id=p['id'],
+                        verdict=verdict,
+                        response_text=content,
+                        cost=run_cost,
+                        prompt_tokens=p_tokens,
+                        completion_tokens=c_tokens,
+                        policy_version=policy_version
+                    )
+                    session.add(result)
+                    session.commit()
+                    
+                    # Return dict for CSV writer
+                    return {
+                        'test_date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                        'model': model_name,
+                        'prompt_id': p['id'],
+                        'category': p['category'],
+                        'verdict': verdict,
+                        'prompt_text': p['text'],
+                        'response_text': content,
+                        'prompt_tokens': p_tokens,
+                        'completion_tokens': c_tokens,
+                        'total_tokens': t_tokens,
+                        'run_cost': run_cost
+                    }
+                except Exception as e:
+                    logger.error(f"DB Save Error: {e}")
+                    session.rollback()
+                    # Return error so we see it in CSV
+                    return {
+                        'test_date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                        'model': model_name,
+                        'prompt_id': p['id'],
+                        'category': p['category'],
+                        'verdict': "ERROR",
+                        'prompt_text': p['text'],
+                        'response_text': f"DB_SAVE_ERROR: {e}",
+                        'prompt_tokens': p_tokens,
+                        'completion_tokens': c_tokens,
+                        'total_tokens': t_tokens,
+                        'run_cost': run_cost
+                    }
+                finally:
+                    session.close() # Ensure session is closed!
 
         except Exception as e:
             logger.error(f"Failed to process {p['id']} on {model_name}: {e}")

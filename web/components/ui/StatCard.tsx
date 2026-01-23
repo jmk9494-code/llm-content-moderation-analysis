@@ -11,9 +11,10 @@ interface StatCardProps {
     change?: number; // Percentage change (e.g., 5.2 for +5.2%)
     icon?: ReactNode;
     delay?: number; // Animation delay
+    className?: string;
 }
 
-export function StatCard({ title, value, description, change, icon, delay = 0 }: StatCardProps) {
+export function StatCard({ title, value, description, change, icon, delay = 0, className = "" }: StatCardProps) {
     const isPositive = change !== undefined && change > 0;
     const isNegative = change !== undefined && change < 0;
     const isNeutral = change === undefined || change === 0;
@@ -23,7 +24,7 @@ export function StatCard({ title, value, description, change, icon, delay = 0 }:
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay }}
-            className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow"
+            className={`bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow ${className}`}
         >
             <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-slate-500">{title}</span>

@@ -298,14 +298,18 @@ export default function DashboardPage() {
                 }
                 delay={0.3}
               />
-              <StatCard
-                title="Refusal Rate"
-                value={`${stats.refusalRate.toFixed(1)}%`}
-                icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
-                description={`${stats.refusals} of ${stats.totalAudits} censored`}
-                delay={0.4}
-              />
             </StatCardGrid>
+
+            {/* Full Width Refusal Rate Card */}
+            <StatCard
+              title="Refusal Rate"
+              value={`${stats.refusalRate.toFixed(1)}%`}
+              icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
+              description={`${stats.refusals} of ${stats.totalAudits} censored`}
+              delay={0.4}
+              className="flex flex-col items-center text-center justify-center w-full bg-slate-50/50 border-slate-200/60 shadow-sm"
+            />
+
 
             {/* Filter Controls */}
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
