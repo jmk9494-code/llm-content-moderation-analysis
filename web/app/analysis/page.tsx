@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, ChangeEvent } from 'react';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X, Compass, Grip
+    Info, Database, Clock, Filter, X, Compass, Grip, BookOpen, Search
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -43,7 +43,7 @@ type BiasRow = {
 const COLORS = ['#8b5cf6', '#10b981', '#94a3b8'];
 
 export default function DeepDivePage() {
-    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters' | 'bias'>('datalog');
+    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters' | 'bias' | 'prompts'>('datalog');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -266,6 +266,9 @@ export default function DeepDivePage() {
                     </TabButton>
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>
                         Semantic Clusters
+                    </TabButton>
+                    <TabButton active={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} icon={<BookOpen className="w-4 h-4" />}>
+                        Prompt Library
                     </TabButton>
                 </div>
 
@@ -501,7 +504,10 @@ export default function DeepDivePage() {
                         </div>
                     )}
 
+
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
+
+                    {activeTab === 'prompts' && <PromptLibraryView />}
 
                 </div>
             </div>
@@ -791,3 +797,127 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
     );
 }
 
+
+
+type Prompt = {
+    id: string;
+    text: string;
+    category: string;
+    source?: string;
+};
+
+function PromptLibraryView() {
+    const [prompts, setPrompts] = useState<Prompt[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const ITEMS_PER_PAGE = 50;
+
+    useEffect(() => {
+        fetch('/api/prompts')
+            .then(r => r.json())
+            .then((data: { data: Prompt[] }) => {
+                if (data.data) setPrompts(data.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to load prompts", err);
+                setLoading(false);
+            });
+    }, []);
+
+    const categories = useMemo(() => Array.from(new Set(prompts.map((p: Prompt) => p.category))).sort(), [prompts]);
+
+    const filtered = useMemo(() => {
+        return prompts.filter((p: Prompt) => {
+            if (filterCategory !== 'all' && p.category !== filterCategory) return false;
+            if (search && !p.text.toLowerCase().includes(search.toLowerCase()) && !p.id.toLowerCase().includes(search.toLowerCase())) return false;
+            return true;
+        });
+    }, [prompts, filterCategory, search]);
+
+    const paginated = filtered.slice(0, page * ITEMS_PER_PAGE);
+
+    if (loading) return <div className="p-12 text-center text-slate-500">Loading prompt library...</div>;
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Total Prompts</div>
+                    <div className="text-3xl font-black text-slate-900">{prompts.length.toLocaleString()}</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Categories</div>
+                    <div className="text-3xl font-black text-slate-900">{categories.length}</div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Gold Standard</div>
+                    <div className={`text-3xl font-black ${prompts.length >= 1925 ? 'text-green-600' : 'text-amber-600'}`}>
+                        {prompts.length >= 1925 ? 'Met' : 'Pending'}
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search prompts by text or ID..."
+                            value={search}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                    </div>
+                    <select
+                        value={filterCategory}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterCategory(e.target.value)}
+                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-bold text-slate-500 uppercase border-b border-slate-100">
+                        <div className="col-span-2">ID</div>
+                        <div className="col-span-2">Category</div>
+                        <div className="col-span-8">Prompt Text</div>
+                    </div>
+                    {paginated.map((p: Prompt) => (
+                        <div key={p.id} className="grid grid-cols-12 gap-4 px-4 py-3 text-sm border-b border-slate-50 hover:bg-slate-50 items-start">
+                            <div className="col-span-2 font-mono text-xs text-slate-500 truncate" title={p.id}>{p.id}</div>
+                            <div className="col-span-2">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">
+                                    {p.category}
+                                </span>
+                            </div>
+                            <div className="col-span-8 text-slate-700">{p.text}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {paginated.length < filtered.length && (
+                    <div className="mt-6 text-center">
+                        <button
+                            onClick={() => setPage(p => p + 1)}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                        >
+                            Load More ({filtered.length - paginated.length} remaining)
+                        </button>
+                    </div>
+                )}
+
+                {filtered.length === 0 && (
+                    <div className="text-center py-12 text-slate-400">
+                        No prompts found matching your criteria.
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
