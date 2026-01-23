@@ -14,6 +14,7 @@ pydantic-settings # For environment validation
 ruff              # Fast Python linter
 black             # Code formatter
 pytest            # Testing framework
+pytest-asyncio    # Async test support
 statsmodels       # Power analysis and advanced statistics
 scipy             # Scientific computing and statistics
 numpy             # Numerical computing

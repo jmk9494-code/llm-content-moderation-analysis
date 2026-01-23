@@ -42,3 +42,14 @@ max-complexity = 10
 line-length = 88
 target-version = ['py310']
 include = '\.pyi?$'
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+markers = [
+    "asyncio: mark test as asyncio",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::UserWarning",
+]
