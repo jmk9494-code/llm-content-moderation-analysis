@@ -31,7 +31,7 @@ export async function GET() {
         // Current prompts.csv format: "id","category","text"
         // But let's check the file content first to be sure about headers.
 
-        let data = [];
+        let data: any[] = [];
         // Heuristic: Check if first row looks like a header
         if (parsed.data && parsed.data.length > 0) {
             const firstRow = parsed.data[0] as string[];
