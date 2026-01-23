@@ -36,9 +36,13 @@ def calculate_fleiss_kappa(ratings_matrix: np.ndarray) -> float:
         kappa = calculate_fleiss_kappa(matrix)
     """
     N, k = ratings_matrix.shape
+    
+    if N == 0 or k == 0:
+        return 0.0
+        
     n = ratings_matrix.sum(axis=1)[0]  # Number of raters per subject
     
-    if N == 0 or k == 0 or n == 0:
+    if n == 0:
         return 0.0
     
     # Calculate proportion of all assignments to each category

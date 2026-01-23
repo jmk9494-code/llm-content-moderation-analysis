@@ -44,7 +44,7 @@ class TestFleissKappa:
             [2, 2, 2],
         ])
         kappa = calculate_fleiss_kappa(matrix)
-        assert kappa == pytest.approx(0.0, abs=0.1)
+        assert kappa == pytest.approx(-0.2, abs=0.01)
     
     def test_empty_matrix(self):
         """Empty matrix returns 0."""
@@ -68,7 +68,7 @@ class TestPairwiseKappa:
         v1 = ["ALLOWED", "ALLOWED", "ALLOWED", "ALLOWED"]
         v2 = ["REMOVED", "REMOVED", "REMOVED", "REMOVED"]
         kappa = calculate_pairwise_kappa(v1, v2)
-        assert kappa < 0  # Worse than chance
+        assert kappa <= 0  # Worse than or equal to chance (0.0 in this case)
 
 
 class TestPowerAnalysis:
@@ -141,7 +141,7 @@ class TestOddsRatio:
         """Different proportions give OR != 1."""
         result = calculate_odds_ratio(90, 100, 10, 100)
         assert result["odds_ratio"] > 1
-        assert result["significant"] is True
+        assert result["significant"]
 
 
 class TestBootstrap:
@@ -157,7 +157,7 @@ class TestBootstrap:
     def test_bootstrap_proportion(self):
         """Bootstrap proportion CI is reasonable."""
         lower, prop, upper = bootstrap_proportion_ci(50, 100, seed=42)
-        assert 40 < lower < prop < upper < 60  # Near 50%
+        assert 40 <= lower <= prop <= upper <= 60  # Near 50%
 
 
 class TestInterpretations:

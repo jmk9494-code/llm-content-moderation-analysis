@@ -13,46 +13,36 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>('system');
+    const [theme, setThemeState] = useState<Theme>('light');
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+    const [mounted, setMounted] = useState(false);
 
+    // Force light mode always
     useEffect(() => {
-        // Load saved theme from localStorage
-        const saved = localStorage.getItem('theme') as Theme | null;
-        if (saved) {
-            setThemeState(saved);
-        }
+        setMounted(true);
+        setThemeState('light');
     }, []);
 
+    // Apply theme changes (Always light)
     useEffect(() => {
+        if (!mounted) return;
         const root = window.document.documentElement;
-
-        const applyTheme = (isDark: boolean) => {
-            if (isDark) {
-                root.classList.add('dark');
-                setResolvedTheme('dark');
-            } else {
-                root.classList.remove('dark');
-                setResolvedTheme('light');
-            }
-        };
-
-        if (theme === 'system') {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            applyTheme(mediaQuery.matches);
-
-            const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
-            mediaQuery.addEventListener('change', handler);
-            return () => mediaQuery.removeEventListener('change', handler);
-        } else {
-            applyTheme(theme === 'dark');
-        }
-    }, [theme]);
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+        setResolvedTheme('light');
+        // Clear any saved theme
+        localStorage.removeItem('theme');
+    }, [mounted]);
 
     const setTheme = (newTheme: Theme) => {
-        setThemeState(newTheme);
-        localStorage.setItem('theme', newTheme);
+        // No-op or just set light
+        setThemeState('light');
     };
+
+    // Prevent hydration mismatch by not rendering until mounted
+    if (!mounted) {
+        return <>{children}</>;
+    }
 
     return (
         <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
@@ -64,7 +54,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) {
-        throw new Error('useTheme must be used within a ThemeProvider');
+        // Return safe fallback for static page generation
+        return {
+            theme: 'light' as const,
+            resolvedTheme: 'light' as const,
+            setTheme: () => { },
+        };
     }
     return context;
 }

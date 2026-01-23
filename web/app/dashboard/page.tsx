@@ -1,17 +1,15 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { DataTable, SortableHeader } from '@/components/ui/DataTable';
-import PriceChart from '@/components/PriceChart';
-import LatencyChart from '@/components/LatencyChart';
-import VerdictPieChart from '@/components/VerdictPieChart';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
-import { ActivityFeed } from '@/components/ui/ActivityFeed';
-import { InsightsSummary } from '@/components/ui/InsightsSummary';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, DollarSign, CheckCircle, Zap, Filter, LayoutGrid, List } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle } from 'lucide-react';
+import HeatmapTable from '@/components/HeatmapTable';
+import ModelComparison from '@/components/ModelComparison';
+import { DataTable, SortableHeader } from '@/components/ui/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export type AuditRow = {
   timestamp: string;
@@ -26,15 +24,12 @@ export type AuditRow = {
   latency_ms: number;
 };
 
-type FilterType = 'all' | 'safe' | 'unsafe' | 'recent';
-type ViewMode = 'table' | 'cards';
-
-// Define columns for the DataTable
-const columns: ColumnDef<AuditRow>[] = [
+// Columns for Audit Log table
+const auditColumns: ColumnDef<AuditRow>[] = [
   {
     accessorKey: 'timestamp',
     header: ({ column }) => <SortableHeader column={column} title="Date" />,
-    cell: ({ row }) => new Date(row.getValue('timestamp')).toLocaleDateString(),
+    cell: ({ row }) => new Date(row.getValue('timestamp')).toLocaleDateString()
   },
   {
     accessorKey: 'model',
@@ -47,128 +42,52 @@ const columns: ColumnDef<AuditRow>[] = [
   {
     accessorKey: 'category',
     header: ({ column }) => <SortableHeader column={column} title="Category" />,
-    cell: ({ row }) => (
-      <span className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-700 rounded-full">
-        {row.getValue('category')}
-      </span>
-    ),
   },
   {
     accessorKey: 'verdict',
     header: ({ column }) => <SortableHeader column={column} title="Verdict" />,
     cell: ({ row }) => {
       const verdict = row.getValue('verdict') as string;
-      const styles = {
-        safe: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-        unsafe: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-        default: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-      };
-      const style = styles[verdict as keyof typeof styles] || styles.default;
-      return <span className={`px-2 py-1 text-xs font-medium rounded-full ${style}`}>{verdict}</span>;
-    },
-  },
-  {
-    accessorKey: 'cost',
-    header: ({ column }) => <SortableHeader column={column} title="Cost" />,
-    cell: ({ row }) => {
-      const val = row.getValue('cost') as number;
-      return val ? <span className="font-mono text-sm">${val.toFixed(5)}</span> : '-';
-    },
-  },
-  {
-    accessorKey: 'latency_ms',
-    header: ({ column }) => <SortableHeader column={column} title="Tokens" />,
-    cell: ({ row }) => {
-      const val = row.getValue('latency_ms') as number;
-      return val ? <span className="font-mono text-sm">{val.toLocaleString()}</span> : '-';
+      const isRefusal = ['REMOVED', 'REFUSAL', 'unsafe'].includes(verdict);
+      return (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${isRefusal ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {verdict}
+        </span>
+      );
     },
   },
   {
     accessorKey: 'prompt',
     header: 'Prompt',
-    cell: ({ row }) => (
-      <div className="max-w-xs truncate text-xs text-slate-500 dark:text-slate-400" title={row.getValue('prompt')}>
-        {row.getValue('prompt')}
-      </div>
-    ),
+    cell: ({ row }) => <div className="max-w-xs truncate text-xs text-slate-500" title={row.getValue('prompt')}>{row.getValue('prompt')}</div>,
+  },
+  {
+    accessorKey: 'response',
+    header: 'Response',
+    cell: ({ row }) => <div className="max-w-xs truncate text-xs text-slate-500 font-mono" title={row.getValue('response')}>{row.getValue('response')}</div>,
   },
 ];
-
-// Expanded row renderer
-function ExpandedRowContent({ row }: { row: AuditRow }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-          Prompt
-        </h4>
-        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
-          {row.prompt || 'No prompt available'}
-        </p>
-      </div>
-      <div>
-        <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2">
-          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          Response
-        </h4>
-        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap bg-slate-100 dark:bg-slate-800 p-3 rounded-md max-h-48 overflow-y-auto">
-          {row.response || 'No response available'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Card view for mobile
-function AuditCard({ row }: { row: AuditRow }) {
-  const verdictStyle = {
-    safe: 'border-l-green-500 bg-green-50/50 dark:bg-green-900/10',
-    unsafe: 'border-l-red-500 bg-red-50/50 dark:bg-red-900/10',
-    default: 'border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10'
-  };
-  const style = verdictStyle[row.verdict as keyof typeof verdictStyle] || verdictStyle.default;
-
-  return (
-    <div className={`p-4 rounded-lg border-l-4 border border-slate-200 dark:border-slate-700 ${style}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-medium text-slate-900 dark:text-white">
-          {row.model?.split('/')[1] || row.model}
-        </span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {new Date(row.timestamp).toLocaleDateString()}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${row.verdict === 'safe' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-          row.verdict === 'unsafe' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-          }`}>
-          {row.verdict}
-        </span>
-        <span className="text-xs text-slate-500 dark:text-slate-400">{row.category}</span>
-      </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-        {row.prompt}
-      </p>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const [data, setData] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const { addToast } = useToast();
+
+  // Filter states
+  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedRegion, setSelectedRegion] = useState<string>('all');
+  const [selectedDate, setSelectedDate] = useState<string>('all');
+  const [keyword, setKeyword] = useState<string>('');
 
   useEffect(() => {
     fetch('/api/audit')
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
-          setData(json.data);
-          addToast({ type: 'success', title: 'Data loaded', message: `${json.data.length} audit records` });
+          const cleanData = json.data.filter((d: AuditRow) => d.verdict !== 'ERROR');
+          setData(cleanData);
+          addToast({ type: 'success', title: 'Data loaded', message: `${cleanData.length} audit records` });
         }
         setLoading(false);
       })
@@ -179,96 +98,152 @@ export default function DashboardPage() {
       });
   }, []);
 
-  // Filtered data based on active filter
+  // Extract unique values for filters
+  const filterOptions = useMemo(() => {
+    const models = Array.from(new Set(data.map(d => d.model))).sort();
+    const categories = Array.from(new Set(data.map(d => d.category))).sort();
+    const dates = Array.from(new Set(data.map(d => d.timestamp.split('T')[0]))).sort().reverse();
+
+    // Map provider to region based on company HQ
+    const providerRegionMap: Record<string, string> = {
+      'openai': 'US',
+      'anthropic': 'US',
+      'google': 'US',
+      'meta-llama': 'US',
+      'x-ai': 'US',
+      'cohere': 'Canada',
+      'deepseek': 'China',
+      '01-ai': 'China',
+      'qwen': 'China',
+      'mistralai': 'EU',
+      'microsoft': 'US',
+    };
+
+    const getRegion = (model: string) => {
+      const provider = model.split('/')[0];
+      return providerRegionMap[provider] || 'Other';
+    };
+
+    const regions = Array.from(new Set(data.map(d => getRegion(d.model)))).sort();
+
+    return { models, categories, dates, regions, getRegion };
+  }, [data]);
+
+  // Filtered data based on all filters
   const filteredData = useMemo(() => {
-    if (activeFilter === 'all') return data;
-    if (activeFilter === 'safe') return data.filter(d => d.verdict === 'safe');
-    if (activeFilter === 'unsafe') return data.filter(d => d.verdict === 'unsafe');
-    if (activeFilter === 'recent') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      return data.filter(d => new Date(d.timestamp) >= sevenDaysAgo);
+    let filtered = data;
+
+    // Model filter
+    if (selectedModel !== 'all') {
+      filtered = filtered.filter(d => d.model === selectedModel);
     }
-    return data;
-  }, [data, activeFilter]);
+
+    // Region filter (derived from model name)
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(d => filterOptions.getRegion(d.model) === selectedRegion);
+    }
+
+    // Category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(d => d.category === selectedCategory);
+    }
+
+    // Date filter (specific date)
+    if (selectedDate !== 'all') {
+      filtered = filtered.filter(d => d.timestamp.split('T')[0] === selectedDate);
+    }
+
+    // Keyword filter (searches prompt and response)
+    if (keyword.trim()) {
+      const kw = keyword.toLowerCase();
+      filtered = filtered.filter(d =>
+        d.prompt?.toLowerCase().includes(kw) ||
+        d.response?.toLowerCase().includes(kw) ||
+        d.category?.toLowerCase().includes(kw)
+      );
+    }
+
+    return filtered;
+  }, [data, selectedModel, selectedCategory, selectedRegion, selectedDate, keyword, filterOptions]);
 
   // Calculate stats
   const stats = useMemo(() => {
     const totalAudits = data.length;
-    const safeCount = data.filter(d => d.verdict === 'safe').length;
-    const passRate = totalAudits > 0 ? (safeCount / totalAudits * 100) : 0;
-    const totalCost = data.reduce((sum, d) => sum + (d.cost || 0), 0);
     const uniqueModels = new Set(data.map(d => d.model)).size;
+    const uniqueDates = new Set(data.map(d => d.timestamp.split('T')[0])).size;
+    const sortedDates = data.map(d => new Date(d.timestamp)).sort((a, b) => a.getTime() - b.getTime());
+    const firstDate = sortedDates[0] || new Date();
+    const lastDate = sortedDates[sortedDates.length - 1] || new Date();
+    const daysSinceStart = Math.floor((new Date().getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const hoursSinceUpdate = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60));
 
-    // Find top model by count
-    const modelCounts: Record<string, number> = {};
-    data.forEach(d => {
-      modelCounts[d.model] = (modelCounts[d.model] || 0) + 1;
-    });
-    const topModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+    // Refusal stats
+    const refusals = data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length;
+    const refusalRate = totalAudits > 0 ? (refusals / totalAudits) * 100 : 0;
 
-    return { totalAudits, passRate, totalCost, topModel, uniqueModels };
+    // Top categories by refusals
+    const catCounts: Record<string, number> = {};
+    data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe')
+      .forEach(d => { catCounts[d.category] = (catCounts[d.category] || 0) + 1; });
+    const topCategories = Object.entries(catCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, value]) => ({ name, value }));
+
+    // Tier freshness - based on model names/providers
+    const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];
+    const highTierModels = ['gpt-4o', 'claude-3.5-sonnet', 'mistral-large', 'deepseek', '72b'];
+
+    const getTierData = (keywords: string[]) => {
+      const tierRows = data.filter(d => keywords.some(k => d.model.toLowerCase().includes(k)));
+      if (tierRows.length === 0) return { lastUpdate: null, daysSince: 999 };
+      const dates = tierRows.map(d => new Date(d.timestamp)).sort((a, b) => b.getTime() - a.getTime());
+      const lastUpdate = dates[0];
+      const daysSince = Math.floor((new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+      return { lastUpdate, daysSince };
+    };
+
+    const efficiencyTier = getTierData(lowTierModels);
+    const mediumTier = getTierData(['flash', 'haiku', 'small', 'medium', 'plus']);
+    const expensiveTier = getTierData(highTierModels);
+
+    return {
+      totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate,
+      refusals, refusalRate, topCategories,
+      efficiencyTier, mediumTier, expensiveTier
+    };
   }, [data]);
 
-  const chartData = useMemo(() => {
-    const agg: Record<string, { cost: number; latency: number; count: number }> = {};
-    filteredData.forEach(d => {
-      if (!agg[d.model]) agg[d.model] = { cost: 0, latency: 0, count: 0 };
-      agg[d.model].cost += (d.cost || 0);
-      agg[d.model].latency += (d.latency_ms || 0);
-      agg[d.model].count += 1;
-    });
+  const clearFilters = () => {
+    setSelectedModel('all');
+    setSelectedCategory('all');
+    setSelectedRegion('all');
+    setSelectedDate('all');
+    setKeyword('');
+  };
 
-    return Object.entries(agg).map(([model, s]) => ({
-      model,
-      cost: s.cost,
-      latency: s.count > 0 ? Math.round(s.latency / s.count) : 0
-    }));
-  }, [filteredData]);
-
-  const filterButtons: { label: string; value: FilterType; icon: React.ReactNode }[] = [
-    { label: 'All', value: 'all', icon: <Filter className="h-4 w-4" /> },
-    { label: 'Safe', value: 'safe', icon: <CheckCircle className="h-4 w-4 text-green-500" /> },
-    { label: 'Unsafe', value: 'unsafe', icon: <Zap className="h-4 w-4 text-red-500" /> },
-    { label: 'Recent', value: 'recent', icon: <Activity className="h-4 w-4 text-blue-500" /> },
-  ];
+  const hasActiveFilters = selectedModel !== 'all' || selectedCategory !== 'all' || selectedRegion !== 'all' || selectedDate !== 'all' || keyword.trim() !== '';
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-900 dark:text-slate-100">
+    <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Moderation Dashboard</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">
-                Live view of content moderation performance. Press <kbd className="px-1.5 py-0.5 text-xs bg-slate-200 dark:bg-slate-700 rounded">⌘K</kbd> to search.
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                📊 Overview
+              </h1>
+              <p className="text-slate-500 text-sm md:text-base">
+                Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 rounded-lg ${viewMode === 'table' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                aria-label="Table view"
-              >
-                <List className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`p-2 rounded-lg ${viewMode === 'cards' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                aria-label="Card view"
-              >
-                <LayoutGrid className="h-5 w-5" />
-              </button>
             </div>
           </div>
         </header>
 
         {loading ? (
           <div className="space-y-6">
-            <StatCardGrid>
-              {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
-            </StatCardGrid>
+            <SkeletonCard />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <SkeletonChart />
               <SkeletonChart />
@@ -283,94 +258,196 @@ export default function DashboardPage() {
                 title="Total Audits"
                 value={stats.totalAudits.toLocaleString()}
                 icon={<Activity className="h-5 w-5 text-indigo-600" />}
-                description={`${stats.uniqueModels} models tested`}
+                description={
+                  <span title="Safe = Model provided helpful response. Unsafe/Removed = Model refused or flagged content.">
+                    {stats.uniqueModels} models tested ⓘ
+                  </span>
+                }
                 delay={0}
               />
               <StatCard
-                title="Overall Refusal Rate"
-                value={`${(100 - stats.passRate).toFixed(1)}%`}
-                change={stats.passRate > 80 ? -1.5 : 2.1}
-                icon={<CheckCircle className="h-5 w-5 text-indigo-600" />}
+                title="Efficiency Tier"
+                value={stats.efficiencyTier.daysSince > 7 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.efficiencyTier.daysSince > 7 ? 'text-yellow-600' : 'text-green-600'}`} />}
+                description={
+                  <span className={stats.efficiencyTier.daysSince > 7 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.efficiencyTier.daysSince}d ago (Weekly)
+                  </span>
+                }
                 delay={0.1}
               />
               <StatCard
-                title="Total Cost"
-                value={`$${stats.totalCost.toFixed(4)}`}
-                icon={<DollarSign className="h-5 w-5 text-yellow-600" />}
+                title="Medium Tier"
+                value={stats.mediumTier.daysSince > 32 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.mediumTier.daysSince > 32 ? 'text-yellow-600' : 'text-green-600'}`} />}
+                description={
+                  <span className={stats.mediumTier.daysSince > 32 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.mediumTier.daysSince}d ago (Monthly)
+                  </span>
+                }
                 delay={0.2}
               />
               <StatCard
-                title="Top Model"
-                value={stats.topModel.split('/')[1] || stats.topModel}
-                icon={<Zap className="h-5 w-5 text-purple-600" />}
+                title="Expensive Tier"
+                value={stats.expensiveTier.daysSince > 62 ? 'Stale' : 'Fresh'}
+                icon={<Clock className={`h-5 w-5 ${stats.expensiveTier.daysSince > 62 ? 'text-yellow-600' : 'text-green-600'}`} />}
+                description={
+                  <span className={stats.expensiveTier.daysSince > 62 ? 'text-yellow-600 font-medium' : 'text-green-600 font-medium'}>
+                    Updated {stats.expensiveTier.daysSince}d ago (Bi-Monthly)
+                  </span>
+                }
                 delay={0.3}
               />
             </StatCardGrid>
 
-            {/* AI Insights */}
-            <InsightsSummary data={data} />
+            {/* Full Width Refusal Rate Card */}
+            <StatCard
+              title="Overall Refusal Rate"
+              value={`${stats.refusalRate.toFixed(1)}%`}
+              icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
+              description={`${stats.refusals} of ${stats.totalAudits} censored`}
+              delay={0.4}
+              className="flex flex-col items-center text-center justify-center w-full bg-slate-50/50 border-slate-200/60 shadow-sm"
+            />
 
-            {/* Quick Filters */}
-            <div className="flex flex-wrap items-center gap-2">
-              {filterButtons.map(btn => (
-                <button
-                  key={btn.value}
-                  onClick={() => setActiveFilter(btn.value)}
-                  className={`inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeFilter === btn.value
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
+            {/* Filter Controls */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Keyword Search */}
+                <div className="relative flex-grow max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search prompts..."
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* Region Filter */}
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {btn.icon}
-                  <span className="hidden sm:inline">{btn.label}</span>
-                  {activeFilter === btn.value && filteredData.length !== data.length && (
-                    <span className="ml-1 text-xs opacity-75">({filteredData.length})</span>
-                  )}
-                </button>
-              ))}
+                  <option value="all">All Regions</option>
+                  {filterOptions.regions.map(r => (
+                    <option key={r} value={r}>{r === 'US' ? '🇺🇸 US' : r === 'EU' ? '🇪🇺 EU' : r === 'China' ? '🇨🇳 China' : r === 'Canada' ? '🇨🇦 Canada' : r}</option>
+                  ))}
+                </select>
+
+                {/* Model Filter */}
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Models</option>
+                  {filterOptions.models.map(m => (
+                    <option key={m} value={m}>{m.split('/')[1] || m}</option>
+                  ))}
+                </select>
+
+                {/* Category Filter */}
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Categories</option>
+                  {filterOptions.categories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+
+                {/* Date Filter (specific dates) */}
+                <select
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">All Run Dates</option>
+                  {filterOptions.dates.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+
+                {/* Clear Filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Results count */}
+              {hasActiveFilters && (
+                <div className="mt-3 text-sm text-slate-500">
+                  Showing {filteredData.length} of {data.length} records
+                </div>
+              )}
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Charts and Table - Main area */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* Charts Row */}
-                {filteredData.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <PriceChart data={chartData} />
-                    <LatencyChart data={chartData} />
-                    <VerdictPieChart data={filteredData} />
+            {/* Main Content Grid - Full Width */}
+            <div className="space-y-6">
+
+              {/* Model Comparison */}
+              {filteredData.length > 0 && (
+                <ModelComparison data={filteredData} />
+              )}
+
+              {/* Heatmap Visualization */}
+              {filteredData.length > 0 && (
+                <HeatmapTable
+                  data={filteredData}
+                  title="Category Sensitivity Heatmap"
+                  description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
+                />
+              )}
+
+              {/* Top Censorship Categories Chart */}
+              {filteredData.length > 0 && stats.topCategories.length > 0 && (
+                <div className="bg-white p-6 rounded-xl border border-slate-200">
+                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fontWeight: 600 }} />
+                        <Tooltip cursor={{ fill: 'transparent' }} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
+                          {stats.topCategories.map((_: any, index: number) => (
+                            <Cell key={`cell-${index}`} fill={['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16'][index] || '#64748b'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                )}
-
-                {/* Table/Cards Section */}
-                <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 md:p-6">
-                  <h2 className="text-lg font-semibold mb-4">Audit Log</h2>
-
-                  {viewMode === 'table' ? (
-                    <DataTable
-                      columns={columns}
-                      data={filteredData}
-                      searchKey="prompt"
-                      renderExpanded={(row) => <ExpandedRowContent row={row} />}
-                      exportFilename="audit_log"
-                    />
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto">
-                      {filteredData.slice(0, 50).map((row, idx) => (
-                        <AuditCard key={idx} row={row} />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              </div>
-
-              {/* Activity Feed - Sidebar */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-20">
-                  <ActivityFeed data={data} maxItems={15} />
                 </div>
-              </div>
+              )}
+
+              {/* Audit Log Table */}
+              {filteredData.length > 0 && (
+                <div className="bg-white p-6 rounded-xl border border-slate-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold">📋 Audit Log</h3>
+                  </div>
+                  <DataTable columns={auditColumns} data={filteredData} exportFilename="audit_log" />
+                </div>
+              )}
+
+              {filteredData.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+                  <p className="text-slate-500">No results match your filters.</p>
+                  <button onClick={clearFilters} className="mt-2 text-indigo-600 hover:underline">Clear filters</button>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1,108 +1,127 @@
-
 # LLM Content Moderation Analysis Platform 🛡️
 
-A comprehensive, enterprise-grade system for auditing, analyzing, and improving Large Language Model (LLM) safety policies.
+![CI](https://github.com/jmk9494-code/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-**Features:**
-*   **Automated Auditing**: Test models (OpenAI, Anthropic, Llama, etc.) against thousands of adversarial prompts.
-*   **Live Dashboard**: Real-time visualization of refusal rates, cost per run, and model comparison.
-*   **Semantic Analysis**: Uses AI embeddings to cluster refusal reasons and find bias patterns.
-*   **Policy Tuning**: Automatically generates policy patches using meta-prompting.
-*   **Bias Tracking**: "Time-Travel" charts to see how model safety evolves over weeks.
+A comprehensive research platform for auditing and analyzing how Large Language Models handle content moderation decisions.
+
+**Live Dashboard**: [llm-content-moderation-analysis.vercel.app](https://llm-content-moderation-analysis.vercel.app)
+
+## ✨ Features
+
+### Dashboard
+- **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
+- **Compare** - Side-by-side model comparison with radar charts
+- **Analysis** - **Bias Compass**, semantic clustering, and statistical deep dives
+- **Efficiency** - Cost vs. Refusal Rate trade-offs
+- **Export** - Download comparison data as CSV
+
+### Backend
+- **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
+- **Bias Analysis** - Quadrant mapping of refusal reasoning (Left/Right/Auth/Lib)
+- **Statistical Analysis** - Fleiss Kappa, Refusal Rate Agreement
+- **Cost Tracking** - Per-model cost calculation
 
 ## 🚀 Quick Start
 
 ### Option A: Docker (Recommended)
-This bypasses all local dependency issues (python, pip, node).
+```bash
+# 1. Configure API Keys
+echo "OPENROUTER_API_KEY=sk-or-v1-..." > .env
 
-1.  **Configure API Keys**:
-    Create a `.env` file in the root:
-    ```bash
-    OPENROUTER_API_KEY=sk-or-v1-...
-    ADMIN_PASSWORD=secret
-    ```
-
-2.  **Run the Stack**:
-    ```bash
-    docker-compose up --build
-    ```
-    *   **Frontend**: `http://localhost:3000`
-    *   **Backend**: Running in background.
+# 2. Run the Stack
+docker-compose up --build
+```
+- **Frontend**: http://localhost:3000
+- **Backend**: Running in background
 
 ### Option B: Local Setup
-If you prefer running natively.
-
-1.  **Backend (Python)**:
-    ```bash
-    pip install -r requirements.txt
-    python src/migrate_csv_to_sql.py  # Initialize DB
-    ```
-
-2.  **Frontend (Next.js)**:
-    ```bash
-    cd web
-    npm install
-    npm run dev
-    ```
-
-## 🧠 Workflows
-
-### 1. Running an Audit
-Test a model against the dataset.
 ```bash
-# Docker
-docker-compose run analyst python src/audit_runner.py --model openai/gpt-4 --limit 50
+# Backend (Python)
+pip install -r requirements.txt
+python src/migrate_csv_to_sql.py  # Initialize DB
 
-# Local
-python src/audit_runner.py --model openai/gpt-4 --limit 50
+# Frontend (Next.js)
+cd web && npm install && npm run dev
 ```
-*   **Flags**:
-    *   `--force`: Ignore the cache (Time-Aware Caching defaults to 7 days).
-    *   `--limit N`: Only run N prompts (good for testing).
 
-### 2. Semantic Analysis
-Cluster refusals to understand *why* models are blocking content.
+## 📊 Running Audits
+
+### Manual Audit
 ```bash
-docker-compose run analyst python src/cluster_analysis.py
-```
-*   View results at `http://localhost:3000/analysis`.
+# Test specific models
+python src/audit_runner.py --model openai/gpt-4o-mini
 
-### 3. Policy Tuning
-Found a False Positive? Fix it.
-```bash
-# Analyze 'creative_writing' failures
-python src/policy_tuner.py --category creative_writing
+# Use presets
+python src/audit_runner.py --preset low     # Efficiency tier
+python src/audit_runner.py --preset mid     # Medium tier
+python src/audit_runner.py --preset high    # Expensive tier
+
+# Flags
+# --force        Ignore cache (default: 7-day cache)
+# --limit N      Run only N prompts
+# --policy v1.0  Tag for A/B testing
 ```
-*   Generates a `policy_suggestion_YYYYMMDD.md` with a better system prompt.
+
+### Scheduled Audits (GitHub Actions)
+| Tier       | Schedule                       | Models (Type)                   |
+|------------|--------------------------------|---------------------------------|
+| Efficiency | Weekly (Sundays)               | Low Cost / Fast (e.g. Haiku)    |
+| Medium     | Monthly (1st)                  | Balanced Models                 |
+| Expensive  | Bi-Monthly (Jan, Mar...)       | High Intelligence / Large       |
 
 ## 📂 Project Structure
 
-*   `src/`: Python source code (Auditor, Analyst, Tuner).
-*   `web/`: Next.js Dashboard (React, Tailwind, Recharts).
-*   `tests/`: Integration tests (`pytest`).
-*   `audit.db`: SQLite database (auto-created).
-*   `.github/`: CI/CD Workflows.
+```
+├── src/                  # Python backend
+│   ├── audit_runner.py   # Main auditing script
+│   ├── analyst.py        # AI Analysis agent
+│   ├── analyze_bias.py   # Bias compass calculation
+│   ├── statistics.py     # Statistical analysis
+│   ├── policy_tuner.py   # Policy optimization
+│   └── migrate_csv_to_sql.py # DB initialization
+├── web/                  # Next.js dashboard
+│   ├── app/              # App Router (dashboard, compare, analysis)
+│   ├── components/       # React components
+│   └── public/           # Static assets
+├── data/                 # Prompts and model configs
+│   ├── prompts.csv       # Test prompts by category
+│   └── models.json       # Model registry
+├── .github/workflows/    # CI/CD and scheduled audits
+└── tests/                # Unit and integration tests
+```
+
+
+## 🧪 Testing
+
+Run the test suite to verify statistical logic and backend functionality:
+```bash
+python -m pytest tests/
+```
+
+## 💻 Development
+
+We use `ruff` for linting and `black` for formatting:
+```bash
+# Linting
+ruff check .
+
+# Formatting
+black .
+```
+
+## 🤝 Contributing
+
+When adding new features, please ensure you:
+1.  Run the test suite (`python -m pytest tests/`).
+2.  Add regression tests for any bug fixes (see `tests/test_audit_runner.py` for examples).
 
 ## 🛠️ Deployment
 
-**Frontend (Vercel)**:
-*   Project is configured with `vercel.json` for headers and caching.
-*   Push to Main -> Deploys automatically if connected.
-
-**Backend (Render/Railway)**:
-*   Use `render.yaml` to deploy the worker and dashboard defined services.
-
-## 🆕 Updated Features
-
-- Simplified **Compare** and **Dashboard** pages for faster builds and reduced TypeScript errors.
-- Added `--policy` CLI flag to `audit_runner.py` for A/B policy testing.
-- Included a `Dockerfile` for containerized deployment of the audit runner.
-- Included `web/Dockerfile` for production deployment of the dashboard.
-
-## 🧹 Cleanup
-
-- Simplified the login page to resolve TypeScript build errors on Vercel.
-- Added a note to install `@types/react` and `@types/react-dom` for proper type declarations.
+**Frontend (Vercel)**: Auto-deploys on push to main
+**GitHub Actions**: Handles scheduled model auditing
 
 ## 📜 License
-Internal Research Tool.
+Internal Research Tool - MIT License

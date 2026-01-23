@@ -1,52 +1,50 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
 import path from 'path';
-import Database from 'better-sqlite3';
-
-const DB_PATH = path.join(process.cwd(), '../audit.db');
+import Papa from 'papaparse';
 
 export async function GET() {
     try {
-        const db = new Database(DB_PATH, { readonly: true });
+        // Read from CSV file in public folder
+        const csvPath = path.join(process.cwd(), 'public', 'audit_log.csv');
 
-        // Select all audit results
-        const stmt = db.prepare(`
-            SELECT 
-                r.timestamp,
-                r.model_id as model,
-                r.run_id as case_id,
-                p.category,
-                r.verdict,
-                p.text as prompt,
-                r.response_text as response,
-                r.cost,
-                r.prompt_tokens + r.completion_tokens as latency_ms, 
-                r.prompt_tokens + r.completion_tokens as tokens_used,
-                r.policy_version
-            FROM audit_results r
-            LEFT JOIN prompts p ON r.prompt_id = p.id
-            ORDER BY r.timestamp DESC
-        `);
-        // Note: latency_ms is actually not stored in DB currently (column not in schema provided earlier? I didn't verify it in src/database.py view)
-        // Schema view in Step 907 showed: cost, prompt_tokens, completion_tokens. NO latency_ms column.
-        // I should stick to 'tokens_used' or use a placeholder for latency if missing. 
-        // Logic: r.timestamp is when it finished. DB doesn't track duration? 
-        // audit_runner.py doesn't seem to calculate duration explicitly for DB save?
-        // Re-reading Step 945: audit_runner.py line 248... it saves verdict, response_text, cost.
-        // It does NOT save latency/duration.
-        // The CSV *did* have it?
-        // ParseCSV in Step 852: `latency_ms: row.latency_ms`.
-        // So the DB schema is MISSING latency_ms!
+        if (!fs.existsSync(csvPath)) {
+            return NextResponse.json({ data: [], error: 'No audit data found' });
+        }
 
-        // I should ADD latency_ms to the DB schema if I can, but I already made the migration script.
-        // For now, I will omit latency or set to 0.
+        const csvContent = fs.readFileSync(csvPath, 'utf-8');
 
-        const rows = stmt.all();
-        db.close();
+        // Use Papa Parse for proper CSV handling (multiline, quotes, etc.)
+        const parsed = Papa.parse(csvContent, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+        });
 
-        return NextResponse.json({ data: rows });
+        if (!parsed.data || parsed.data.length === 0) {
+            return NextResponse.json({ data: [] });
+        }
+
+        // Models to exclude (deprecated or no data)
+        const EXCLUDED_MODELS = ['mistralai/mistral-medium', '01-ai/yi-34b-chat'];
+
+        // Map to expected format - handle various CSV column naming conventions
+        const data = parsed.data.map((row: any) => ({
+            timestamp: row.timestamp || row.test_date || row.date || '',
+            model: row.model || row.model_id || '',
+            case_id: row.case_id || row.prompt_id || row.run_id || '',
+            category: row.category || '',
+            verdict: row.verdict || '',
+            prompt: row.prompt || row.prompt_text || row.text || '',
+            response: row.response || row.response_text || '',
+            cost: parseFloat(row.cost || row.run_cost) || 0,
+            tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
+            latency_ms: parseInt(row.latency_ms) || 0,
+        })).filter((row: any) => row.model && !EXCLUDED_MODELS.includes(row.model)); // Filter out rows without model or excluded models
+
+        return NextResponse.json({ data });
     } catch (error) {
-        console.error('Database Error:', error);
-        // Fallback or empty?
-        return NextResponse.json({ error: 'Failed to read audit log' }, { status: 500 });
+        console.error('Error reading audit data:', error);
+        return NextResponse.json({ error: 'Failed to read audit log', data: [] }, { status: 500 });
     }
 }

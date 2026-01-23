@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
+import fs from 'fs';
 import Database from 'better-sqlite3';
 
-const DB_PATH = path.join(process.cwd(), '../audit.db');
+// Try multiple possible paths for the database
+const possiblePaths = [
+    path.join(process.cwd(), '../audit.db'),
+    path.join(process.cwd(), 'audit.db'),
+    path.join(process.cwd(), '../../audit.db'),
+];
+
+const DB_PATH = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
 
 export async function GET() {
     try {

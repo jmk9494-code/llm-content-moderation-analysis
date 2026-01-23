@@ -3,7 +3,7 @@ name: Audit (Expensive Tier)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 4 1 1,7 *' # Jan 1 and July 1 at 04:00 UTC
+    - cron: '0 4 1 */2 *' # 1st of every 2nd month at 04:00 UTC (Jan, Mar, May, Jul, Sep, Nov)
 
 concurrency:
   group: expensive-${{ github.ref }}
