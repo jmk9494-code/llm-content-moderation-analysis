@@ -239,7 +239,19 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
         cached = check_cache(model_name, p['id'], force=force_rerun)
         if cached:
             logger.info(f"[{model_name}] Cache Hit for {p['id']} (skipped cost)")
-            return
+            return {
+                'test_date': cached.timestamp.strftime("%Y-%m-%d"),
+                'model': cached.model_id,
+                'prompt_id': cached.prompt_id,
+                'category': p['category'],
+                'verdict': cached.verdict,
+                'prompt_text': p['text'],
+                'response_text': cached.response_text,
+                'prompt_tokens': cached.prompt_tokens,
+                'completion_tokens': cached.completion_tokens,
+                'total_tokens': (cached.prompt_tokens or 0) + (cached.completion_tokens or 0),
+                'run_cost': cached.cost
+            }
             
         logger.info(f"[{model_name}] Testing {p['id']}...")
         try:
