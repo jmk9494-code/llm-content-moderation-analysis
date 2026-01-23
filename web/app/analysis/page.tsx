@@ -87,7 +87,7 @@ export default function DeepDivePage() {
                         Papa.parse(csvText, {
                             header: true,
                             skipEmptyLines: true,
-                            complete: (results) => {
+                            complete: (results: any) => {
                                 setBiasData(results.data as BiasRow[]);
                             }
                         });
@@ -107,18 +107,18 @@ export default function DeepDivePage() {
     const stats = useMemo(() => {
         if (auditData.length === 0) return null;
 
-        const models = Array.from(new Set(auditData.map(d => d.model)));
-        const prompts = Array.from(new Set(auditData.map(d => d.case_id || d.prompt_id || d.prompt)));
+        const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
+        const prompts = Array.from(new Set(auditData.map((d: AuditRow) => d.case_id || d.prompt_id || d.prompt)));
 
         const reliability = calculateFleissKappa(auditData, models, prompts);
 
         // Calculate Agreement Distribution
         const distributionMap = new Map<string, number>();
         prompts.forEach(p => {
-            const relevant = auditData.filter(d => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
+            const relevant = auditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
             if (relevant.length < 2) return;
 
-            const safeCount = relevant.filter(d => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
+            const safeCount = relevant.filter((d: AuditRow) => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
 
             let bucket = "";
@@ -142,13 +142,13 @@ export default function DeepDivePage() {
 
     const efficiencyData = useMemo(() => {
         if (auditData.length === 0) return [];
-        const models = Array.from(new Set(auditData.map(d => d.model)));
+        const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
 
         return models.map(m => {
-            const rows = auditData.filter(d => d.model === m);
+            const rows = auditData.filter((d: AuditRow) => d.model === m);
             const total = rows.length;
-            const refused = rows.filter(d => ['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)).length;
-            const cost = rows.reduce((acc, curr) => acc + (curr.cost || 0), 0);
+            const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)).length;
+            const cost = rows.reduce((acc: number, curr: AuditRow) => acc + (curr.cost || 0), 0);
 
             return {
                 name: m.split('/').pop(),
@@ -172,11 +172,11 @@ export default function DeepDivePage() {
             return 'unknown';
         };
 
-        const modelSizes = Array.from(new Set(auditData.map(d => extractSize(d.model)))).filter(s => s !== 'unknown').sort();
+        const modelSizes = Array.from(new Set(auditData.map((d: AuditRow) => extractSize(d.model)))).filter(s => s !== 'unknown').sort();
 
         return {
-            models: Array.from(new Set(auditData.map(d => d.model))).sort(),
-            categories: Array.from(new Set(auditData.map(d => d.category))).filter(Boolean).sort(),
+            models: Array.from(new Set(auditData.map((d: AuditRow) => d.model))).sort(),
+            categories: Array.from(new Set(auditData.map((d: AuditRow) => d.category))).filter(Boolean).sort(),
             modelSizes
         };
     }, [auditData]);
@@ -196,7 +196,7 @@ export default function DeepDivePage() {
         if (auditData.length === 0) return [];
 
         // Apply filters
-        const filtered = auditData.filter(d => {
+        const filtered = auditData.filter((d: AuditRow) => {
             if (longitudinalModel !== 'all' && d.model !== longitudinalModel) return false;
             if (longitudinalCategory !== 'all' && d.category !== longitudinalCategory) return false;
             if (longitudinalModelSize !== 'all' && getModelSize(d.model) !== longitudinalModelSize) return false;
@@ -206,7 +206,7 @@ export default function DeepDivePage() {
 
         const dateMap = new Map<string, { date: string; total: number; refusals: number; prompts: AuditRow[] }>();
 
-        filtered.forEach(d => {
+        filtered.forEach((d: AuditRow) => {
             const date = d.timestamp?.split('T')[0] || 'Unknown';
             if (!dateMap.has(date)) {
                 dateMap.set(date, { date, total: 0, refusals: 0, prompts: [] });
@@ -220,7 +220,7 @@ export default function DeepDivePage() {
         });
 
         return Array.from(dateMap.values())
-            .map(d => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
+            .map((d: any) => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
             .sort((a, b) => a.date.localeCompare(b.date));
     }, [auditData, longitudinalModel, longitudinalCategory]);
 
@@ -399,7 +399,7 @@ export default function DeepDivePage() {
                                         />
                                         <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
                                         <Scatter name="Models" data={efficiencyData} fill="#8884d8">
-                                            {efficiencyData.map((entry, index) => (
+                                            {efficiencyData.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Scatter>
@@ -436,7 +436,7 @@ export default function DeepDivePage() {
                                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model</label>
                                         <select
                                             value={longitudinalModel}
-                                            onChange={e => setLongitudinalModel(e.target.value)}
+                                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setLongitudinalModel(e.target.value)}
                                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="all">All Models</option>
@@ -447,7 +447,7 @@ export default function DeepDivePage() {
                                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
                                         <select
                                             value={longitudinalCategory}
-                                            onChange={e => setLongitudinalCategory(e.target.value)}
+                                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setLongitudinalCategory(e.target.value)}
                                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="all">All Categories</option>
@@ -539,7 +539,7 @@ function ModelRegistryTable() {
                         </tr>
                     </thead>
                     <tbody>
-                        {models.map((model) => (
+                        {models.map((model: any) => (
                             <tr key={model.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                 <td className="py-3 px-4 font-medium text-slate-900">{model.name}</td>
                                 <td className="py-3 px-4 text-slate-600">{model.provider}</td>
@@ -698,7 +698,7 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
         };
     });
 
-    const modelCounts = biasData.reduce((acc, curr) => {
+    const modelCounts = biasData.reduce((acc: Record<string, number>, curr: BiasRow) => {
         acc[curr.model] = (acc[curr.model] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
@@ -750,7 +750,7 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
                             <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
 
                             <Scatter name="Biases" data={scatterData} fill="#8884d8">
-                                {scatterData.map((entry, index) => (
+                                {scatterData.map((entry: any, index: number) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[Math.abs(entry.model.length) % COLORS.length]} />
                                 ))}
                             </Scatter>
