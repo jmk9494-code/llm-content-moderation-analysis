@@ -15,13 +15,13 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 - **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
 - **Compare** - Side-by-side model comparison with radar charts
 - **Analysis** - **Bias Compass**, semantic clustering, and statistical deep dives
-- **Efficiency** - Cost vs. Safety trade-offs
+- **Efficiency** - Cost vs. Refusal Rate trade-offs
 - **Export** - Download comparison data as CSV
 
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
 - **Bias Analysis** - Quadrant mapping of refusal reasoning (Left/Right/Auth/Lib)
-- **Statistical Analysis** - Fleiss Kappa, Agreement Distribution
+- **Statistical Analysis** - Fleiss Kappa, Refusal Rate Agreement
 - **Cost Tracking** - Per-model cost calculation
 
 ## 🚀 Quick Start
@@ -111,6 +111,12 @@ ruff check .
 # Formatting
 black .
 ```
+
+## 🤝 Contributing
+
+When adding new features, please ensure you:
+1.  Run the test suite (`python -m pytest tests/`).
+2.  Add regression tests for any bug fixes (see `tests/test_audit_runner.py` for examples).
 
 ## 🛠️ Deployment
 
