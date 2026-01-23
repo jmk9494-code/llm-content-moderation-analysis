@@ -38,7 +38,7 @@ export function generateReport(data: AuditRow[], filters: { region?: string; tie
     const regionText = filters.region && filters.region !== 'All' ? ` in the **${filters.region}** region` : "";
 
     return `
-## Real-Time Censorship Analysis
+## Real-Time Refusal Analysis
 
 Based on the current dataset${regionText}, we analyzed **${total}** prompts across **${models.length}** AI models.
 
@@ -47,7 +47,7 @@ Based on the current dataset${regionText}, we analyzed **${total}** prompts acro
 *   **Overall Freedom Score**: The models allowed **${(100 - Number(refusalRate)).toFixed(1)}%** of prompts, while restricting **${refusalRate}%**.
 *   **Most Restrictive Model**: **${mostStrict.model}** is the most heavily censored model in this view, refusing **${mostStrict.rate.toFixed(1)}%** of all prompts.
 *   **Most Free Model**: **${leastStrict.model}** proved to be the most permissible, with a refusal rate of only **${leastStrict.rate.toFixed(1)}%**.
-*   **Sensitive Topic**: The category **${mostCensoredCat.category}** triggered the highest rate of censorship (**${mostCensoredCat.rate.toFixed(1)}%** refusals).
+*   **Sensitive Topic**: The category **${mostCensoredCat.category}** triggered the highest rate of refusals (**${mostCensoredCat.rate.toFixed(1)}%** refusals).
 
 ### 💡 Analyst Notes
 ${Number(refusalRate) > 15

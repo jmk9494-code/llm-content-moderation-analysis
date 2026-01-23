@@ -13,7 +13,7 @@ type AuditRow = {
 
 type ModelStats = {
     model: string;
-    censorshipScore: number;
+    refusalRate: number;
     avgLength: number;
     count: number;
     confidenceInterval: { lower: number; upper: number };
@@ -95,7 +95,7 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
         const overallRate = refusalsAll / totalAll;
 
         return Object.entries(map).map(([model, s]) => {
-            const censorshipScore = (s.refusals / s.total) * 100;
+            const refusalRate = (s.refusals / s.total) * 100;
             const ci = wilsonConfidenceInterval(s.refusals, s.total);
 
             // Compare to overall rate
@@ -106,13 +106,13 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
 
             return {
                 model,
-                censorshipScore,
+                refusalRate,
                 avgLength: Math.round(s.totalLen / s.total),
                 count: s.total,
                 confidenceInterval: ci,
                 pValue
             };
-        }).sort((a, b) => b.censorshipScore - a.censorshipScore);
+        }).sort((a, b) => b.refusalRate - a.refusalRate);
     }, [data]);
 
     const formatCI = (ci: { lower: number; upper: number }) => {
@@ -142,14 +142,14 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">Model</th>
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">
                                 <div className="flex items-center gap-1">
-                                    Censorship Score
+                                    Refusal Rate
                                     <span title="Percentage of prompts refused or flagged as unsafe">ⓘ</span>
                                 </div>
                             </th>
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">
                                 <div className="flex items-center gap-1">
                                     95% CI
-                                    <span title="Wilson score confidence interval for the censorship rate">ⓘ</span>
+                                    <span title="Wilson score confidence interval for the refusal rate">ⓘ</span>
                                 </div>
                             </th>
                             <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">Avg Response</th>
@@ -166,16 +166,16 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 h-2 bg-slate-100 rounded-full max-w-[100px] overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full ${row.censorshipScore > 50 ? 'bg-red-500' :
-                                                    row.censorshipScore > 30 ? 'bg-amber-500' : 'bg-emerald-500'
+                                                className={`h-full rounded-full ${row.refusalRate > 50 ? 'bg-red-500' :
+                                                    row.refusalRate > 30 ? 'bg-amber-500' : 'bg-emerald-500'
                                                     }`}
-                                                style={{ width: `${Math.max(row.censorshipScore, 5)}%` }}
+                                                style={{ width: `${Math.max(row.refusalRate, 5)}%` }}
                                             ></div>
                                         </div>
-                                        <span className={`font-bold ${row.censorshipScore > 50 ? 'text-red-600' :
-                                            row.censorshipScore > 30 ? 'text-amber-600' : 'text-emerald-600'
+                                        <span className={`font-bold ${row.refusalRate > 50 ? 'text-red-600' :
+                                            row.refusalRate > 30 ? 'text-amber-600' : 'text-emerald-600'
                                             }`}>
-                                            {row.censorshipScore.toFixed(1)}%
+                                            {row.refusalRate.toFixed(1)}%
                                         </span>
                                     </div>
                                 </td>

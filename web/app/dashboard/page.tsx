@@ -410,7 +410,7 @@ export default function DashboardPage() {
               {/* Top Censorship Categories Chart */}
               {filteredData.length > 0 && stats.topCategories.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
-                  <h3 className="text-lg font-bold mb-4">🚫 Top Censorship Categories</h3>
+                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>

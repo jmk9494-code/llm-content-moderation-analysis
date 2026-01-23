@@ -1,5 +1,10 @@
 # LLM Content Moderation Analysis Platform 🛡️
 
+![CI](https://github.com/jmk9494-code/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 A comprehensive research platform for auditing and analyzing how Large Language Models handle content moderation decisions.
 
 **Live Dashboard**: [llm-content-moderation-analysis.vercel.app](https://llm-content-moderation-analysis.vercel.app)
@@ -9,8 +14,9 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ### Dashboard
 - **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
 - **Compare** - Side-by-side model comparison with radar charts
-- **Deep Dive** - Statistical analysis, semantic clustering, **Bias Compass**, and **Model Registry**
+- **Analysis** - **Bias Compass**, semantic clustering, and statistical deep dives
 - **Efficiency** - Cost vs. Safety trade-offs
+- **Export** - Download comparison data as CSV
 
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
@@ -60,26 +66,50 @@ python src/audit_runner.py --preset high    # Expensive tier
 ```
 
 ### Scheduled Audits (GitHub Actions)
-| Schedule              | Models                          |
-|----------------------|--------------------------------|
-| Weekly (Sundays)     | GPT-4o-mini, Claude Haiku, etc |
-| Monthly (1st)        | Gemini Flash, Large Models     |
+| Tier       | Schedule                       | Models (Type)                   |
+|------------|--------------------------------|---------------------------------|
+| Efficiency | Weekly (Sundays)               | Low Cost / Fast (e.g. Haiku)    |
+| Medium     | Monthly (1st)                  | Balanced Models                 |
+| Expensive  | Bi-Monthly (Jan, Mar...)       | High Intelligence / Large       |
 
 ## 📂 Project Structure
 
 ```
 ├── src/                  # Python backend
 │   ├── audit_runner.py   # Main auditing script
+│   ├── analyst.py        # AI Analysis agent
+│   ├── analyze_bias.py   # Bias compass calculation
 │   ├── statistics.py     # Statistical analysis
-│   └── cluster_analysis.py
+│   ├── policy_tuner.py   # Policy optimization
+│   └── migrate_csv_to_sql.py # DB initialization
 ├── web/                  # Next.js dashboard
-│   ├── app/              # Pages (dashboard, compare, analysis)
-│   └── components/       # React components
+│   ├── app/              # App Router (dashboard, compare, analysis)
+│   ├── components/       # React components
+│   └── public/           # Static assets
 ├── data/                 # Prompts and model configs
 │   ├── prompts.csv       # Test prompts by category
 │   └── models.json       # Model registry
 ├── .github/workflows/    # CI/CD and scheduled audits
-└── tests/                # Integration tests
+└── tests/                # Unit and integration tests
+```
+
+
+## 🧪 Testing
+
+Run the test suite to verify statistical logic and backend functionality:
+```bash
+python -m pytest tests/
+```
+
+## 💻 Development
+
+We use `ruff` for linting and `black` for formatting:
+```bash
+# Linting
+ruff check .
+
+# Formatting
+black .
 ```
 
 ## 🛠️ Deployment

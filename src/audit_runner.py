@@ -278,6 +278,21 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
                 )
                 session.add(result)
                 session.commit()
+                
+                # Return dict for CSV writer
+                return {
+                    'test_date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                    'model': model_name,
+                    'prompt_id': p['id'],
+                    'category': p['category'],
+                    'verdict': verdict,
+                    'prompt_text': p['text'],
+                    'response_text': content,
+                    'prompt_tokens': p_tokens,
+                    'completion_tokens': c_tokens,
+                    'total_tokens': t_tokens,
+                    'run_cost': run_cost
+                }
             except Exception as e:
                 logger.error(f"DB Save Error: {e}")
                 session.rollback()
@@ -314,6 +329,21 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
                 )
                 session.add(db_result)
                 session.commit()
+                
+                # Return error dict for CSV writer
+                return {
+                    'test_date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                    'model': model_name,
+                    'prompt_id': p['id'],
+                    'category': p['category'],
+                    'verdict': verdict,
+                    'prompt_text': p['text'],
+                    'response_text': f"ERROR: {e}",
+                    'prompt_tokens': 0,
+                    'completion_tokens': 0,
+                    'total_tokens': 0,
+                    'run_cost': 0
+                }
             except Exception as db_err:
                 logger.error(f"DB Save Error (on failure): {db_err}")
                 session.rollback()
