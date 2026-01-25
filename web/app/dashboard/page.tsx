@@ -36,7 +36,8 @@ const auditColumns: ColumnDef<AuditRow>[] = [
     header: ({ column }) => <SortableHeader column={column} title="Model" />,
     cell: ({ row }) => {
       const model = row.getValue('model') as string;
-      return <span className="font-medium">{model?.split('/')[1] || model}</span>;
+      const modelName = model && typeof model === 'string' ? (model.split('/')[1] || model) : 'Unknown';
+      return <span className="font-medium">{modelName}</span>;
     }
   },
   {
@@ -102,7 +103,12 @@ export default function DashboardPage() {
   const filterOptions = useMemo(() => {
     const models = Array.from(new Set(data.map(d => d.model))).sort();
     const categories = Array.from(new Set(data.map(d => d.category))).sort();
-    const dates = Array.from(new Set(data.map(d => d.timestamp.split('T')[0]))).sort().reverse();
+    // Safely handle timestamp splitting
+    const dates = Array.from(new Set(data.map(d => {
+      if (!d.timestamp || typeof d.timestamp !== 'string') return null;
+      return d.timestamp.split('T')[0];
+    }))).filter(Boolean) as string[];
+    dates.sort().reverse();
 
     // Map provider to region based on company HQ
     const providerRegionMap: Record<string, string> = {
@@ -120,6 +126,7 @@ export default function DashboardPage() {
     };
 
     const getRegion = (model: string) => {
+      if (!model || typeof model !== 'string') return 'Other';
       const provider = model.split('/')[0];
       return providerRegionMap[provider] || 'Other';
     };
@@ -150,7 +157,10 @@ export default function DashboardPage() {
 
     // Date filter (specific date)
     if (selectedDate !== 'all') {
-      filtered = filtered.filter(d => d.timestamp.split('T')[0] === selectedDate);
+      filtered = filtered.filter(d => {
+        if (!d.timestamp || typeof d.timestamp !== 'string') return false;
+        return d.timestamp.split('T')[0] === selectedDate;
+      });
     }
 
     // Keyword filter (searches prompt and response)
@@ -170,7 +180,10 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const totalAudits = data.length;
     const uniqueModels = new Set(data.map(d => d.model)).size;
-    const uniqueDates = new Set(data.map(d => d.timestamp.split('T')[0])).size;
+    const uniqueDates = new Set(data
+      .map(d => d.timestamp && typeof d.timestamp === 'string' ? d.timestamp.split('T')[0] : null)
+      .filter(Boolean)
+    ).size;
     const sortedDates = data.map(d => new Date(d.timestamp)).sort((a, b) => a.getTime() - b.getTime());
     const firstDate = sortedDates[0] || new Date();
     const lastDate = sortedDates[sortedDates.length - 1] || new Date();
@@ -344,9 +357,10 @@ export default function DashboardPage() {
                   className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="all">All Models</option>
-                  {filterOptions.models.map(m => (
-                    <option key={m} value={m}>{m.split('/')[1] || m}</option>
-                  ))}
+                  {filterOptions.models.map(m => {
+                    const displayName = m && typeof m === 'string' ? (m.split('/')[1] || m) : 'Unknown';
+                    return <option key={m} value={m}>{displayName}</option>;
+                  })}
                 </select>
 
                 {/* Category Filter */}

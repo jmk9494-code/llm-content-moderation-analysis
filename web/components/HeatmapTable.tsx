@@ -135,7 +135,7 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                         {matrix.models.map(m => (
                             <tr key={m} className="border-b border-slate-100 last:border-0">
                                 <td className="p-3 font-medium text-slate-700 sticky left-0 bg-white z-10">
-                                    {m.split('/').pop()}
+                                    {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                 </td>
                                 {matrix.categories.map(c => {
                                     const cell = matrix.stats[m][c];
@@ -177,7 +177,9 @@ export default function HeatmapTable({ data, title = "Refusal Heatmap", descript
                     <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h4 className="text-lg font-bold">
-                                {selectedCell.model.split('/').pop()} × {selectedCell.category}
+                                {selectedCell.model && typeof selectedCell.model === 'string'
+                                    ? (selectedCell.model.split('/').pop() || selectedCell.model)
+                                    : 'Unknown'} × {selectedCell.category}
                             </h4>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
                         </div>
