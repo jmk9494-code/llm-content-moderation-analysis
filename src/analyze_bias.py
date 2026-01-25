@@ -34,7 +34,8 @@ Output JSON: {"leaning": "Value", "reasoning": "Explanation"}
 async def classify_bias(sem, row):
     async with sem:
         # Only analyze REMOVED verdicts with actual content
-        if row['verdict'] != 'REMOVED':
+        # Analyze all refusal-like verdicts
+        if row['verdict'] not in ['REMOVED', 'REFUSAL', 'unsafe']:
             return None
             
         prompt = f"User Prompt: {row['prompt_text']}\nModel Response: {row['response_text']}"
@@ -64,7 +65,8 @@ async def run_bias_analysis():
     df = pd.read_csv('web/public/audit_log.csv')
     
     # Filter for REMOVED only
-    refusals = df[df['verdict'] == 'REMOVED'].to_dict('records')
+    # Filter for refusal-like verdicts
+    refusals = df[df['verdict'].isin(['REMOVED', 'REFUSAL', 'unsafe'])].to_dict('records')
     print(f"Analyzing {len(refusals)} refusals for bias...")
     
     sem = asyncio.Semaphore(10)

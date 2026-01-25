@@ -195,13 +195,21 @@ export default function DashboardPage() {
     const refusalRate = totalAudits > 0 ? (refusals / totalAudits) * 100 : 0;
 
     // Top categories by refusals
+    // Top categories by refusals
     const catCounts: Record<string, number> = {};
-    data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe')
-      .forEach(d => { catCounts[d.category] = (catCounts[d.category] || 0) + 1; });
+    const refusalsList = data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe');
+    refusalsList.forEach(d => { catCounts[d.category] = (catCounts[d.category] || 0) + 1; });
+
+    // Convert to percentage of total refusals
+    const totalRefusalsCount = refusalsList.length;
     const topCategories = Object.entries(catCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([name, value]) => ({ name, value }));
+      .map(([name, count]) => ({
+        name,
+        value: totalRefusalsCount > 0 ? parseFloat(((count / totalRefusalsCount) * 100).toFixed(1)) : 0,
+        count // Keep raw count for potentially detailed tooltip if needed
+      }));
 
     // Tier freshness - based on model names/providers
     const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];
@@ -427,14 +435,17 @@ export default function DashboardPage() {
               {/* Top Censorship Categories Chart */}
               {filteredData.length > 0 && stats.topCategories.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
-                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories</h3>
+                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories (% of Total Refusals)</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" hide />
+                        <XAxis type="number" hide domain={[0, 100]} />
                         <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fontWeight: 600 }} />
-                        <Tooltip cursor={{ fill: 'transparent' }} />
+                        <Tooltip
+                          cursor={{ fill: 'transparent' }}
+                          formatter={(value: number) => [`${value}%`, 'Refusals']}
+                        />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
                           {stats.topCategories.map((_: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16'][index] || '#64748b'} />

@@ -843,7 +843,7 @@ function PromptLibraryView() {
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <div className="text-slate-500 text-sm font-medium uppercase mb-1">Total Prompts</div>
                     <div className="text-3xl font-black text-slate-900">{prompts.length.toLocaleString()}</div>
@@ -852,12 +852,7 @@ function PromptLibraryView() {
                     <div className="text-slate-500 text-sm font-medium uppercase mb-1">Categories</div>
                     <div className="text-3xl font-black text-slate-900">{categories.length}</div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Gold Standard</div>
-                    <div className={`text-3xl font-black ${prompts.length >= 1925 ? 'text-green-600' : 'text-amber-600'}`}>
-                        {prompts.length >= 1925 ? 'Met' : 'Pending'}
-                    </div>
-                </div>
+
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
