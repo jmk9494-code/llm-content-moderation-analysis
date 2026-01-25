@@ -101,9 +101,7 @@ export function NavBar() {
                     </div>
                 </div>
             )}
-        </div>
-                </div >
-            </div >
+
         </nav >
     );
 }
