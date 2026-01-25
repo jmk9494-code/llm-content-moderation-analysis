@@ -25,8 +25,7 @@ export async function GET() {
             return NextResponse.json({ data: [] });
         }
 
-        // Models to exclude (deprecated or no data)
-        const EXCLUDED_MODELS = ['mistralai/mistral-medium', '01-ai/yi-34b-chat'];
+
 
         // Map to expected format - handle various CSV column naming conventions
         const data = parsed.data.map((row: any) => ({
@@ -40,7 +39,7 @@ export async function GET() {
             cost: parseFloat(row.cost || row.run_cost) || 0,
             tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
             latency_ms: parseInt(row.latency_ms) || 0,
-        })).filter((row: any) => row.model && !EXCLUDED_MODELS.includes(row.model)); // Filter out rows without model or excluded models
+        })).filter((row: any) => row.model); // Filter out rows without model
 
         return NextResponse.json({ data });
     } catch (error) {
