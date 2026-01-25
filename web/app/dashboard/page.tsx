@@ -444,7 +444,7 @@ export default function DashboardPage() {
                         <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fontWeight: 600 }} />
                         <Tooltip
                           cursor={{ fill: 'transparent' }}
-                          formatter={(value: number) => [`${value}%`, 'Refusals']}
+                          formatter={(value: any) => [`${value}%`, 'Refusals']}
                         />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
                           {stats.topCategories.map((_: any, index: number) => (
