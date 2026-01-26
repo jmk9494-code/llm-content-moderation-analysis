@@ -192,38 +192,49 @@ export default function DeepDivePage() {
         return 'unknown';
     };
 
-    // Longitudinal Data (by date) - with filters
+    // Longitudinal Data (by date & model) - pivoted for multi-line chart
     const longitudinalData = useMemo(() => {
         if (auditData.length === 0) return [];
 
-        // Apply filters
+        // 1. Filter relevant data
         const filtered = auditData.filter((d: AuditRow) => {
             if (longitudinalModels.length > 0 && !longitudinalModels.includes(d.model)) return false;
-            if (longitudinalCategory !== 'all' && d.category !== longitudinalCategory) return false;
-            if (longitudinalModelSize !== 'all' && getModelSize(d.model) !== longitudinalModelSize) return false;
-            if (longitudinalKeyword && !d.prompt?.toLowerCase().includes(longitudinalKeyword.toLowerCase())) return false;
+            // Additional filters if needed
             return true;
         });
 
-        const dateMap = new Map<string, { date: string; total: number; refusals: number; prompts: AuditRow[] }>();
+        // 2. Get unique dates and sort them
+        const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown')))
+            .filter(d => d !== 'Unknown')
+            .sort((a, b) => a.localeCompare(b));
 
-        filtered.forEach((d: AuditRow) => {
-            const date = d.timestamp?.split('T')[0] || 'Unknown';
-            if (!dateMap.has(date)) {
-                dateMap.set(date, { date, total: 0, refusals: 0, prompts: [] });
-            }
-            const entry = dateMap.get(date)!;
-            entry.total++;
-            entry.prompts.push(d);
-            if (['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)) {
-                entry.refusals++;
-            }
+        // 3. Get active models (or all if none selected)
+        const activeModels = longitudinalModels.length > 0
+            ? longitudinalModels
+            : Array.from(new Set(filtered.map(d => d.model)));
+
+        // 4. Build pivot table: [{ date: '2024-01-01', 'gpt-4': 10.5, 'claude': 5.0 }, ...]
+        const chartData = uniqueDates.map(date => {
+            const dayRows = filtered.filter(d => (d.timestamp?.split('T')[0]) === date);
+
+            const row: any = { date }; // Explicit any to allow dynamic model keys
+
+            activeModels.forEach(model => {
+                const modelRows = dayRows.filter(d => d.model === model);
+                if (modelRows.length > 0) {
+                    const refusals = modelRows.filter(d => ['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)).length;
+                    row[model] = (refusals / modelRows.length) * 100;
+                    row[`${model}_count`] = modelRows.length; // Store count for tooltip
+                } else {
+                    row[model] = null; // Gap in line
+                }
+            });
+
+            return row;
         });
 
-        return Array.from(dateMap.values())
-            .map((d: any) => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
-            .sort((a, b) => a.date.localeCompare(b.date));
-    }, [auditData, longitudinalModels, longitudinalCategory, longitudinalModelSize, longitudinalKeyword]);
+        return { chartData, activeModels };
+    }, [auditData, longitudinalModels]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50">
@@ -420,9 +431,8 @@ export default function DeepDivePage() {
                                     <Info className="w-4 h-4" /> What is the Longitudinal Study?
                                 </h3>
                                 <p className="text-sm text-blue-700">
-                                    This tab tracks <strong>model behavior over time</strong>. It shows how the overall refusal rate
-                                    changes across different audit dates. This helps identify trends—are models becoming more or less
-                                    restrictive? Are there spikes in refusals on certain days? Use this to monitor drift in AI safety policies.
+                                    This tab tracks <strong>model behavior over time</strong>. Compare how different models' refusal rates evolve.
+                                    Select specific models below to isolate their trends.
                                 </p>
                             </div>
 
@@ -430,90 +440,83 @@ export default function DeepDivePage() {
                             <div className="flex flex-wrap gap-4 p-4 bg-white rounded-xl border border-slate-200">
                                 <div className="flex items-center gap-2">
                                     <Filter className="h-4 w-4 text-slate-400" />
-                                    <span className="text-sm font-medium text-slate-500">Filters:</span>
+                                    <span className="text-sm font-medium text-slate-500">Models:</span>
                                 </div>
-                                <div className="flex-1 flex flex-wrap gap-4">
-                                    <div className="min-w-[200px]">
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Models</label>
-                                        <div className="flex flex-wrap gap-2 max-w-xl">
-                                            {longitudinalFilterOptions.models.map(m => {
-                                                const isSelected = longitudinalModels.includes(m);
-                                                return (
-                                                    <button
-                                                        key={m}
-                                                        onClick={() => {
-                                                            if (isSelected) {
-                                                                setLongitudinalModels(prev => prev.filter(model => model !== m));
-                                                            } else {
-                                                                setLongitudinalModels(prev => [...prev, m]);
-                                                            }
-                                                        }}
-                                                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${isSelected
-                                                                ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                                            }`}
-                                                    >
-                                                        {m.split('/').pop()}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                    <div className="min-w-[200px]">
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
-                                        <select
-                                            value={longitudinalCategory}
-                                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setLongitudinalCategory(e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                                        >
-                                            <option value="all">All Categories</option>
-                                            {longitudinalFilterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                    {(longitudinalModels.length > 0 || longitudinalCategory !== 'all') && (
-                                        <button
-                                            onClick={() => { setLongitudinalModels([]); setLongitudinalCategory('all'); }}
-                                            className="flex items-center gap-1 px-3 py-2 mt-5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg"
-                                        >
-                                            <X className="h-4 w-4" /> Clear
-                                        </button>
-                                    )}
+                                <div className="flex-1 flex flex-wrap gap-2">
+                                    {longitudinalFilterOptions.models.map(m => {
+                                        const isSelected = longitudinalModels.includes(m);
+                                        return (
+                                            <button
+                                                key={m}
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setLongitudinalModels(prev => prev.filter(model => model !== m));
+                                                    } else {
+                                                        setLongitudinalModels(prev => [...prev, m]);
+                                                    }
+                                                }}
+                                                className={`px-3 py-1 text-xs rounded-full border transition-all ${isSelected
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                {m.split('/').pop()}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
+                                {longitudinalModels.length > 0 && (
+                                    <button
+                                        onClick={() => setLongitudinalModels([])}
+                                        className="flex items-center gap-1 px-3 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50"
+                                    >
+                                        <X className="h-4 w-4" /> Clear
+                                    </button>
+                                )}
                             </div>
 
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Over Time
-                                    {longitudinalModels.length > 0 && <span className="text-sm font-normal text-slate-400">({longitudinalModels.length} models)</span>}
-                                    {longitudinalCategory !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalCategory})</span>}
+                                    <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Trends
                                 </h3>
-                                {longitudinalData.length > 1 ? (
+                                {longitudinalData.chartData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="90%">
-                                        <LineChart data={longitudinalData} margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
+                                        <LineChart data={longitudinalData.chartData} margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
                                             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                                             <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                                             <YAxis unit="%" domain={[0, 100]} />
                                             <RechartsTooltip
                                                 contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                                                formatter={(value: any) => [`${value.toFixed(1)}%`, 'Refusal Rate']}
+                                                formatter={(value: any, name: any, props: any) => {
+                                                    const modelKey = props.dataKey;
+                                                    const countKey = `${modelKey}_count`;
+                                                    const count = props.payload[countKey];
+                                                    return [
+                                                        <span key="val">{value.toFixed(1)}% <span className="text-slate-400 text-xs">({count} prompts)</span></span>,
+                                                        name
+                                                    ];
+                                                }}
                                             />
                                             <Legend />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="refusalRate"
-                                                stroke="#6366f1"
-                                                strokeWidth={3}
-                                                dot={{ fill: '#6366f1', strokeWidth: 2, r: 4 }}
-                                                activeDot={{ r: 6, fill: '#4f46e5' }}
-                                                name="Refusal Rate"
-                                            />
+                                            {longitudinalData.activeModels.map((model, i) => (
+                                                <Line
+                                                    key={model}
+                                                    type="monotone"
+                                                    dataKey={model}
+                                                    name={model.split('/').pop()}
+                                                    stroke={['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'][i % 6]}
+                                                    strokeWidth={3}
+                                                    dot={{ r: 4 }}
+                                                    activeDot={{ r: 6 }}
+                                                    connectNulls // Skip missing dates for smoother lines
+                                                />
+                                            ))}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-80 text-slate-400">
                                         <TrendingUp className="h-12 w-12 mb-4 opacity-50" />
-                                        <p>Need data from multiple dates to show longitudinal trends.</p>
-                                        <p className="text-sm">Run audits on different days to see changes over time.</p>
+                                        <p>No data matches your filters.</p>
                                     </div>
                                 )}
                             </div>
@@ -732,12 +735,33 @@ function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allMode
                 <h3 className="font-bold text-indigo-800 flex items-center gap-2 mb-2">
                     <Compass className="w-4 h-4" /> What is the Bias Compass?
                 </h3>
-                <p className="text-sm text-indigo-700">
+                <p className="text-sm text-indigo-700 mb-2">
                     This visualization maps the <strong>reasoning behind refusals</strong> to a political/philosophical compass.
-                    Instead of just saying "Refused", we analyze <em>why</em>. Is the model protecting marginalized groups (Left-Libertarian)?
-                    Upholding traditional values (Right-Authoritarian)? Or just following generic safety rules (Neutral)?
+                    Instead of just saying "Refused", we analyze <em>why</em> using an LLM-as-a-Judge.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-3">
+                    <div className="bg-white/50 p-2 rounded">
+                        <span className="font-bold text-indigo-900">Left-Libertarian (Green)</span>
+                        <p className="text-indigo-800 mt-1">Values individual freedom and social equality. Refusals often aim to protect marginalized groups, prevent hate speech, or challenge systemic bias.</p>
+                    </div>
+                    <div className="bg-white/50 p-2 rounded">
+                        <span className="font-bold text-indigo-900">Right-Authoritarian (Blue)</span>
+                        <p className="text-indigo-800 mt-1">Values tradition, order, and hierarchy. Refusals often aim to uphold moral standards, respect authority, or prevent disorder/indecency.</p>
+                    </div>
+                    <div className="bg-white/50 p-2 rounded">
+                        <span className="font-bold text-indigo-900">Left-Authoritarian (Red)</span>
+                        <p className="text-indigo-800 mt-1">Values collective good and regulation. Refusals focus on misinformation, regulatory compliance, or economic fairness.</p>
+                    </div>
+                    <div className="bg-white/50 p-2 rounded">
+                        <span className="font-bold text-indigo-900">Right-Libertarian (Purple)</span>
+                        <p className="text-indigo-800 mt-1">Values market freedom and property. Refusals are rare but focus on preventing coercion or restrictions on liberty.</p>
+                    </div>
+                </div>
+                <p className="text-xs text-indigo-600 mt-3 pt-2 border-t border-indigo-200/50">
+                    * "Neutral-Safety" refers to generic refusals (e.g. "I cannot fulfill this request") lacking clear ideological framing.
                 </p>
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Compass Chart */}
