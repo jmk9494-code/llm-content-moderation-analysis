@@ -77,10 +77,14 @@ export default function ComparePage() {
     }, [data]);
 
     const availableModels = useMemo(() => {
-        // Filter out models with 0 data
+        // Filter out models with < 100 VALID data points
         const modelCounts = new Map<string, number>();
-        data.forEach(d => modelCounts.set(d.model, (modelCounts.get(d.model) || 0) + 1));
-        return Array.from(new Set(data.map(d => d.model))).filter(m => (modelCounts.get(m) || 0) > 0).sort();
+        data.forEach(d => {
+            if (d.verdict && d.verdict !== 'ERROR' && d.verdict !== 'BLOCKED') {
+                modelCounts.set(d.model, (modelCounts.get(d.model) || 0) + 1);
+            }
+        });
+        return Array.from(new Set(data.map(d => d.model))).filter(m => (modelCounts.get(m) || 0) >= 100).sort();
     }, [data]);
 
     // Filtered data based on search/category/date

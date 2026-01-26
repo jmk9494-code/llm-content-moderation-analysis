@@ -101,7 +101,15 @@ export default function DashboardPage() {
 
   // Extract unique values for filters
   const filterOptions = useMemo(() => {
-    const models = Array.from(new Set(data.map(d => d.model))).sort();
+    // Exclude models with < 100 VALID data points
+    const validModelCounts: Record<string, number> = {};
+    data.forEach(d => {
+      if (d.verdict && d.verdict !== 'ERROR' && d.verdict !== 'BLOCKED') {
+        validModelCounts[d.model] = (validModelCounts[d.model] || 0) + 1;
+      }
+    });
+
+    const models = Array.from(new Set(data.map(d => d.model))).filter(m => (validModelCounts[m] || 0) >= 100).sort();
     const categories = Array.from(new Set(data.map(d => d.category))).sort();
     // Safely handle timestamp splitting
     const dates = Array.from(new Set(data.map(d => {
@@ -138,7 +146,7 @@ export default function DashboardPage() {
 
   // Filtered data based on all filters
   const filteredData = useMemo(() => {
-    let filtered = data;
+    let filtered = data.filter(d => filterOptions.models.includes(d.model));
 
     // Model filter
     if (selectedModel !== 'all') {
