@@ -485,7 +485,7 @@ def main():
                 (["openai", "gpt", "mini"], "openai/gpt-4o-mini"),
                 (["google", "gemini", "flash"], "google/gemini-2.0-flash-exp"),
                 (["anthropic", "claude", "haiku"], "anthropic/claude-3-haiku"),
-                (["x-ai", "grok"], "x-ai/grok-4-fast")
+                (["x-ai", "grok"], "x-ai/grok-3-mini")
             ]
             
             for kw, fallback in patterns:
