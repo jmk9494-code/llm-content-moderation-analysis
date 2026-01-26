@@ -228,8 +228,7 @@ export default function DashboardPage() {
         };
       })
       .filter(c => c.total > 0)
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+      .sort((a, b) => b.value - a.value);
 
     // Tier freshness - based on model names/providers
     const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];

@@ -814,6 +814,15 @@ function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allMode
                                 const count = biasData.filter(d => d.leaning === key).length;
                                 if (count === 0) return null;
                                 const pct = (count / biasData.length) * 100;
+
+                                // Colors matching the compass explanation
+                                let barColor = '#6366f1'; // Default Indigo
+                                if (key === 'Left-Libertarian') barColor = '#22c55e'; // Green
+                                if (key === 'Left-Authoritarian') barColor = '#ef4444'; // Red
+                                if (key === 'Right-Authoritarian') barColor = '#3b82f6'; // Blue
+                                if (key === 'Right-Libertarian') barColor = '#a855f7'; // Purple
+                                if (key === 'Neutral-Safety') barColor = '#94a3b8'; // Slate
+
                                 return (
                                     <div key={key}>
                                         <div className="flex justify-between text-sm mb-1">
@@ -821,7 +830,7 @@ function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allMode
                                             <span className="text-slate-500">{count} ({pct.toFixed(1)}%)</span>
                                         </div>
                                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-indigo-500" style={{ width: `${pct}%` }}></div>
+                                            <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: barColor }}></div>
                                         </div>
                                     </div>
                                 )
