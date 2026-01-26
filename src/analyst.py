@@ -111,7 +111,7 @@ def generate_weekly_report(output_dir=".", report_file="data/latest_report.md"):
         {examples}
         
         ## Instructions
-        Write a professional markdown report titled "🛡️ AI Analyst 2.0 Insights".
+        Write a professional markdown report titled "🛡️ AI Analyst 2.0 Weekly Insights".
         
         1. **Executive Summary**: Synthesize the reliability and robustness scores. Is the ecosystem stable?
         2. **Efficiency Analysis**: Recommend a model based on the "Best Value" (Good safety profile + Low Cost/1k).

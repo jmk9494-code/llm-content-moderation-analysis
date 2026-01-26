@@ -12,9 +12,9 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ## ✨ Features
 
 ### Dashboard
-- **Overview** - Real-time stats, heatmaps, model comparison, and audit logs
-- **Compare** - Side-by-side model comparison with radar charts
-- **Analysis** - **Bias Compass**, semantic clustering, statistical deep dives, and **Prompt Library**
+- **Overview** - Real-time stats, heatmaps, interactive model filtering, and audit logs
+- **Compare** - Side-by-side model comparison with statistical significance tests
+- **Analysis** - **Bias Compass** (All Models), Longitudinal Study (Multi-model support), and **Weekly AI Analyst** reports
 - **Efficiency** - Cost vs. Refusal Rate trade-offs
 - **Export** - Download comparison data as CSV
 

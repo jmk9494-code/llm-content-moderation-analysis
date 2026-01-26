@@ -203,21 +203,32 @@ export default function DashboardPage() {
     const refusalRate = totalAudits > 0 ? (refusals / totalAudits) * 100 : 0;
 
     // Top categories by refusals
-    // Top categories by refusals
+    // Top categories by refusal rate
     const catCounts: Record<string, number> = {};
-    const refusalsList = data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe');
-    refusalsList.forEach(d => { catCounts[d.category] = (catCounts[d.category] || 0) + 1; });
+    const catTotalCounts: Record<string, number> = {};
 
-    // Convert to percentage of total refusals
-    const totalRefusalsCount = refusalsList.length;
-    const topCategories = Object.entries(catCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({
-        name,
-        value: totalRefusalsCount > 0 ? parseFloat(((count / totalRefusalsCount) * 100).toFixed(1)) : 0,
-        count // Keep raw count for potentially detailed tooltip if needed
-      }));
+    data.forEach(d => {
+      catTotalCounts[d.category] = (catTotalCounts[d.category] || 0) + 1;
+      if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') {
+        catCounts[d.category] = (catCounts[d.category] || 0) + 1;
+      }
+    });
+
+    // Convert to refusal rate per category
+    const topCategories = Object.keys(catTotalCounts)
+      .map(name => {
+        const refusals = catCounts[name] || 0;
+        const total = catTotalCounts[name] || 0;
+        return {
+          name,
+          value: total > 0 ? parseFloat(((refusals / total) * 100).toFixed(1)) : 0,
+          count: refusals,
+          total
+        };
+      })
+      .filter(c => c.total > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
 
     // Tier freshness - based on model names/providers
     const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];
@@ -428,7 +439,10 @@ export default function DashboardPage() {
 
               {/* Model Comparison */}
               {filteredData.length > 0 && (
-                <ModelComparison data={filteredData} />
+                <ModelComparison
+                  data={filteredData}
+                  onModelSelect={(model) => setSelectedModel(model)}
+                />
               )}
 
               {/* Heatmap Visualization */}
@@ -443,7 +457,7 @@ export default function DashboardPage() {
               {/* Top Censorship Categories Chart */}
               {filteredData.length > 0 && stats.topCategories.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
-                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories (% of Total Refusals)</h3>
+                  <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories (Refusal Rate)</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
@@ -471,7 +485,50 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">📋 Audit Log</h3>
                   </div>
-                  <DataTable columns={auditColumns} data={filteredData} exportFilename="audit_log" />
+                  <DataTable
+                    columns={auditColumns}
+                    data={filteredData}
+                    exportFilename="audit_log"
+                    renderExpanded={(row) => (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm p-2">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-slate-400"></span> Prompt
+                          </h4>
+                          <div className="bg-slate-100 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                            {row.prompt}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-slate-900 flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${['REMOVED', 'REFUSAL', 'unsafe'].includes(row.verdict) ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                            Response
+                          </h4>
+                          <div className="bg-slate-100 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+                            {row.response}
+                          </div>
+                        </div>
+                        <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Latency</span>
+                            <span className="font-medium text-slate-700">{row.latency_ms} ms</span>
+                          </div>
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Tokens Used</span>
+                            <span className="font-medium text-slate-700">{row.tokens_used}</span>
+                          </div>
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Est. Cost</span>
+                            <span className="font-medium text-slate-700">${row.cost?.toFixed(6) || '0.000000'}</span>
+                          </div>
+                          <div>
+                            <span className="block text-xs text-slate-500 mb-1">Case ID</span>
+                            <span className="font-mono text-xs text-slate-500">{row.case_id}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  />
                 </div>
               )}
 

@@ -72,7 +72,7 @@ function normalCDF(x: number): number {
     return 0.5 * (1.0 + sign * y);
 }
 
-export default function ModelComparison({ data }: { data: AuditRow[] }) {
+export default function ModelComparison({ data, onModelSelect }: { data: AuditRow[], onModelSelect?: (model: string) => void }) {
     const stats = useMemo(() => {
         const map: Record<string, { total: number; refusals: number; totalLen: number }> = {};
 
@@ -158,7 +158,11 @@ export default function ModelComparison({ data }: { data: AuditRow[] }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {stats.map((row: ModelStats) => (
-                            <tr key={row.model} className="hover:bg-slate-50/50 transition-colors">
+                            <tr
+                                key={row.model}
+                                className={`hover:bg-slate-50/50 transition-colors ${onModelSelect ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                                onClick={() => onModelSelect?.(row.model)}
+                            >
                                 <td className="p-4 font-medium text-slate-900">
                                     {row.model.split('/')[1] || row.model}
                                 </td>

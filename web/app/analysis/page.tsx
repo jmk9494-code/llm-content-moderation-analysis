@@ -53,7 +53,7 @@ export default function DeepDivePage() {
     const [loading, setLoading] = useState(true);
 
     // Longitudinal Filters
-    const [longitudinalModel, setLongitudinalModel] = useState<string>('all');
+    const [longitudinalModels, setLongitudinalModels] = useState<string[]>([]);
     const [longitudinalCategory, setLongitudinalCategory] = useState<string>('all');
     const [longitudinalKeyword, setLongitudinalKeyword] = useState<string>('');
     const [longitudinalModelSize, setLongitudinalModelSize] = useState<string>('all');
@@ -64,7 +64,7 @@ export default function DeepDivePage() {
                 // 1. Audit Data
                 const r1 = await fetch('/api/audit');
                 const j1 = await r1.json();
-                if (j1.data) setAuditData(j1.data.filter((d: any) => d.verdict !== 'ERROR'));
+                if (j1.data) setAuditData(j1.data);
 
                 // 2. Clusters
                 try {
@@ -116,13 +116,14 @@ export default function DeepDivePage() {
         const distributionMap = new Map<string, number>();
         prompts.forEach(p => {
             const relevant = auditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
-            if (relevant.length < 2) return;
+            if (relevant.length === 0) return;
 
             const safeCount = relevant.filter((d: AuditRow) => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
 
             let bucket = "";
-            if (percentage === 0) bucket = "0% (All Unsafe)";
+            if (relevant.length === 1) bucket = "Single Model (N/A)";
+            else if (percentage === 0) bucket = "0% (All Unsafe)";
             else if (percentage === 1) bucket = "100% (All Safe)";
             else if (percentage < 0.5) bucket = "< 50% Safe";
             else if (percentage >= 0.5) bucket = "> 50% Safe";
@@ -197,7 +198,7 @@ export default function DeepDivePage() {
 
         // Apply filters
         const filtered = auditData.filter((d: AuditRow) => {
-            if (longitudinalModel !== 'all' && d.model !== longitudinalModel) return false;
+            if (longitudinalModels.length > 0 && !longitudinalModels.includes(d.model)) return false;
             if (longitudinalCategory !== 'all' && d.category !== longitudinalCategory) return false;
             if (longitudinalModelSize !== 'all' && getModelSize(d.model) !== longitudinalModelSize) return false;
             if (longitudinalKeyword && !d.prompt?.toLowerCase().includes(longitudinalKeyword.toLowerCase())) return false;
@@ -222,7 +223,7 @@ export default function DeepDivePage() {
         return Array.from(dateMap.values())
             .map((d: any) => ({ ...d, refusalRate: (d.refusals / d.total) * 100 }))
             .sort((a, b) => a.date.localeCompare(b.date));
-    }, [auditData, longitudinalModel, longitudinalCategory]);
+    }, [auditData, longitudinalModels, longitudinalCategory, longitudinalModelSize, longitudinalKeyword]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50">
@@ -305,7 +306,7 @@ export default function DeepDivePage() {
                         </div>
                     )}
 
-                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} />}
+                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
 
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
@@ -433,15 +434,30 @@ export default function DeepDivePage() {
                                 </div>
                                 <div className="flex-1 flex flex-wrap gap-4">
                                     <div className="min-w-[200px]">
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Model</label>
-                                        <select
-                                            value={longitudinalModel}
-                                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setLongitudinalModel(e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                                        >
-                                            <option value="all">All Models</option>
-                                            {longitudinalFilterOptions.models.map(m => <option key={m} value={m}>{m.split('/')[1] || m}</option>)}
-                                        </select>
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Models</label>
+                                        <div className="flex flex-wrap gap-2 max-w-xl">
+                                            {longitudinalFilterOptions.models.map(m => {
+                                                const isSelected = longitudinalModels.includes(m);
+                                                return (
+                                                    <button
+                                                        key={m}
+                                                        onClick={() => {
+                                                            if (isSelected) {
+                                                                setLongitudinalModels(prev => prev.filter(model => model !== m));
+                                                            } else {
+                                                                setLongitudinalModels(prev => [...prev, m]);
+                                                            }
+                                                        }}
+                                                        className={`px-2 py-1 text-xs rounded-full border transition-colors ${isSelected
+                                                                ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                            }`}
+                                                    >
+                                                        {m.split('/').pop()}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                     <div className="min-w-[200px]">
                                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Category</label>
@@ -454,9 +470,9 @@ export default function DeepDivePage() {
                                             {longitudinalFilterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
-                                    {(longitudinalModel !== 'all' || longitudinalCategory !== 'all') && (
+                                    {(longitudinalModels.length > 0 || longitudinalCategory !== 'all') && (
                                         <button
-                                            onClick={() => { setLongitudinalModel('all'); setLongitudinalCategory('all'); }}
+                                            onClick={() => { setLongitudinalModels([]); setLongitudinalCategory('all'); }}
                                             className="flex items-center gap-1 px-3 py-2 mt-5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg"
                                         >
                                             <X className="h-4 w-4" /> Clear
@@ -468,7 +484,7 @@ export default function DeepDivePage() {
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Over Time
-                                    {longitudinalModel !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalModel.split('/')[1]})</span>}
+                                    {longitudinalModels.length > 0 && <span className="text-sm font-normal text-slate-400">({longitudinalModels.length} models)</span>}
                                     {longitudinalCategory !== 'all' && <span className="text-sm font-normal text-slate-400">({longitudinalCategory})</span>}
                                 </h3>
                                 {longitudinalData.length > 1 ? (
@@ -666,7 +682,7 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     );
 }
 
-function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
+function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allModels: string[] }) {
     if (biasData.length === 0) return (
         <div className="p-12 text-center text-slate-500">
             <Compass className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -702,6 +718,13 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[] }) {
         acc[curr.model] = (acc[curr.model] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
+
+    // Ensure all known models are represented, even with 0 count
+    if (allModels) {
+        allModels.forEach(m => {
+            if (!modelCounts[m]) modelCounts[m] = 0;
+        });
+    }
 
     return (
         <div className="space-y-8">
