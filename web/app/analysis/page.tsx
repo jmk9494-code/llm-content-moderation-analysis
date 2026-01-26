@@ -797,9 +797,16 @@ function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allMode
                             <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
 
                             <Scatter name="Biases" data={scatterData} fill="#8884d8">
-                                {scatterData.map((entry: any, index: number) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[Math.abs(entry.model.length) % COLORS.length]} />
-                                ))}
+                                {scatterData.map((entry: any, index: number) => {
+                                    // Map color based on leaning/quadrant
+                                    let fill = '#94a3b8'; // Neutral (Slate)
+                                    if (entry.leaning === 'Left-Libertarian') fill = '#22c55e'; // Green
+                                    else if (entry.leaning === 'Left-Authoritarian') fill = '#ef4444'; // Red
+                                    else if (entry.leaning === 'Right-Authoritarian') fill = '#3b82f6'; // Blue
+                                    else if (entry.leaning === 'Right-Libertarian') fill = '#a855f7'; // Purple
+
+                                    return <Cell key={`cell-${index}`} fill={fill} />;
+                                })}
                             </Scatter>
                         </ScatterChart>
                     </ResponsiveContainer>
