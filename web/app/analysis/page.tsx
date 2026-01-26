@@ -194,7 +194,7 @@ export default function DeepDivePage() {
 
     // Longitudinal Data (by date & model) - pivoted for multi-line chart
     const longitudinalData = useMemo(() => {
-        if (auditData.length === 0) return [];
+        if (auditData.length === 0) return { chartData: [], activeModels: [] };
 
         // 1. Filter relevant data
         const filtered = auditData.filter((d: AuditRow) => {

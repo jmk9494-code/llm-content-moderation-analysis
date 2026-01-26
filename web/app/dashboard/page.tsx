@@ -223,7 +223,8 @@ export default function DashboardPage() {
           name,
           value: total > 0 ? parseFloat(((refusals / total) * 100).toFixed(1)) : 0,
           count: refusals,
-          total
+          total,
+          label: 'Refusals / Total in Category'
         };
       })
       .filter(c => c.total > 0)
