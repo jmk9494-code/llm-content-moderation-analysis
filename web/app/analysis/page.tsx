@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo, ChangeEvent } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X, Compass, Grip, BookOpen, Search
+    Info, Database, Clock, Filter, X, Compass, Flame, AlertTriangle, Zap, BookOpen
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -11,6 +12,7 @@ import {
 } from 'recharts';
 import { calculateFleissKappa } from '@/lib/statistics';
 import Papa from 'papaparse';
+import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
 
 // --- Types ---
 type AuditRow = {
@@ -40,10 +42,10 @@ type BiasRow = {
     judge_reasoning: string;
 };
 
-const COLORS = ['#8b5cf6', '#10b981', '#94a3b8'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
-export default function DeepDivePage() {
-    const [activeTab, setActiveTab] = useState<'datalog' | 'reliability' | 'efficiency' | 'longitudinal' | 'clusters' | 'bias' | 'prompts'>('datalog');
+export default function AnalysisPage() {
+    const [activeTab, setActiveTab] = useState<'datalog' | 'heatmap' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('datalog');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -54,32 +56,25 @@ export default function DeepDivePage() {
 
     // Longitudinal Filters
     const [longitudinalModels, setLongitudinalModels] = useState<string[]>([]);
-    const [longitudinalCategory, setLongitudinalCategory] = useState<string>('all');
-    const [longitudinalKeyword, setLongitudinalKeyword] = useState<string>('');
-    const [longitudinalModelSize, setLongitudinalModelSize] = useState<string>('all');
 
     useEffect(() => {
         const loadAll = async () => {
             try {
-                // 1. Audit Data
                 const r1 = await fetch('/api/audit');
                 const j1 = await r1.json();
                 if (j1.data) setAuditData(j1.data);
 
-                // 2. Clusters
                 try {
                     const r2 = await fetch('/clusters.json');
                     if (r2.ok) setClusters(await r2.json());
                 } catch (e) { console.warn("Clusters not found"); }
 
-                // 3. Report
                 try {
                     const r3 = await fetch('/api/report');
                     const j3 = await r3.json();
                     if (j3.content) setReportContent(j3.content);
                 } catch (e) { console.warn("Report not found"); }
 
-                // 4. Bias Log (CSV)
                 try {
                     const r4 = await fetch('/bias_log.csv');
                     if (r4.ok) {
@@ -103,40 +98,27 @@ export default function DeepDivePage() {
         loadAll();
     }, []);
 
-    // --- Stats Calculations ---
     const stats = useMemo(() => {
         if (auditData.length === 0) return null;
-
         const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
         const prompts = Array.from(new Set(auditData.map((d: AuditRow) => d.case_id || d.prompt_id || d.prompt)));
-
         const reliability = calculateFleissKappa(auditData, models, prompts);
 
-        // Calculate Agreement Distribution
         const distributionMap = new Map<string, number>();
         prompts.forEach(p => {
             const relevant = auditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
             if (relevant.length === 0) return;
-
             const safeCount = relevant.filter((d: AuditRow) => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
-
             let bucket = "";
             if (relevant.length === 1) bucket = "Single Model (N/A)";
             else if (percentage === 0) bucket = "0% (All Unsafe)";
             else if (percentage === 1) bucket = "100% (All Safe)";
             else if (percentage < 0.5) bucket = "< 50% Safe";
             else if (percentage >= 0.5) bucket = "> 50% Safe";
-
             distributionMap.set(bucket, (distributionMap.get(bucket) || 0) + 1);
         });
-
-        const distribution = Array.from(distributionMap.entries())
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => {
-                const order = ["0% (All Unsafe)", "< 50% Safe", "> 50% Safe", "100% (All Safe)"];
-                return order.indexOf(a.name) - order.indexOf(b.name);
-            });
+        const distribution = Array.from(distributionMap.entries()).map(([name, value]) => ({ name, value }));
 
         return { reliability, models, prompts, distribution };
     }, [auditData]);
@@ -144,13 +126,11 @@ export default function DeepDivePage() {
     const efficiencyData = useMemo(() => {
         if (auditData.length === 0) return [];
         const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
-
         return models.map(m => {
             const rows = auditData.filter((d: AuditRow) => d.model === m);
             const total = rows.length;
-            const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)).length;
+            const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict)).length;
             const cost = rows.reduce((acc: number, curr: AuditRow) => acc + (curr.cost || 0), 0);
-
             return {
                 name: m.split('/').pop(),
                 fullName: m,
@@ -161,78 +141,50 @@ export default function DeepDivePage() {
         }).filter(m => m.total > 0);
     }, [auditData]);
 
-    // Filter options for longitudinal study
-    const longitudinalFilterOptions = useMemo(() => {
-        // Extract model sizes from model names (e.g., 'gpt-4' -> '4', 'claude-3-opus' -> '3')
-        const extractSize = (model: string): string => {
-            const match = model.match(/-(\d+\.?\d*)(b|B)?/);
-            if (match) return match[1] + (match[2] || '');
-            if (model.includes('mini')) return 'mini';
-            if (model.includes('small')) return 'small';
-            if (model.includes('large')) return 'large';
-            return 'unknown';
-        };
+    // Calculate Trigger Words (Top words in refused prompts)
+    const triggerWords = useMemo(() => {
+        if (auditData.length === 0) return [];
 
-        const modelSizes = Array.from(new Set(auditData.map((d: AuditRow) => extractSize(d.model)))).filter(s => s !== 'unknown').sort();
+        const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'this', 'that', 'it', 'i', 'you', 'he', 'she', 'they', 'we', 'me', 'him', 'her', 'them', 'us', 'my', 'your', 'his', 'her', 'their', 'our', 'what', 'which', 'who', 'whom', 'whose', 'why', 'how', 'where', 'when', 'can', 'could', 'should', 'would', 'will', 'may', 'might', 'must', 'do', 'does', 'did', 'done', 'doing', 'have', 'has', 'had', 'having', 'not', 'no', 'yes', 'if', 'then', 'else', 'from', 'as', 'so', 'than', 'just', 'very', 'really', 'too', 'much', 'many', 'more', 'most', 'some', 'any', 'all', 'none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'make', 'write', 'create', 'generate', 'tell', 'me', 'about', 'like', 'know']);
 
-        return {
-            models: Array.from(new Set(auditData.map((d: AuditRow) => d.model))).sort(),
-            categories: Array.from(new Set(auditData.map((d: AuditRow) => d.category))).filter(Boolean).sort(),
-            modelSizes
-        };
-    }, [auditData]);
+        const wordCounts: Record<string, number> = {};
+        const refusedPrompts = auditData.filter(d => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict));
 
-    // Helper to extract model size
-    const getModelSize = (model: string): string => {
-        const match = model.match(/-(\d+\.?\d*)(b|B)?/);
-        if (match) return match[1] + (match[2] || '');
-        if (model.includes('mini')) return 'mini';
-        if (model.includes('small')) return 'small';
-        if (model.includes('large')) return 'large';
-        return 'unknown';
-    };
-
-    // Longitudinal Data (by date & model) - pivoted for multi-line chart
-    const longitudinalData = useMemo(() => {
-        if (auditData.length === 0) return { chartData: [], activeModels: [] };
-
-        // 1. Filter relevant data
-        const filtered = auditData.filter((d: AuditRow) => {
-            if (longitudinalModels.length > 0 && !longitudinalModels.includes(d.model)) return false;
-            // Additional filters if needed
-            return true;
+        refusedPrompts.forEach(row => {
+            if (!row.prompt) return;
+            const words = row.prompt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            words.forEach(w => {
+                if (w.length > 3 && !stopWords.has(w)) {
+                    wordCounts[w] = (wordCounts[w] || 0) + 1;
+                }
+            });
         });
 
-        // 2. Get unique dates and sort them
-        const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown')))
-            .filter(d => d !== 'Unknown')
-            .sort((a, b) => a.localeCompare(b));
+        return Object.entries(wordCounts)
+            .map(([word, count]) => ({ word, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 30); // Top 30 triggers
+    }, [auditData]);
 
-        // 3. Get active models (or all if none selected)
-        const activeModels = longitudinalModels.length > 0
-            ? longitudinalModels
-            : Array.from(new Set(filtered.map(d => d.model)));
+    const longitudinalData = useMemo(() => {
+        if (auditData.length === 0) return { chartData: [], activeModels: [] };
+        const filtered = auditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
+        const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown'))).filter(d => d !== 'Unknown').sort();
+        const activeModels = longitudinalModels.length > 0 ? longitudinalModels : Array.from(new Set(filtered.map(d => d.model)));
 
-        // 4. Build pivot table: [{ date: '2024-01-01', 'gpt-4': 10.5, 'claude': 5.0 }, ...]
         const chartData = uniqueDates.map(date => {
             const dayRows = filtered.filter(d => (d.timestamp?.split('T')[0]) === date);
-
-            const row: any = { date }; // Explicit any to allow dynamic model keys
-
+            const row: any = { date };
             activeModels.forEach(model => {
                 const modelRows = dayRows.filter(d => d.model === model);
                 if (modelRows.length > 0) {
-                    const refusals = modelRows.filter(d => ['REFUSAL', 'REMOVED', 'unsafe'].includes(d.verdict)).length;
+                    const refusals = modelRows.filter(d => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict)).length;
                     row[model] = (refusals / modelRows.length) * 100;
                     row[`${model}_count`] = modelRows.length; // Store count for tooltip
-                } else {
-                    row[model] = null; // Gap in line
-                }
+                } else row[model] = null;
             });
-
             return row;
         });
-
         return { chartData, activeModels };
     }, [auditData, longitudinalModels]);
 
@@ -250,284 +202,140 @@ export default function DeepDivePage() {
             <div className="max-w-7xl mx-auto space-y-6">
 
                 {/* Header */}
-                <header className="mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-                        🔬 Deep Dive Analysis
-                    </h1>
-                    <p className="text-slate-500 text-sm md:text-base mt-1">
-                        Advanced metrics, efficiency benchmarking, and automated research insights.
-                    </p>
+                <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
+                            🔬 Analysis Deep Dive
+                        </h1>
+                        <p className="text-slate-500 text-sm md:text-base mt-1">
+                            Advanced metrics, academic visuals, and automated research insights.
+                        </p>
+                    </div>
+                    <Link href="/dashboard" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                        &larr; Back to Dashboard
+                    </Link>
                 </header>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1">
-                    <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>
-                        Data Log
-                    </TabButton>
-                    <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>
-                        Bias Compass
-                    </TabButton>
-                    <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>
-                        Reliability & Consensus
-                    </TabButton>
-                    <TabButton active={activeTab === 'efficiency'} onClick={() => setActiveTab('efficiency')} icon={<DollarSign className="w-4 h-4" />}>
-                        Efficiency & Cost
-                    </TabButton>
-                    <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>
-                        Longitudinal Study
-                    </TabButton>
-                    <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>
-                        Semantic Clusters
-                    </TabButton>
-                    <TabButton active={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} icon={<BookOpen className="w-4 h-4" />}>
-                        Prompt Library
-                    </TabButton>
+                <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1 overflow-x-auto">
+                    <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>Data Log</TabButton>
+                    <TabButton active={activeTab === 'heatmap'} onClick={() => setActiveTab('heatmap')} icon={<Flame className="w-4 h-4" />}>Censorship Heatmap</TabButton>
+                    <TabButton active={activeTab === 'triggers'} onClick={() => setActiveTab('triggers')} icon={<AlertTriangle className="w-4 h-4" />}>Trigger List</TabButton>
+                    <TabButton active={activeTab === 'alignment'} onClick={() => setActiveTab('alignment')} icon={<Zap className="w-4 h-4" />}>Alignment Tax</TabButton>
+                    <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>Semantic Clusters</TabButton>
+                    <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>Bias Compass</TabButton>
+                    <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</TabButton>
+                    <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>Longitudinal</TabButton>
                 </div>
 
                 {/* Content */}
                 <div className="min-h-[60vh]">
                     {activeTab === 'datalog' && (
                         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-                            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                                    <Info className="w-4 h-4" /> What is the Data Log?
-                                </h3>
-                                <p className="text-sm text-blue-700">
-                                    The Data Log displays the raw AI-generated analysis report. It summarizes key findings from the moderation audit,
-                                    including model rankings, statistical insights, and recommendations. This report is auto-generated by running
-                                    the Python analysis script on the audit data.
-                                </p>
-                            </div>
+                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><FileText className="w-5 h-5" /> Executive Summary</h3>
                             {reportContent ? (
-                                <article className="prose prose-slate max-w-none">
+                                <article className="prose prose-slate max-w-none text-sm">
                                     {reportContent.split('\n').map((line, i) => {
-                                        if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
-                                        if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold mt-6 mb-3 flex items-center gap-2">{line.includes('Leaderboard') ? '🏆' : line.includes('Statistical') ? '📊' : ''} {line.replace('## ', '')}</h2>;
-                                        if (line.startsWith('### ')) return <h3 key={i} className="text-xl font-bold mt-4 mb-2">{line.replace('### ', '')}</h3>;
+                                        if (line.startsWith('# ')) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
+                                        if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-bold mt-6 mb-3 border-b pb-1">{line.replace('## ', '')}</h2>;
+                                        if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-bold mt-4 mb-2">{line.replace('### ', '')}</h3>;
                                         if (line.startsWith('- ')) return <li key={i} className="ml-4 list-disc my-1">{line.replace('- ', '')}</li>;
                                         return <p key={i} className="my-2 whitespace-pre-wrap">{line}</p>;
                                     })}
                                 </article>
-                            ) : (
-                                <div className="text-center py-12 text-slate-400">
-                                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    No generated report found. Run the Python analysis script first.
-                                </div>
-                            )}
+                            ) : <div className="text-slate-400">No report generated.</div>}
                         </div>
                     )}
 
-                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
-
-                    {activeTab === 'reliability' && stats && (
+                    {activeTab === 'heatmap' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                                    <Info className="w-4 h-4" /> What is Reliability & Consensus?
-                                </h3>
-                                <p className="text-sm text-blue-700">
-                                    This tab measures how consistently different AI models agree on safety verdicts.
-                                    <strong> Fleiss' Kappa</strong> is a statistical measure of inter-rater reliability—higher scores mean models agree more often.
-                                    The <strong>Agreement Distribution</strong> shows what percentage of prompts had unanimous vs. split decisions across models.
-                                </p>
+                            <div className="p-4 bg-orange-50 rounded-lg border border-orange-100 text-sm text-orange-800">
+                                <strong>Figure 2: Censorship Fingerprint.</strong> This heatmap visualizes the rate of refusal for each model across different risk categories. Redder cells indicate higher refusal rates (more censorship).
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
-                                    <div className="flex items-end gap-4">
-                                        <span className="text-5xl font-black text-indigo-600">
-                                            {stats.reliability.score.toFixed(3)}
-                                        </span>
-                                        <span className="text-lg text-slate-500 mb-2 font-medium bg-slate-100 px-3 py-1 rounded-full">
-                                            {stats.reliability.interpretation}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-slate-500 mt-4">
-                                        Measures how consistently models agree on safety verdicts over {stats.prompts.length} prompts.
-                                        Scores above 0.4 indicate fair agreement; above 0.6 is moderate.
-                                    </p>
-                                </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                    <h3 className="text-lg font-bold mb-4">Agreement Distribution</h3>
-                                    {stats.distribution && stats.distribution.length > 0 ? (
-                                        <div className="h-48 text-xs">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={stats.distribution}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                                                    <YAxis hide />
-                                                    <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#fff', borderRadius: '8px' }} />
-                                                    <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} name="Prompts" />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                            <div className="text-center mt-2 text-slate-400">
-                                                Based on {stats.prompts.length} prompts
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center justify-center h-32 bg-slate-50 rounded-lg text-slate-400 text-sm">
-                                            Not enough data for distribution
-                                        </div>
-                                    )}
+                            <CensorshipHeatmap data={auditData} title="Censorship Fingerprint" />
+                        </div>
+                    )}
+
+                    {activeTab === 'triggers' && (
+                        <div className="space-y-6">
+                            <div className="p-4 bg-red-50 rounded-lg border border-red-100 text-sm text-red-800">
+                                <strong>Figure 4: The Trigger List.</strong> This chart reveals the most common words found in prompts that were refused by models. These "trigger words" are often strong indicators of what topics models are sensitive to.
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 className="text-lg font-bold mb-6">Top Trigger Words</h3>
+                                <div className="h-[500px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={triggerWords} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                            <XAxis type="number" />
+                                            <YAxis dataKey="word" type="category" width={100} tick={{ fontSize: 12 }} />
+                                            <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                            <Bar dataKey="count" fill="#ef4444" name="Refusals" radius={[0, 4, 4, 0]} barSize={20} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {activeTab === 'efficiency' && (
+                    {activeTab === 'alignment' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                                <h3 className="font-bold text-indigo-800 flex items-center gap-2 mb-2">
-                                    <Info className="w-4 h-4" /> What is Efficiency & Cost?
-                                </h3>
-                                <p className="text-sm text-indigo-700">
-                                    This tab visualizes the trade-off between <strong>cost</strong> and <strong>safety</strong> across models.
-                                    The X-axis shows the cost per 1,000 prompts (in USD), while the Y-axis shows the refusal rate (%).
-                                    It also includes a <strong>Model Registry</strong> listing current pricing and capabilities.
-                                </p>
+                            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100 text-sm text-indigo-800">
+                                <strong>Figure 1: The Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
+                            </div>
+                            {/* Option A: The interactive Pareto chart if iframe preferred */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[700px]">
+                                <iframe src="/assets/pareto.html" className="w-full h-full border-0" title="Alignment Tax Pareto Frontier" />
                             </div>
 
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
-                                <h3 className="text-lg font-bold mb-4 flex items-center justify-between">
-                                    <span>Cost vs. Safety Trade-off</span>
-                                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">X: Cost ($/1k) • Y: Refusal Rate (%)</span>
-                                </h3>
+                            {/* Option B: Simplified React Scatter if HTML fails or for quick view */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 h-[400px]">
+                                <h4 className="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider">Simplified Scatter View</h4>
                                 <ResponsiveContainer width="100%" height="90%">
                                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                        <XAxis
-                                            type="number"
-                                            dataKey="costPer1k"
-                                            name="Cost"
-                                            unit="$"
-                                            label={{ value: 'Cost per 1k Prompts', position: 'bottom', offset: 0 }}
-                                        />
-                                        <YAxis
-                                            type="number"
-                                            dataKey="refusalRate"
-                                            name="Refusal Rate"
-                                            unit="%"
-                                            label={{ value: 'Refusal Rate', angle: -90, position: 'insideLeft' }}
-                                        />
-                                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
+                                        <CartesianGrid />
+                                        <XAxis type="number" dataKey="costPer1k" name="Cost" unit="$" label={{ value: 'Cost ($/1k)', position: 'bottom' }} />
+                                        <YAxis type="number" dataKey="refusalRate" name="Refusals" unit="%" label={{ value: 'Refusal Rate %', angle: -90, position: 'insideLeft' }} />
+                                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
                                         <Scatter name="Models" data={efficiencyData} fill="#8884d8">
-                                            {efficiencyData.map((entry: any, index: number) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
+                                            {efficiencyData.map((e, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                                         </Scatter>
                                     </ScatterChart>
                                 </ResponsiveContainer>
                             </div>
+                        </div>
+                    )}
 
-                            {/* Model Registry Implementation */}
-                            <ModelRegistryTable />
+                    {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
+                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
+
+                    {activeTab === 'reliability' && stats && (
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
+                                <div className="text-5xl font-black text-indigo-600">{stats.reliability.score.toFixed(3)}</div>
+                                <div className="text-slate-500">{stats.reliability.interpretation}</div>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === 'longitudinal' && (
-                        <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                                    <Info className="w-4 h-4" /> What is the Longitudinal Study?
-                                </h3>
-                                <p className="text-sm text-blue-700">
-                                    This tab tracks <strong>model behavior over time</strong>. Compare how different models' refusal rates evolve.
-                                    Select specific models below to isolate their trends.
-                                </p>
-                            </div>
-
-                            {/* Filters */}
-                            <div className="flex flex-wrap gap-4 p-4 bg-white rounded-xl border border-slate-200">
-                                <div className="flex items-center gap-2">
-                                    <Filter className="h-4 w-4 text-slate-400" />
-                                    <span className="text-sm font-medium text-slate-500">Models:</span>
-                                </div>
-                                <div className="flex-1 flex flex-wrap gap-2">
-                                    {longitudinalFilterOptions.models.map(m => {
-                                        const isSelected = longitudinalModels.includes(m);
-                                        return (
-                                            <button
-                                                key={m}
-                                                onClick={() => {
-                                                    if (isSelected) {
-                                                        setLongitudinalModels(prev => prev.filter(model => model !== m));
-                                                    } else {
-                                                        setLongitudinalModels(prev => [...prev, m]);
-                                                    }
-                                                }}
-                                                className={`px-3 py-1 text-xs rounded-full border transition-all ${isSelected
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
-                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                {m.split('/').pop()}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                {longitudinalModels.length > 0 && (
-                                    <button
-                                        onClick={() => setLongitudinalModels([])}
-                                        className="flex items-center gap-1 px-3 py-2 text-sm text-red-500 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50"
-                                    >
-                                        <X className="h-4 w-4" /> Clear
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
-                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <Clock className="w-5 h-5 text-indigo-500" /> Refusal Rate Trends
-                                </h3>
-                                {longitudinalData.chartData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="90%">
-                                        <LineChart data={longitudinalData.chartData} margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
-                                            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                            <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                                            <YAxis unit="%" domain={[0, 100]} />
-                                            <RechartsTooltip
-                                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                                                formatter={(value: any, name: any, props: any) => {
-                                                    const modelKey = props.dataKey;
-                                                    const countKey = `${modelKey}_count`;
-                                                    const count = props.payload[countKey];
-                                                    return [
-                                                        <span key="val">{value.toFixed(1)}% <span className="text-slate-400 text-xs">({count} prompts)</span></span>,
-                                                        name
-                                                    ];
-                                                }}
-                                            />
-                                            <Legend />
-                                            {longitudinalData.activeModels.map((model, i) => (
-                                                <Line
-                                                    key={model}
-                                                    type="monotone"
-                                                    dataKey={model}
-                                                    name={model.split('/').pop()}
-                                                    stroke={['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'][i % 6]}
-                                                    strokeWidth={3}
-                                                    dot={{ r: 4 }}
-                                                    activeDot={{ r: 6 }}
-                                                    connectNulls // Skip missing dates for smoother lines
-                                                />
-                                            ))}
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-80 text-slate-400">
-                                        <TrendingUp className="h-12 w-12 mb-4 opacity-50" />
-                                        <p>No data matches your filters.</p>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
+                            <h3 className="text-lg font-bold mb-4">Refusal Rate Over Time</h3>
+                            <ResponsiveContainer width="100%" height="90%">
+                                <LineChart data={longitudinalData.chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="date" />
+                                    <YAxis unit="%" />
+                                    <RechartsTooltip />
+                                    <Legend />
+                                    {longitudinalData.activeModels.map((m, i) => (
+                                        <Line key={m} type="monotone" dataKey={m} stroke={COLORS[i % COLORS.length]} strokeWidth={2} connectNulls />
+                                    ))}
+                                </LineChart>
+                            </ResponsiveContainer>
                         </div>
                     )}
-
-
-                    {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
-
-                    {activeTab === 'prompts' && <PromptLibraryView />}
-
                 </div>
             </div>
         </main>
@@ -535,6 +343,83 @@ export default function DeepDivePage() {
 }
 
 // --- Sub-components ---
+
+function TabButton({ active, onClick, children, icon }: any) {
+    return (
+        <button
+            onClick={onClick}
+            className={`
+                flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap
+                ${active
+                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
+            `}
+        >
+            {icon}
+            {children}
+        </button>
+    )
+}
+
+function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
+    if (clusters.length === 0) return <div className="p-8 text-center text-slate-500">No cluster data available.</div>;
+    const pieData = clusters.map((c, i) => ({ name: `Cluster ${i + 1}`, value: c.size, keywords: c.keywords.join(', ') }));
+    return (
+        <div className="space-y-6">
+            <div className="p-4 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-100">
+                <strong>Figure 3: Semantic Clusters.</strong> Groups common refusal themes.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 className="text-lg font-bold mb-4">Themes</h2>
+                    <div className="h-64">
+                        <ResponsiveContainer><PieChart><Pie data={pieData} innerRadius={60} outerRadius={80} dataKey="value">{pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><RechartsTooltip /><Legend /></PieChart></ResponsiveContainer>
+                    </div>
+                </div>
+                <div className="col-span-2 space-y-4">
+                    {clusters.map((c, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex gap-4">
+                            <div className="w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                            <div>
+                                <h3 className="font-bold">Cluster {idx + 1} ({c.size} cases)</h3>
+                                <p className="text-xs text-slate-500 mb-2">{c.keywords.join(', ')}</p>
+                                <p className="text-sm italic text-slate-600 bg-slate-50 p-2 rounded">"{c.exemplar}"</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[] }) {
+    const leaningCoords: Record<string, { x: number, y: number }> = {
+        'Left-Libertarian': { x: -0.7, y: -0.5 }, 'Left-Authoritarian': { x: -0.7, y: 0.5 },
+        'Right-Libertarian': { x: 0.7, y: -0.5 }, 'Right-Authoritarian': { x: 0.7, y: 0.5 }, 'Neutral-Safety': { x: 0, y: 0 }
+    };
+    const scatterData = biasData.map(row => {
+        const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
+        return { ...row, x: base.x + (Math.random() - 0.5) * 0.4, y: base.y + (Math.random() - 0.5) * 0.4, z: 1 };
+    });
+
+    return (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[600px]">
+            <h3 className="text-lg font-bold mb-2">Bias Compass</h3>
+            <ResponsiveContainer>
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
+                    <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
+                    <ReferenceLine x={0} stroke="#cbd5e1" label="Authoritarian / Libertarian" />
+                    <ReferenceLine y={0} stroke="#cbd5e1" label="Left / Right" />
+                    <Scatter data={scatterData} fill="#8884d8">{scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Scatter>
+                    <RechartsTooltip />
+                </ScatterChart>
+            </ResponsiveContainer>
+        </div>
+    );
+}
 
 // Model Registry Component
 function ModelRegistryTable() {
@@ -573,23 +458,6 @@ function ModelRegistryTable() {
     );
 }
 
-function TabButton({ active, onClick, children, icon }: any) {
-    return (
-        <button
-            onClick={onClick}
-            className={`
-                flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-all
-                ${active
-                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'}
-            `}
-        >
-            {icon}
-            {children}
-        </button>
-    )
-}
-
 function CustomTooltip({ active, payload }: any) {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -606,376 +474,12 @@ function CustomTooltip({ active, payload }: any) {
     return null;
 }
 
-function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
-    if (clusters.length === 0) return (
-        <div className="space-y-6">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4" /> What are Semantic Clusters?
-                </h3>
-                <p className="text-sm text-blue-700">
-                    Semantic clustering groups similar refusal responses together based on their meaning.
-                    This helps identify <strong>common themes</strong> in how models refuse requests—for example,
-                    "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
-                    and an example response to help you understand the pattern.
-                </p>
-            </div>
-            <div className="p-8 text-center text-slate-500">No semantic clustering data available.</div>
-        </div>
-    );
-
-    const COLORS = ['#8b5cf6', '#10b981', '#94a3b8'];
-
-    const pieData = clusters.map((c, i) => ({
-        name: `Cluster ${i + 1}`,
-        value: c.size,
-        keywords: c.keywords.join(', ')
-    }));
-
-    return (
-        <div className="space-y-6">
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4" /> What are Semantic Clusters?
-                </h3>
-                <p className="text-sm text-blue-700">
-                    Semantic clustering groups similar refusal responses together based on their meaning.
-                    This helps identify <strong>common themes</strong> in how models refuse requests—for example,
-                    "violence-related refusals" or "medical misinformation refusals". Each cluster shows keywords
-                    and an example response to help you understand the pattern.
-                </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 col-span-1">
-                    <h2 className="text-lg font-bold mb-4">Refusal Themes</h2>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                </Pie>
-                                <RechartsTooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-                <div className="col-span-2 space-y-4">
-                    {clusters.map((c, idx) => (
-                        <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex gap-4">
-                            <div className="h-full w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-lg">Cluster {idx + 1} ({c.size} cases)</h3>
-                                    <div className="flex flex-wrap gap-1">
-                                        {c.keywords.map(k => (
-                                            <span key={k} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full font-mono flex items-center gap-1">
-                                                <Tag className="h-3 w-3" /> {k}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-600 font-mono mb-3">"{c.exemplar}"</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allModels: string[] }) {
-    if (biasData.length === 0) return (
-        <div className="p-12 text-center text-slate-500">
-            <Compass className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No bias analysis data found.</p>
-            <p className="text-sm">Run 'src/analyze_bias.py' to generate this data.</p>
-        </div>
-    );
-
-    // Prepare scatter data
-    // Map leanings to coordinates
-    const leaningCoords: Record<string, { x: number, y: number }> = {
-        'Left-Libertarian': { x: -0.7, y: -0.5 },
-        'Left-Authoritarian': { x: -0.7, y: 0.5 },
-        'Right-Libertarian': { x: 0.7, y: -0.5 },
-        'Right-Authoritarian': { x: 0.7, y: 0.5 },
-        'Neutral-Safety': { x: 0, y: 0 }
-    };
-
-    const scatterData = biasData.map((row, i) => {
-        const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
-        // Add jitter
-        const jitterX = (Math.random() - 0.5) * 0.4;
-        const jitterY = (Math.random() - 0.5) * 0.4;
-        return {
-            ...row,
-            x: base.x + jitterX,
-            y: base.y + jitterY,
-            z: 1 // for scatter size
-        };
-    });
-
-    const modelCounts = biasData.reduce((acc: Record<string, number>, curr: BiasRow) => {
-        acc[curr.model] = (acc[curr.model] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    // Ensure all known models are represented, even with 0 count
-    if (allModels) {
-        allModels.forEach(m => {
-            if (!modelCounts[m]) modelCounts[m] = 0;
-        });
-    }
-
-    return (
-        <div className="space-y-8">
-            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                <h3 className="font-bold text-indigo-800 flex items-center gap-2 mb-2">
-                    <Compass className="w-4 h-4" /> What is the Bias Compass?
-                </h3>
-                <p className="text-sm text-indigo-700 mb-2">
-                    This visualization maps the <strong>reasoning behind refusals</strong> to a political/philosophical compass.
-                    Instead of just saying "Refused", we analyze <em>why</em> using an LLM-as-a-Judge.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-3">
-                    <div className="bg-white/50 p-2 rounded">
-                        <span className="font-bold text-indigo-900">Left-Libertarian (Green)</span>
-                        <p className="text-indigo-800 mt-1">Values individual freedom and social equality. Refusals often aim to protect marginalized groups, prevent hate speech, or challenge systemic bias.</p>
-                    </div>
-                    <div className="bg-white/50 p-2 rounded">
-                        <span className="font-bold text-indigo-900">Right-Authoritarian (Blue)</span>
-                        <p className="text-indigo-800 mt-1">Values tradition, order, and hierarchy. Refusals often aim to uphold moral standards, respect authority, or prevent disorder/indecency.</p>
-                    </div>
-                    <div className="bg-white/50 p-2 rounded">
-                        <span className="font-bold text-indigo-900">Left-Authoritarian (Red)</span>
-                        <p className="text-indigo-800 mt-1">Values collective good and regulation. Refusals focus on misinformation, regulatory compliance, or economic fairness.</p>
-                    </div>
-                    <div className="bg-white/50 p-2 rounded">
-                        <span className="font-bold text-indigo-900">Right-Libertarian (Purple)</span>
-                        <p className="text-indigo-800 mt-1">Values market freedom and property. Refusals are rare but focus on preventing coercion or restrictions on liberty.</p>
-                    </div>
-                </div>
-                <p className="text-xs text-indigo-600 mt-3 pt-2 border-t border-indigo-200/50">
-                    * "Neutral-Safety" refers to generic refusals (e.g. "I cannot fulfill this request") lacking clear ideological framing.
-                </p>
-            </div>
-
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Compass Chart */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px] relative">
-                    <h3 className="text-lg font-bold mb-2">🧭 Safety Alignment Chart</h3>
-                    <ResponsiveContainer width="100%" height="90%">
-                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                            <CartesianGrid stroke="#94a3b8" />
-                            <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
-                            <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
-                            <RechartsTooltip
-                                content={({ active, payload }: any) => {
-                                    if (active && payload && payload.length) {
-                                        const d = payload[0].payload;
-                                        return (
-                                            <div className="bg-white p-3 border border-slate-200 shadow-lg rounded-lg text-sm max-w-xs z-50">
-                                                <p className="font-bold text-indigo-600 mb-1">{d.model.split('/').pop()}</p>
-                                                <p className="font-semibold text-slate-700 mb-1">{d.leaning}</p>
-                                                <p className="text-xs text-slate-500 italic">"{d.judge_reasoning}"</p>
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                }}
-                            />
-                            <ReferenceLine x={0} stroke="#64748b" strokeWidth={2} label={{ value: "Authoritarian (Top) / Libertarian (Bottom)", position: 'insideTop', fill: '#64748b', fontSize: 12 }} />
-                            <ReferenceLine y={0} stroke="#64748b" strokeWidth={2} label={{ value: "Left (Left) / Right (Right)", position: 'insideRight', fill: '#64748b', fontSize: 12, angle: -90 }} />
-
-                            {/* Quadrant Labels */}
-                            <ReferenceLine y={0.8} stroke="none" label={{ value: "AUTH-LEFT", position: 'insideLeft', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
-                            <ReferenceLine y={0.8} stroke="none" label={{ value: "AUTH-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
-                            <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-LEFT", position: 'insideLeft', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
-                            <ReferenceLine y={-0.8} stroke="none" label={{ value: "LIB-RIGHT", position: 'insideRight', fill: '#94a3b8', fontSize: 20, fontWeight: 'bold', opacity: 0.3 }} />
-
-                            <Scatter name="Biases" data={scatterData} fill="#8884d8">
-                                {scatterData.map((entry: any, index: number) => {
-                                    // Map color based on leaning/quadrant
-                                    let fill = '#94a3b8'; // Neutral (Slate)
-                                    if (entry.leaning === 'Left-Libertarian') fill = '#22c55e'; // Green
-                                    else if (entry.leaning === 'Left-Authoritarian') fill = '#ef4444'; // Red
-                                    else if (entry.leaning === 'Right-Authoritarian') fill = '#3b82f6'; // Blue
-                                    else if (entry.leaning === 'Right-Libertarian') fill = '#a855f7'; // Purple
-
-                                    return <Cell key={`cell-${index}`} fill={fill} />;
-                                })}
-                            </Scatter>
-                        </ScatterChart>
-                    </ResponsiveContainer>
-                </div>
-
-                {/* Legend & Stats */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 className="text-lg font-bold mb-4">Refusal Breakdown by Leaning</h3>
-                        <div className="space-y-4">
-                            {Object.entries(leaningCoords).map(([key, _]) => {
-                                const count = biasData.filter(d => d.leaning === key).length;
-                                if (count === 0) return null;
-                                const pct = (count / biasData.length) * 100;
-
-                                // Colors matching the compass explanation
-                                let barColor = '#6366f1'; // Default Indigo
-                                if (key === 'Left-Libertarian') barColor = '#22c55e'; // Green
-                                if (key === 'Left-Authoritarian') barColor = '#ef4444'; // Red
-                                if (key === 'Right-Authoritarian') barColor = '#3b82f6'; // Blue
-                                if (key === 'Right-Libertarian') barColor = '#a855f7'; // Purple
-                                if (key === 'Neutral-Safety') barColor = '#94a3b8'; // Slate
-
-                                return (
-                                    <div key={key}>
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium text-slate-700">{key}</span>
-                                            <span className="text-slate-500">{count} ({pct.toFixed(1)}%)</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: barColor }}></div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                        <h3 className="text-lg font-bold mb-4">Analyzed Models</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {Object.keys(modelCounts).map(m => (
-                                <span key={m} className="px-3 py-1 bg-slate-100 rounded-full text-sm text-slate-600">
-                                    {m.split('/').pop()} <span className="text-slate-400 text-xs">({modelCounts[m]})</span>
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div >
-        </div >
-    );
-}
-
-
-
-type Prompt = {
-    id: string;
-    text: string;
-    category: string;
-    source?: string;
-};
-
 function PromptLibraryView() {
-    const [prompts, setPrompts] = useState<Prompt[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filterCategory, setFilterCategory] = useState('all');
-    const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const ITEMS_PER_PAGE = 50;
-
-    useEffect(() => {
-        fetch('/api/prompts')
-            .then(r => r.json())
-            .then((data: { data: Prompt[] }) => {
-                if (data.data) setPrompts(data.data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to load prompts", err);
-                setLoading(false);
-            });
-    }, []);
-
-    const categories = useMemo(() => Array.from(new Set(prompts.map((p: Prompt) => p.category))).sort(), [prompts]);
-
-    const filtered = useMemo(() => {
-        return prompts.filter((p: Prompt) => {
-            if (filterCategory !== 'all' && p.category !== filterCategory) return false;
-            if (search && !p.text.toLowerCase().includes(search.toLowerCase()) && !p.id.toLowerCase().includes(search.toLowerCase())) return false;
-            return true;
-        });
-    }, [prompts, filterCategory, search]);
-
-    const paginated = filtered.slice(0, page * ITEMS_PER_PAGE);
-
-    if (loading) return <div className="p-12 text-center text-slate-500">Loading prompt library...</div>;
-
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Total Prompts</div>
-                    <div className="text-3xl font-black text-slate-900">{prompts.length.toLocaleString()}</div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <div className="text-slate-500 text-sm font-medium uppercase mb-1">Categories</div>
-                    <div className="text-3xl font-black text-slate-900">{categories.length}</div>
-                </div>
-
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search prompts by text or ID..."
-                            value={search}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                    </div>
-                    <select
-                        value={filterCategory}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) => setFilterCategory(e.target.value)}
-                        className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        <option value="all">All Categories</option>
-                        {categories.map((c: string) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                </div>
-
-                <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-bold text-slate-500 uppercase border-b border-slate-100">
-                        <div className="col-span-2">ID</div>
-                        <div className="col-span-2">Category</div>
-                        <div className="col-span-8">Prompt Text</div>
-                    </div>
-                    {paginated.map((p: Prompt) => (
-                        <div key={p.id} className="grid grid-cols-12 gap-4 px-4 py-3 text-sm border-b border-slate-50 hover:bg-slate-50 items-start">
-                            <div className="col-span-2 font-mono text-xs text-slate-500 truncate" title={p.id}>{p.id}</div>
-                            <div className="col-span-2">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700">
-                                    {p.category}
-                                </span>
-                            </div>
-                            <div className="col-span-8 text-slate-700">{p.text}</div>
-                        </div>
-                    ))}
-                </div>
-
-                {paginated.length < filtered.length && (
-                    <div className="mt-6 text-center">
-                        <button
-                            onClick={() => setPage(p => p + 1)}
-                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                        >
-                            Load More ({filtered.length - paginated.length} remaining)
-                        </button>
-                    </div>
-                )}
-
-                {filtered.length === 0 && (
-                    <div className="text-center py-12 text-slate-400">
-                        No prompts found matching your criteria.
-                    </div>
-                )}
-            </div>
+        <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
+            <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-bold mb-2">Prompt Library</h3>
+            <p>Access the full database of test prompts, categories, and difficulty scores.</p>
         </div>
     );
 }
