@@ -344,7 +344,7 @@ export default function DashboardPage() {
             </StatCardGrid>
 
             {/* Phase 8 Insights Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Political Compass Card */}
               <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
                 <div className="flex justify-between items-center mb-4">
@@ -362,6 +362,32 @@ export default function DashboardPage() {
                     <img
                       src="/political_compass.png"
                       alt="AI Political Compass"
+                      className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Paternalism Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    👶 Paternalism Audit
+                  </h3>
+                  <span className="px-2 py-1 bg-amber-50 text-amber-700 text-xs font-medium rounded-full">New</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <p className="text-sm text-slate-500 mb-4 text-center">
+                    Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?
+                  </p>
+                  <div className="relative w-full aspect-square max-w-sm bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
+                    <img
+                      src="/paternalism.png"
+                      alt="Paternalism Chart"
                       className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';

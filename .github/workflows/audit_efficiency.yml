@@ -81,6 +81,9 @@ jobs:
           
           # Export Traces for Evidence Locker
           python src/export_traces.py
+          
+          # Generate Paternalism Chart
+          python src/analysis/plot_paternalism.py --output web/public/paternalism.png
 
       - name: Commit and Push Results
         run: |
