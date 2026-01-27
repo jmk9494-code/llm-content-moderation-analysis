@@ -504,7 +504,7 @@ def main():
     parser.add_argument("--policy", type=str, help="Policy version tag (e.g. v1.0) for A/B testing")
     parser.add_argument("--phrasing-variants", type=int, default=0, help="Generate N phrasing variants for each prompt")
     parser.add_argument("--input", type=str, default="data/prompts.csv", help="Input CSV")
-    parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
+    parser.add_argument("--output", type=str, default="web/public/audit_log.csv", help="Output CSV")
     parser.add_argument("--limit", type=int, help="Limit number of prompts to process")
     parser.add_argument("--force", action="store_true", help="Force re-run (ignore cache)")
     parser.add_argument("--benchmark", type=str, choices=["xstest"], help="Use a standardized benchmark dataset")
