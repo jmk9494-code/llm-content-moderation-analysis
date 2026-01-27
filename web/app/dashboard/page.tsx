@@ -450,11 +450,9 @@ export default function DashboardPage() {
               {filteredData.length > 0 && (
                 <div className="space-y-4">
                   <CensorshipHeatmap
-                    data={filteredData.map(d => ({
-                      topic: d.category,
-                      model: d.model.split('/')[1] || d.model,
-                      refusalRate: ['REMOVED', 'REFUSAL', 'unsafe'].includes(d.verdict) ? 1 : 0
-                    }))}
+                    data={filteredData}
+                    title="Category Sensitivity Heatmap"
+                    description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                   />
                 </div>
               )}
