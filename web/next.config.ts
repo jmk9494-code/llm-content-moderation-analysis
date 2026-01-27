@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // Headers are now handled by middleware.ts for better security control.
-  output: 'standalone',
+  // output: 'standalone',
 };
 
 export default nextConfig;

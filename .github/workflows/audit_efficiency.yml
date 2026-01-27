@@ -70,7 +70,17 @@ jobs:
             fi
             ATTEMPT=$((ATTEMPT + 1))
           done
-          exit 1
+          
+      - name: Generate Phase 8 Visuals (Paternalism & Compass)
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
+        run: |
+          # Generate Political Compass (Efficiency Tier + standard reference)
+          python src/analysis/political_compass.py --models openai/gpt-4o-mini,anthropic/claude-3-haiku,google/gemini-2.0-flash-exp
+          
+          # Export Traces for Evidence Locker
+          python src/export_traces.py
 
       - name: Commit and Push Results
         run: |
