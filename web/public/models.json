@@ -1,173 +1,173 @@
 [
-    {
-        "id": "openai/gpt-4o",
-        "name": "GPT-4o",
-        "provider": "OpenAI",
-        "region": "US",
-        "tier": "High",
-        "cost_per_m_in": 5.0,
-        "cost_per_m_out": 15.0
-    },
-    {
-        "id": "openai/gpt-4o-mini",
-        "name": "GPT-4o Mini",
-        "provider": "OpenAI",
-        "region": "US",
-        "tier": "Low",
-        "cost_per_m_in": 0.15,
-        "cost_per_m_out": 0.60
-    },
-    {
-        "id": "anthropic/claude-3.5-sonnet",
-        "name": "Claude 3.5 Sonnet",
-        "provider": "Anthropic",
-        "region": "US",
-        "tier": "High",
-        "cost_per_m_in": 3.0,
-        "cost_per_m_out": 15.0
-    },
-    {
-        "id": "anthropic/claude-3-haiku",
-        "name": "Claude 3 Haiku",
-        "provider": "Anthropic",
-        "region": "US",
-        "tier": "Low",
-        "cost_per_m_in": 0.25,
-        "cost_per_m_out": 1.25
-    },
-    {
-        "id": "google/gemini-2.0-flash-001",
-        "name": "Gemini 2.0 Flash",
-        "provider": "Google",
-        "region": "US",
-        "tier": "Mid",
-        "cost_per_m_in": 0.10,
-        "cost_per_m_out": 0.40
-    },
-    {
-        "id": "deepseek/deepseek-chat",
-        "name": "DeepSeek V3",
-        "provider": "DeepSeek",
-        "region": "China",
-        "tier": "High",
-        "cost_per_m_in": 0.14,
-        "cost_per_m_out": 0.28
-    },
-    {
-        "id": "qwen/qwen-2.5-72b-instruct",
-        "name": "Qwen 2.5 72B",
-        "provider": "Alibaba",
-        "region": "China",
-        "tier": "High",
-        "cost_per_m_in": 0.35,
-        "cost_per_m_out": 0.40
-    },
-    {
-        "id": "qwen/qwen-2.5-7b-instruct",
-        "name": "Qwen 2.5 7B",
-        "provider": "Alibaba",
-        "region": "China",
-        "tier": "Low",
-        "cost_per_m_in": 0.05,
-        "cost_per_m_out": 0.05
-    },
-    {
-        "id": "01-ai/yi-34b-chat",
-        "name": "Yi 34B",
-        "provider": "01.AI",
-        "region": "China",
-        "tier": "Mid",
-        "cost_per_m_in": 0.20,
-        "cost_per_m_out": 0.20
-    },
-    {
-        "id": "mistralai/mistral-large",
-        "name": "Mistral Large",
-        "provider": "Mistral AI",
-        "region": "Europe",
-        "tier": "High",
-        "cost_per_m_in": 2.0,
-        "cost_per_m_out": 6.0
-    },
-    {
-        "id": "mistralai/mistral-medium",
-        "name": "Mistral Medium",
-        "provider": "Mistral AI",
-        "region": "Europe",
-        "tier": "Mid",
-        "cost_per_m_in": 0.60,
-        "cost_per_m_out": 1.80
-    },
-    {
-        "id": "google/gemini-2.5-pro",
-        "name": "Gemini 2.5 Pro",
-        "provider": "Google",
-        "region": "US",
-        "tier": "High",
-        "cost_per_m_in": 2.50,
-        "cost_per_m_out": 7.50
-    },
-    {
-        "id": "google/gemini-2.0-flash-lite-001",
-        "name": "Gemini 2.0 Flash Lite",
-        "provider": "Google",
-        "region": "US",
-        "tier": "Low",
-        "cost_per_m_in": 0.075,
-        "cost_per_m_out": 0.30
-    },
-    {
-        "id": "anthropic/claude-3.5-haiku",
-        "name": "Claude 3.5 Haiku",
-        "provider": "Anthropic",
-        "region": "US",
-        "tier": "Mid",
-        "cost_per_m_in": 0.80,
-        "cost_per_m_out": 4.00
-    },
-    {
-        "id": "mistralai/mistral-small-24b-instruct-2501",
-        "name": "Mistral Small 3",
-        "provider": "Mistral AI",
-        "region": "Europe",
-        "tier": "Mid",
-        "cost_per_m_in": 0.10,
-        "cost_per_m_out": 0.30
-    },
-    {
-        "id": "mistralai/ministral-8b",
-        "name": "Ministral 8B",
-        "provider": "Mistral AI",
-        "region": "Europe",
-        "tier": "Low",
-        "cost_per_m_in": 0.05,
-        "cost_per_m_out": 0.05
-    },
-    {
-        "id": "qwen/qwen-plus",
-        "name": "Qwen Plus",
-        "provider": "Alibaba",
-        "region": "China",
-        "tier": "Mid",
-        "cost_per_m_in": 0.20,
-        "cost_per_m_out": 0.60
-    },
-    {
-        "id": "x-ai/grok-3",
-        "name": "Grok 3",
-        "provider": "xAI",
-        "region": "US",
-        "tier": "Mid",
-        "cost_per_m_in": 3.0,
-        "cost_per_m_out": 15.0
-    },
-    {
-        "id": "x-ai/grok-3-mini",
-        "name": "Grok 3 Mini",
-        "provider": "xAI",
-        "region": "US",
-        "tier": "Low",
-        "cost_per_m_in": 0.30,
-        "cost_per_m_out": 0.50
-    }
+  {
+    "id": "openai/gpt-4o",
+    "name": "GPT-4o",
+    "provider": "OpenAI",
+    "region": "US",
+    "tier": "High",
+    "cost_per_m_in": 5.0,
+    "cost_per_m_out": 15.0
+  },
+  {
+    "id": "openai/gpt-4o-mini",
+    "name": "GPT-4o Mini",
+    "provider": "OpenAI",
+    "region": "US",
+    "tier": "Low",
+    "cost_per_m_in": 0.15,
+    "cost_per_m_out": 0.6
+  },
+  {
+    "id": "anthropic/claude-3.5-sonnet",
+    "name": "Claude 3.5 Sonnet",
+    "provider": "Anthropic",
+    "region": "US",
+    "tier": "High",
+    "cost_per_m_in": 3.0,
+    "cost_per_m_out": 15.0
+  },
+  {
+    "id": "anthropic/claude-3-haiku",
+    "name": "Claude 3 Haiku",
+    "provider": "Anthropic",
+    "region": "US",
+    "tier": "Low",
+    "cost_per_m_in": 0.25,
+    "cost_per_m_out": 1.25
+  },
+  {
+    "id": "google/gemini-2.0-flash-001",
+    "name": "Gemini 2.0 Flash",
+    "provider": "Google",
+    "region": "US",
+    "tier": "Mid",
+    "cost_per_m_in": 0.1,
+    "cost_per_m_out": 0.4
+  },
+  {
+    "id": "deepseek/deepseek-chat",
+    "name": "DeepSeek V3",
+    "provider": "DeepSeek",
+    "region": "China",
+    "tier": "High",
+    "cost_per_m_in": 0.14,
+    "cost_per_m_out": 0.28
+  },
+  {
+    "id": "qwen/qwen-2.5-72b-instruct",
+    "name": "Qwen 2.5 72B",
+    "provider": "Alibaba",
+    "region": "China",
+    "tier": "High",
+    "cost_per_m_in": 0.35,
+    "cost_per_m_out": 0.4
+  },
+  {
+    "id": "qwen/qwen-2.5-7b-instruct",
+    "name": "Qwen 2.5 7B",
+    "provider": "Alibaba",
+    "region": "China",
+    "tier": "Low",
+    "cost_per_m_in": 0.05,
+    "cost_per_m_out": 0.05
+  },
+  {
+    "id": "01-ai/yi-34b-chat",
+    "name": "Yi 34B",
+    "provider": "01.AI",
+    "region": "China",
+    "tier": "Mid",
+    "cost_per_m_in": 0.2,
+    "cost_per_m_out": 0.2
+  },
+  {
+    "id": "mistralai/mistral-large",
+    "name": "Mistral Large",
+    "provider": "Mistral AI",
+    "region": "Europe",
+    "tier": "High",
+    "cost_per_m_in": 2.0,
+    "cost_per_m_out": 6.0
+  },
+  {
+    "id": "mistralai/mistral-medium",
+    "name": "Mistral Medium",
+    "provider": "Mistral AI",
+    "region": "Europe",
+    "tier": "Mid",
+    "cost_per_m_in": 0.6,
+    "cost_per_m_out": 1.8
+  },
+  {
+    "id": "google/gemini-2.5-pro",
+    "name": "Gemini 2.5 Pro",
+    "provider": "Google",
+    "region": "US",
+    "tier": "High",
+    "cost_per_m_in": 2.5,
+    "cost_per_m_out": 7.5
+  },
+  {
+    "id": "google/gemini-2.0-flash-lite-001",
+    "name": "Gemini 2.0 Flash Lite",
+    "provider": "Google",
+    "region": "US",
+    "tier": "Low",
+    "cost_per_m_in": 0.075,
+    "cost_per_m_out": 0.3
+  },
+  {
+    "id": "anthropic/claude-3.5-haiku",
+    "name": "Claude 3.5 Haiku",
+    "provider": "Anthropic",
+    "region": "US",
+    "tier": "Mid",
+    "cost_per_m_in": 0.8,
+    "cost_per_m_out": 4.0
+  },
+  {
+    "id": "mistralai/mistral-small-24b-instruct-2501",
+    "name": "Mistral Small 3",
+    "provider": "Mistral AI",
+    "region": "Europe",
+    "tier": "Mid",
+    "cost_per_m_in": 0.1,
+    "cost_per_m_out": 0.3
+  },
+  {
+    "id": "mistralai/ministral-8b",
+    "name": "Ministral 8B",
+    "provider": "Mistral AI",
+    "region": "Europe",
+    "tier": "Low",
+    "cost_per_m_in": 0.05,
+    "cost_per_m_out": 0.05
+  },
+  {
+    "id": "qwen/qwen-plus",
+    "name": "Qwen Plus",
+    "provider": "Alibaba",
+    "region": "China",
+    "tier": "Mid",
+    "cost_per_m_in": 0.2,
+    "cost_per_m_out": 0.6
+  },
+  {
+    "id": "x-ai/grok-3",
+    "name": "Grok 3",
+    "provider": "xAI",
+    "region": "US",
+    "tier": "Mid",
+    "cost_per_m_in": 3.0,
+    "cost_per_m_out": 15.0
+  },
+  {
+    "id": "x-ai/grok-3-mini",
+    "name": "Grok 3 Mini",
+    "provider": "xAI",
+    "region": "US",
+    "tier": "Low",
+    "cost_per_m_in": 0.3,
+    "cost_per_m_out": 0.5
+  }
 ]
