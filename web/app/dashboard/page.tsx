@@ -279,6 +279,15 @@ export default function DashboardPage() {
                 Discover how AI models handle content moderation across {stats.uniqueModels || 'multiple'} providers.
               </p>
             </div>
+            <a
+              href="/deep_dive.html"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm font-medium text-sm"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Brain className="h-4 w-4" />
+              View Deep Dive Analysis
+            </a>
           </div>
         </header>
 
