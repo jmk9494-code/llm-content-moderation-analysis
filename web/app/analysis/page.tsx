@@ -278,7 +278,7 @@ export default function AnalysisPage() {
                             </div>
                             {/* Option A: The interactive Pareto chart if iframe preferred */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[700px]">
-                                <iframe src="/pareto.html" className="w-full h-full border-0" title="Alignment Tax Pareto Frontier" />
+                                <iframe src="/pareto_chart.html" className="w-full h-full border-0" title="Alignment Tax Pareto Frontier" />
                             </div>
 
                             {/* Option B: Simplified React Scatter if HTML fails or for quick view */}
