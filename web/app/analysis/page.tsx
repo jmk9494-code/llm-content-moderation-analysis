@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X, Compass, Flame, AlertTriangle, Zap, BookOpen
+    Info, Database, Clock, Filter, X, Compass, AlertTriangle, Zap, BookOpen
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { calculateFleissKappa } from '@/lib/statistics';
 import Papa from 'papaparse';
-import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
+
 
 // --- Types ---
 type AuditRow = {
@@ -45,7 +45,7 @@ type BiasRow = {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AnalysisPage() {
-    const [activeTab, setActiveTab] = useState<'datalog' | 'heatmap' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('datalog');
+    const [activeTab, setActiveTab] = useState<'datalog' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('datalog');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -219,7 +219,7 @@ export default function AnalysisPage() {
                 {/* Tabs */}
                 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1 overflow-x-auto">
                     <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>Data Log</TabButton>
-                    <TabButton active={activeTab === 'heatmap'} onClick={() => setActiveTab('heatmap')} icon={<Flame className="w-4 h-4" />}>Censorship Heatmap</TabButton>
+
                     <TabButton active={activeTab === 'triggers'} onClick={() => setActiveTab('triggers')} icon={<AlertTriangle className="w-4 h-4" />}>Trigger List</TabButton>
                     <TabButton active={activeTab === 'alignment'} onClick={() => setActiveTab('alignment')} icon={<Zap className="w-4 h-4" />}>Alignment Tax</TabButton>
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>Semantic Clusters</TabButton>
@@ -247,14 +247,7 @@ export default function AnalysisPage() {
                         </div>
                     )}
 
-                    {activeTab === 'heatmap' && (
-                        <div className="space-y-6">
-                            <div className="p-4 bg-orange-50 rounded-lg border border-orange-100 text-sm text-orange-800">
-                                <strong>Figure 2: Censorship Fingerprint.</strong> This heatmap visualizes the rate of refusal for each model across different risk categories. Redder cells indicate higher refusal rates (more censorship).
-                            </div>
-                            <CensorshipHeatmap data={auditData} title="Censorship Fingerprint" />
-                        </div>
-                    )}
+
 
                     {activeTab === 'triggers' && (
                         <div className="space-y-6">
