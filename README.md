@@ -18,6 +18,12 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 - **Efficiency** - Cost vs. Refusal Rate trade-offs
 - **Export** - Download comparison data as CSV
 
+### Phase 8 Upgrades (New)
+- **Political Compass** 🧭 - Models mapped on Economic/Social axes (Authority vs Liberty).
+- **Paternalism Detection** 👶 - Measures if models treat "Teenagers" differently than "Researchers".
+- **Evidence Locker** 📂 - Full transparency explorer for raw audit traces.
+- **Automated Benchmarks** 🤖 - Self-updating weekly audits via GitHub Actions.
+
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
 - **Bias Analysis** - Quadrant mapping of refusal reasoning (Left/Right/Auth/Lib)

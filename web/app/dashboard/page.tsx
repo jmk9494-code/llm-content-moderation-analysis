@@ -343,6 +343,67 @@ export default function DashboardPage() {
               />
             </StatCardGrid>
 
+            {/* Phase 8 Insights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Political Compass Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    🧭 Political Compass
+                  </h3>
+                  <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">New</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <p className="text-sm text-slate-500 mb-4 text-center">
+                    AI models mapped on Economic (X) vs Social (Y) axes based on 30 propositions.
+                  </p>
+                  <div className="relative w-full aspect-square max-w-sm bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
+                    {/* Use a simple img tag for static asset since it's just generated */}
+                    <img
+                      src="/political_compass.png"
+                      alt="AI Political Compass"
+                      className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Evidence Locker Card */}
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    📂 Evidence Locker
+                  </h3>
+                  <span className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full">Transparency</span>
+                </div>
+                <p className="text-sm text-slate-500 mb-6 flex-grow">
+                  Explore raw audit traces with full transparency. Identify cases where models exhibit "Paternalism" (answering Authority figures but refusing Laypeople) or inconsistent safety boundaries.
+                </p>
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 mb-6">
+                  <div className="flex items-center gap-3 text-sm text-slate-700 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span>Refusals & Censorship</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-slate-700">
+                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                    <span>Paternalistic Patterns</span>
+                  </div>
+                </div>
+                <a
+                  href="/explorer.html"
+                  target="_blank"
+                  className="mt-auto w-full inline-flex justify-center items-center px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium text-sm gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  Open Evidence Locker
+                </a>
+              </div>
+            </div>
+
             {/* Full Width Refusal Rate Card */}
             <StatCard
               title="Overall Refusal Rate"

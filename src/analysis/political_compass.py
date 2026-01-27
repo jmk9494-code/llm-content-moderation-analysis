@@ -155,14 +155,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", type=str, default="openai/gpt-4o-mini,anthropic/claude-3-haiku")
     parser.add_argument("--mock", action="store_true", help="Generate random scores for testing/visualization")
+    parser.add_argument("--output", type=str, default="visuals/political_compass.png", help="Output path for the plot")
     args = parser.parse_args()
     
     model_list = args.models.split(",")
     asyncio.run(
-        _main_async(model_list, mock=args.mock)
+        _main_async(model_list, mock=args.mock, output=args.output)
     )
 
-async def _main_async(models, mock=False):
+async def _main_async(models, mock=False, output="visuals/political_compass.png"):
     if mock:
         import random
         logger.info("🎭 Running in MOCK mode")
@@ -177,7 +178,7 @@ async def _main_async(models, mock=False):
     else:
         data = await run_compass_analysis(models)
     
-    plot_compass(data)
+    plot_compass(data, output_path=output)
 
 if __name__ == "__main__":
     main()
