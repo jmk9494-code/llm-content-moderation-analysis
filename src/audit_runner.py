@@ -20,6 +20,8 @@ from src.config import settings
 from src.logger import logger
 from src.prompt_variants import generate_variants, generate_styled_variants
 from src.taxonomy import TaxonomyClassifier
+from loaders.standard_benchmarks import load_xstest
+from src.modules.translator import PromptTranslator
 # Global temperature override (set via CLI)
 TEMPERATURE_OVERRIDE = None
 
@@ -503,6 +505,8 @@ def main():
     parser.add_argument("--output", type=str, default="audit_log.csv", help="Output CSV")
     parser.add_argument("--limit", type=int, help="Limit number of prompts to process")
     parser.add_argument("--force", action="store_true", help="Force re-run (ignore cache)")
+    parser.add_argument("--benchmark", type=str, choices=["xstest"], help="Use a standardized benchmark dataset")
+    parser.add_argument("--polyglot", action="store_true", help="Translate prompts to Zh/Ru/Ar for cross-lingual audit (Upgrade 3)")
     
     # Methodology Enhancement Flags
     parser.add_argument("--consistency", type=int, default=5, metavar="N", 
@@ -549,7 +553,17 @@ def main():
     else:
         models = ["openai/gpt-4o-mini"] # Default
     
-    loaded_prompts = load_prompts(args.input)
+    if args.benchmark == "xstest":
+        logger.info("📦 Loading XSTest benchmark data...")
+        raw_xstest = load_xstest()
+        loaded_prompts = [
+            {'id': item['case_id'], 'category': item['category'], 'text': item['prompt']}
+            for item in raw_xstest
+        ]
+        if args.limit:
+            loaded_prompts = loaded_prompts[:args.limit]
+    else:
+        loaded_prompts = load_prompts(args.input, limit=args.limit)
     
     # --- Expand Prompts for Styled Variants (Pillar 2) ---
     if args.perturb:
@@ -581,6 +595,18 @@ def main():
             
         except Exception as e:
             logger.error(f"Failed to generate styled variants: {e}")
+
+    # --- Expand Prompts for Polyglot (Upgrade 3) ---
+    if args.polyglot:
+        logger.info("🌍 Translating prompts for Polyglot Audit (Upgrade 3)...")
+        translator = PromptTranslator(client)
+        try:
+            # We assume current 'loaded_prompts' are english. 
+            # Note: We append translations to the list.
+            translated = await translator.translate_prompts(loaded_prompts)
+            loaded_prompts.extend(translated)
+        except Exception as e:
+            logger.error(f"Polyglot translation failed: {e}")
 
     # --- Expand Prompts for Phrasing Variants (Legacy) ---
     if args.phrasing_variants > 0 and not args.perturb:
