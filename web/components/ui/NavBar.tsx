@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
     { name: 'Compare', href: '/compare', icon: ArrowRightLeft, emoji: '⚔️' },
-    { name: 'Deep Dive', href: '/analysis', icon: Brain, emoji: '🧠' },
+    { name: 'Deep Dive', href: '/deep_dive.html', icon: Brain, emoji: '🧠' },
 ];
 
 export function NavBar() {
