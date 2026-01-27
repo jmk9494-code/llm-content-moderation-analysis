@@ -5,13 +5,14 @@ import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle, FileText, Database, ShieldCheck } from 'lucide-react';
+import Papa from 'papaparse';
 import HeatmapTable from '@/components/HeatmapTable';
 import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
 import ModelComparison from '@/components/ModelComparison';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ReferenceLine } from 'recharts';
 
 export type AuditRow = {
   timestamp: string;
@@ -83,7 +84,13 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [keyword, setKeyword] = useState<string>('');
 
+  // Phase 9: Validation State
+  const [pValues, setPValues] = useState<any[]>([]);
+  const [biasData, setBiasData] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'summary' | 'validation'>('summary');
+
   useEffect(() => {
+    // 1. Fetch Audit Data
     fetch('/api/audit')
       .then((r) => r.json())
       .then((json) => {
@@ -99,6 +106,30 @@ export default function DashboardPage() {
         addToast({ type: 'error', title: 'Failed to load data', message: err.message });
         setLoading(false);
       });
+
+    // 2. Fetch P-Values (Validation)
+    fetch('/assets/p_values.csv')
+      .then(r => r.ok ? r.text() : Promise.reject('No P-Values'))
+      .then(csv => {
+        Papa.parse(csv, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results: any) => setPValues(results.data)
+        });
+      })
+      .catch(() => console.warn("P-Values CSV not found (run significance.py)"));
+
+    // 3. Fetch Bias Data (if available)
+    fetch('/bias_log.csv')
+      .then(r => r.ok ? r.text() : Promise.reject('No Bias Log'))
+      .then(csv => {
+        Papa.parse(csv, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results: any) => setBiasData(results.data)
+        });
+      })
+      .catch(() => { });
   }, []);
 
   // Extract unique values for filters
@@ -358,7 +389,6 @@ export default function DashboardPage() {
                     AI models mapped on Economic (X) vs Social (Y) axes based on 30 propositions.
                   </p>
                   <div className="relative w-full aspect-square max-w-sm bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
-                    {/* Use a simple img tag for static asset since it's just generated */}
                     <img
                       src="/political_compass.png"
                       alt="AI Political Compass"
@@ -546,6 +576,11 @@ export default function DashboardPage() {
                 </div>
               )}
 
+              {/* Validation Review */}
+              {filteredData.length > 0 && (
+                <ValidationReview pValues={pValues} />
+              )}
+
               {/* Top Censorship Categories Chart */}
               {filteredData.length > 0 && stats.topCategories.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
@@ -635,5 +670,130 @@ export default function DashboardPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function ValidationReview({ pValues }: { pValues: any[] }) {
+  return (
+    <div className="space-y-8">
+      {/* Ethics Datasheet */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              📋 Ethics Datasheet
+            </h3>
+            <p className="text-slate-500 text-sm mt-1">
+              Standardized documentation for dataset composition, collection, and prohibited uses.
+            </p>
+          </div>
+          <a href="/DATASHEET.md" target="_blank" className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium transition-colors">
+            <FileText className="w-4 h-4" /> View Datasheet
+          </a>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Statistical Significance */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            📊 Statistical Significance (McNemar's Test)
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 font-semibold">
+                  <th className="text-left py-2">Model A</th>
+                  <th className="text-left py-2">Model B</th>
+                  <th className="text-right py-2">P-Value</th>
+                  <th className="text-right py-2">Is Significant?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pValues.length === 0 ? (
+                  <tr><td colSpan={4} className="py-4 text-center text-slate-400">No significance data available.</td></tr>
+                ) : (
+                  pValues.slice(0, 10).map((row, i) => (
+                    <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                      <td className="py-2 text-slate-700">{row['Model A']}</td>
+                      <td className="py-2 text-slate-700">{row['Model B']}</td>
+                      <td className="py-2 text-right font-mono text-slate-600">{parseFloat(row['P-Value']).toExponential(2)}</td>
+                      <td className="py-2 text-right">
+                        {row['Significant'] === 'YES' ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Yes</span>
+                        ) : (
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">No</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Human Audit */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            🕵️ Human Audit Kit
+          </h3>
+          <p className="text-sm text-slate-500 mb-6">
+            Calculate Inter-Rater Reliability (Cohen's Kappa) by validating AI verdicts against human judgment.
+          </p>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+              <div>
+                <div className="font-medium text-slate-900">Step 1: Download Sample</div>
+                <div className="text-xs text-slate-500">50 random traces for review</div>
+              </div>
+              <span className="text-xs text-slate-400 italic">Run script to generate</span>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+              <div>
+                <div className="font-medium text-slate-900">Step 2: Calculate Kappa</div>
+                <div className="text-xs text-slate-500">Compare Human vs AI labels</div>
+              </div>
+              <div className="font-mono text-2xl font-black text-slate-300">
+                0.00
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type BiasRow = { model: string; leaning: string; confidence: number };
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe', '#00C49F'];
+
+function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[] }) {
+  const leaningCoords: Record<string, { x: number, y: number }> = {
+    'Left-Libertarian': { x: -0.7, y: -0.5 }, 'Left-Authoritarian': { x: -0.7, y: 0.5 },
+    'Right-Libertarian': { x: 0.7, y: -0.5 }, 'Right-Authoritarian': { x: 0.7, y: 0.5 }, 'Neutral-Safety': { x: 0, y: 0 }
+  };
+  const scatterData = biasData.map(row => {
+    const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
+    return { ...row, x: base.x + (Math.random() - 0.5) * 0.4, y: base.y + (Math.random() - 0.5) * 0.4, z: 1 };
+  });
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[600px]">
+      <h3 className="text-lg font-bold mb-2">Bias Compass</h3>
+      <ResponsiveContainer>
+        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
+          <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
+          <ReferenceLine x={0} stroke="#cbd5e1" label="Authoritarian / Libertarian" />
+          <ReferenceLine y={0} stroke="#cbd5e1" label="Left / Right" />
+          <Scatter data={scatterData} fill="#8884d8">{scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Scatter>
+          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
