@@ -19,7 +19,7 @@ def deploy_dashboard():
     # Define Copy Mapping (Source -> Destination Filename)
     assets_map = {
         os.path.join(VISUALS_DIR, "pareto_alignment.html"): "pareto.html",
-        os.path.join(VISUALS_DIR, "semantic_clusters.html"): "semantic_clusters.html",
+        os.path.join(VISUALS_DIR, "semantic_clusters.html"): "clusters.html",
         os.path.join(PAPER_FIGS_DIR, "trigger_cloud.png"): "wordcloud.png",
         # PDF handling for heatmap
         os.path.join(PAPER_FIGS_DIR, "censorship_fingerprint.pdf"): "heatmap.pdf", 

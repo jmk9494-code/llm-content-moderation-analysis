@@ -62,7 +62,7 @@ export default function DeepDivePage() {
                                 <span className="badge nlp">Embedding Space</span>
                             </div>
                             <div className="viz-container large">
-                                <iframe src="/assets/semantic_clusters.html" loading="lazy" title="Semantic Cluster Map"></iframe>
+                                <iframe src="/assets/clusters.html" loading="lazy" title="Semantic Cluster Map"></iframe>
                             </div>
                             <p className="caption">
                                 <strong>The Shape of Refusal.</strong> t-SNE/UMAP projection of refusal vectors. "Red Islands" reveal broad conceptual blind spots where models systematically refuse adjacent topics.
