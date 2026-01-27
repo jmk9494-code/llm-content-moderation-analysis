@@ -45,7 +45,7 @@ type BiasRow = {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AnalysisPage() {
-    const [activeTab, setActiveTab] = useState<'datalog' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('datalog');
+    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('summary');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -218,7 +218,7 @@ export default function AnalysisPage() {
 
                 {/* Tabs */}
                 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-1 overflow-x-auto">
-                    <TabButton active={activeTab === 'datalog'} onClick={() => setActiveTab('datalog')} icon={<Database className="w-4 h-4" />}>Data Log</TabButton>
+                    <TabButton active={activeTab === 'summary'} onClick={() => setActiveTab('summary')} icon={<Database className="w-4 h-4" />}>AI Summary</TabButton>
 
                     <TabButton active={activeTab === 'triggers'} onClick={() => setActiveTab('triggers')} icon={<AlertTriangle className="w-4 h-4" />}>Trigger List</TabButton>
                     <TabButton active={activeTab === 'alignment'} onClick={() => setActiveTab('alignment')} icon={<Zap className="w-4 h-4" />}>Alignment Tax</TabButton>
@@ -230,7 +230,7 @@ export default function AnalysisPage() {
 
                 {/* Content */}
                 <div className="min-h-[60vh]">
-                    {activeTab === 'datalog' && (
+                    {activeTab === 'summary' && (
                         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
                             <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><FileText className="w-5 h-5" /> Executive Summary</h3>
                             {reportContent ? (
