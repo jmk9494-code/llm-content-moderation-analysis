@@ -6,6 +6,7 @@ import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skel
 import { useToast } from '@/components/ui/Toast';
 import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle } from 'lucide-react';
 import HeatmapTable from '@/components/HeatmapTable';
+import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
 import ModelComparison from '@/components/ModelComparison';
 import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
@@ -445,13 +446,17 @@ export default function DashboardPage() {
                 />
               )}
 
-              {/* Heatmap Visualization */}
+              {/* Heatmap Visualization (Pillar 5) */}
               {filteredData.length > 0 && (
-                <HeatmapTable
-                  data={filteredData}
-                  title="Category Sensitivity Heatmap"
-                  description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
-                />
+                <div className="space-y-4">
+                  <CensorshipHeatmap
+                    data={filteredData.map(d => ({
+                      topic: d.category,
+                      model: d.model.split('/')[1] || d.model,
+                      refusalRate: ['REMOVED', 'REFUSAL', 'unsafe'].includes(d.verdict) ? 1 : 0
+                    }))}
+                  />
+                </div>
               )}
 
               {/* Top Censorship Categories Chart */}

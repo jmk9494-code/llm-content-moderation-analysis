@@ -46,6 +46,11 @@ class AuditResult(Base):
     completion_tokens = Column(Integer, default=0)
     policy_version = Column(String, nullable=True)
 
+    # Taxonomy Data
+    classification_category = Column(String, nullable=True)
+    confidence_score = Column(Float, default=0.0)
+    classification_reasoning = Column(Text, nullable=True)
+
     # Human Grading
     human_verdict = Column(String, nullable=True)
     notes = Column(Text, nullable=True)

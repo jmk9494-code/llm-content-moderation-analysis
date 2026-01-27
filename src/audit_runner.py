@@ -18,7 +18,8 @@ from src.database import init_db, ModelRegistry, Prompt, AuditResult
 from src.config import settings
 from src.config import settings
 from src.logger import logger
-from src.prompt_variants import generate_variants
+from src.prompt_variants import generate_variants, generate_styled_variants
+from src.taxonomy import TaxonomyClassifier
 # Global temperature override (set via CLI)
 TEMPERATURE_OVERRIDE = None
 
@@ -48,6 +49,9 @@ PRICING["default"] = {"input": 1.0, "output": 2.0}
 
 def get_model_config(model_id):
     return next((m for m in MODEL_REGISTRY if m['id'] == model_id), None)
+
+# Initialize Classifier (Global)
+TAXONOMY_CLASSIFIER = TaxonomyClassifier(client)
 
 # Group keys for CLI presets
 PRESETS = {
@@ -257,14 +261,46 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
         logger.info(f"[{model_name}] Testing {p['id']}...")
         try:
             content, usage = await call_target_model_async(model_name, p['text'])
-            verdict = parse_response(content)
             
+            # --- Pillar 1: Rigid Taxonomy Classification ---
+            classification = await TAXONOMY_CLASSIFIER.classify(p['text'], content)
+            
+            verdict = classification['category'].upper() # Authorized, Hard_Refusal, Soft_Censorship, False_Refusal
+            # Map back to legacy SAFE/BLOCK/REFUSAL for trends if needed, or update trends?
+            # For now, let's map: Authorized -> ALLOWED, others to appropriate bucket
+            # But the prompt asks for "Rigorous Taxonomy". We should probably store the RAW category.
+            # But we check for "verdict" later. 
+            
+            # Compatibility Logic for old charts (verdict):
+            # Authorized -> ALLOWED
+            # Hard_Refusal -> REFUSAL
+            # Soft_Censorship -> ALLOWED (technically allowed but bad?) OR REFUSAL? 
+            #   -> Soft Censorship is usually "Allowed but bad" or "Refused softly"? 
+            #   -> Per definition "Answered but sanitized". Let's call it "REFUSAL" for strictness?
+            #   -> Actually, let's keep `verdict` as the SIMPLE binary (ALLOWED/REMOVED) and use `classification_category` for detail.
+            #   -> If Hard_Refusal -> REMOVED/REFUSAL
+            #   -> If Soft_Censorship -> REMOVED/REFUSAL (Academic standard usually counts this as refusal)
+            #   -> If False_Refusal -> REFUSAL (It is a refusal, just a wrong one)
+            #   -> If Authorized -> ALLOWED
+            
+            legacy_verdict = "ALLOWED" if classification['category'] == "Authorized" else "REFUSAL"
+
             p_tokens = usage.prompt_tokens if usage else 0
             c_tokens = usage.completion_tokens if usage else 0
             t_tokens = usage.total_tokens if usage else 0
             
             run_cost = calculate_cost(model_name, p_tokens, c_tokens)
             
+            # --- Reproducibility: Log Raw Trace (Pillar 4) ---
+            from src.logger import log_raw_trace
+            log_raw_trace(
+                run_id=p.get('run_id') or "N/A",
+                model=model_name,
+                prompt=p['text'],
+                response_text=content,
+                full_payload={"usage": dict(usage) if usage else {}}
+            )
+
             # --- DB Save ---
             async with DB_LOCK:
                 try:
@@ -283,12 +319,16 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
                         timestamp=datetime.datetime.now(),
                         model_id=model_name,
                         prompt_id=p['id'],
-                        verdict=verdict,
+                        verdict=legacy_verdict, # Keep legacy for now
                         response_text=content,
                         cost=run_cost,
                         prompt_tokens=p_tokens,
                         completion_tokens=c_tokens,
-                        policy_version=policy_version
+                        policy_version=policy_version,
+                        # New Fields
+                        classification_category=classification['category'],
+                        confidence_score=classification['confidence_score'],
+                        classification_reasoning=classification['reasoning']
                     )
                     session.add(result)
                     session.commit()
@@ -299,13 +339,17 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
                         'model': model_name,
                         'prompt_id': p['id'],
                         'category': p['category'],
-                        'verdict': verdict,
+                        'style': p.get('style', 'Direct'), # Default to Direct
+                        'verdict': legacy_verdict,
+                        'classification': classification['category'], # Add to CSV
                         'prompt_text': p['text'],
                         'response_text': content,
                         'prompt_tokens': p_tokens,
                         'completion_tokens': c_tokens,
                         'total_tokens': t_tokens,
-                        'run_cost': run_cost
+                        'run_cost': run_cost,
+                        'confidence': classification['confidence_score'],
+                        'reasoning': classification['reasoning']
                     }
                 except Exception as e:
                     logger.error(f"DB Save Error: {e}")
@@ -387,10 +431,8 @@ async def run_audit_for_model(model_name, prompts, force_rerun=False):
     tasks = [process_prompt(sem, p, model_name, force_rerun) for p in prompts]
     await asyncio.gather(*tasks)
 
-async def run_audit_async(prompts, model_names, output_file, policy_version=None):
-    """Main async runner for multiple models."""
-    headers = ['test_date', 'model', 'prompt_id', 'category', 'verdict', 
-               'prompt_text', 'response_text', 'prompt_tokens', 'completion_tokens', 'total_tokens', 'run_cost']
+    headers = ['test_date', 'model', 'prompt_id', 'category', 'style', 'verdict', 'classification',
+               'prompt_text', 'response_text', 'prompt_tokens', 'completion_tokens', 'total_tokens', 'run_cost', 'confidence', 'reasoning']
     
     file_exists = os.path.isfile(output_file)
     with open(output_file, mode='a', newline='', encoding='utf-8') as f:
@@ -463,10 +505,11 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force re-run (ignore cache)")
     
     # Methodology Enhancement Flags
-    parser.add_argument("--consistency", type=int, default=1, metavar="N", 
-                        help="Run each prompt N times to measure response consistency (default: 1)")
-    parser.add_argument("--temperature", type=float, default=None, metavar="T",
-                        help="Set model temperature (0.0-2.0). None uses model default.")
+    parser.add_argument("--consistency", type=int, default=5, metavar="N", 
+                        help="Run each prompt N times to measure response consistency (default: 5)")
+    parser.add_argument("--temperature", type=float, default=0.7, metavar="T",
+                        help="Set model temperature (0.0-2.0). Default: 0.7 for stochasticity.")
+    parser.add_argument("--perturb", action="store_true", help="Generate Direct/Roleplay/Academic variants for every prompt.")
     
     # Check if sys.argv is passed or if we need to parse specific args. 
     # argparse uses sys.argv by default.
@@ -508,8 +551,39 @@ def main():
     
     loaded_prompts = load_prompts(args.input)
     
-    # --- Expand Prompts for Phrasing Variants ---
-    if args.phrasing_variants > 0:
+    # --- Expand Prompts for Styled Variants (Pillar 2) ---
+    if args.perturb:
+        logger.info("🎨 Generating Direct/Roleplay/Academic variants (Pillar 2)...")
+        styled_prompts = []
+        
+        async def _expand_styles():
+            tasks = []
+            for p in loaded_prompts:
+                tasks.append(generate_styled_variants(p['text']))
+            results = await asyncio.gather(*tasks)
+            return results
+
+        try:
+            all_styles = asyncio.run(_expand_styles())
+            
+            for p, styles in zip(loaded_prompts, all_styles):
+                # Add each style as a separate prompt entry
+                for style_name, text in styles.items():
+                    styled_prompts.append({
+                        "id": f"{p['id']}-{style_name[:3].upper()}",
+                        "original_id": p['id'],
+                        "category": p["category"],
+                        "text": text,
+                        "style": style_name
+                    })
+            logger.info(f"Expanded to {len(styled_prompts)} styled prompts.")
+            loaded_prompts = styled_prompts
+            
+        except Exception as e:
+            logger.error(f"Failed to generate styled variants: {e}")
+
+    # --- Expand Prompts for Phrasing Variants (Legacy) ---
+    if args.phrasing_variants > 0 and not args.perturb:
         logger.info(f"Generating {args.phrasing_variants} phrasing variants for each prompt...")
         variant_prompts = []
         
