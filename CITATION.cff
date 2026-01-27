@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Kandel"
+  given-names: "J."
+title: "LLM Content Moderation Analysis Instrument"
+version: 1.0.0
+date-released: 2026-01-27
+url: "https://github.com/jmk9494-code/llm-content-moderation-analysis"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Kandel"
+    given-names: "J."
+  title: "Quantifying the Alignment Tax: A Multi-Lingual Audit of LLM Censorship"
+  year: 2026
