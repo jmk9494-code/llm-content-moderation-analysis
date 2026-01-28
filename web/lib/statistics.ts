@@ -21,16 +21,24 @@ export function calculateFleissKappa(data: any[], models: string[], prompts: str
 
     // Build N x k matrix
     // cell[i][j] = number of raters who assigned category j to subject i
+    // Build N x k matrix
+    // cell[i][j] = number of raters who assigned category j to subject i
     const matrix: number[][] = []; // N rows
+
+    // Optimization: Pre-group rows by prompt ID to avoid O(N^2) filter in loop
+    const rowsByPrompt = new Map<string, any[]>();
+    for (const row of data) {
+        const id = row.case_id || row.prompt || row.prompt_id;
+        if (!id) continue;
+        if (!rowsByPrompt.has(id)) rowsByPrompt.set(id, []);
+        rowsByPrompt.get(id)!.push(row);
+    }
 
     for (const prompt of prompts) {
         let safeCount = 0;
         let unsafeCount = 0;
 
-        // Find verdicts for this prompt from all models
-        // Optimally we'd have a map, but for <10k rows this loop is fine for now
-        // We assume 'data' contains all rows
-        const promptRows = data.filter(d => d.case_id === prompt || d.prompt === prompt || d.prompt_id === prompt);
+        const promptRows = rowsByPrompt.get(prompt) || [];
 
         // We need exactly 'n' ratings. If missing, we skip or impute. 
         // For Fleiss, n must be constant. We'll only count models that provide a verdict.

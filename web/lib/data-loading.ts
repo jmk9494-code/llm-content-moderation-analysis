@@ -25,7 +25,7 @@ export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
                     const data = jsonData.map((row: any) => ({
                         timestamp: row.timestamp || row.test_date || row.date || new Date().toISOString(),
                         model: row.model || row.model_id || 'Unknown',
-                        case_id: row.case_id || row.prompt_id || row.run_id || Math.random().toString(36).substring(7),
+                        case_id: row.case_id || row.prompt_id || row.run_id || row.prompt || row.prompt_text || Math.random().toString(36).substring(7),
                         category: row.category || 'Uncategorized',
                         verdict: row.verdict || 'UNKNOWN',
                         prompt: row.prompt || row.prompt_text || row.text || '',
