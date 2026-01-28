@@ -1,0 +1,6 @@
+{
+  "baseline_refusal_rate": 0.1597780339506629,
+  "ablation_refusal_rate": 0.13820150449306767,
+  "conclusion": "Deep Alignment (Weights)",
+  "details": "Removing system prompt only reduced refusals by 1%."
+}

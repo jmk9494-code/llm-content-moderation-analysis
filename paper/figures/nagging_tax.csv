@@ -1,0 +1,4 @@
+model,Avg Wasted Tokens
+anthropic/claude-3.5-haiku,42.35840707964602
+deepseek/deepseek-chat,37.5
+mistralai/ministral-8b,36.43523316062176

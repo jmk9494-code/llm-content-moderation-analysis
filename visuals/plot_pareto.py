@@ -164,6 +164,23 @@ def plot_pareto_interactive(metrics_df, output_path="visuals/pareto_alignment.ht
     fig.write_html(output_path)
     print(f"Interactive plot saved to {output_path}")
 
+    # Paper Exports
+    pdf_path = "paper/figures/pareto_alignment.pdf"
+    png_path = "paper/figures/pareto_alignment.png"
+    
+    try:
+        # Static Export
+        if not os.path.exists("paper/figures"):
+             os.makedirs("paper/figures", exist_ok=True)
+             
+        fig.write_image(pdf_path, width=1200, height=800)
+        print(f"vector plot saved to {pdf_path}")
+        
+        fig.write_image(png_path, scale=3, width=1200, height=800)
+        print(f"high-res plot saved to {png_path}")
+    except Exception as e:
+        print(f"⚠️ Export failed (missing kaleido?): {e}")
+
 if __name__ == "__main__":
     try:
         df = load_data()

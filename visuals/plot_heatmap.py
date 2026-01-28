@@ -86,6 +86,11 @@ def generate_heatmap(df):
     plt.tight_layout()
     plt.savefig(OUTPUT_PATH)
     print(f"Heatmap saved to {OUTPUT_PATH}")
+    
+    # PNG Export
+    png_path = OUTPUT_PATH.replace('.pdf', '.png')
+    plt.savefig(png_path, dpi=300)
+    print(f"Heatmap saved to {png_path}")
     plt.close()
 
 if __name__ == "__main__":

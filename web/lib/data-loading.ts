@@ -16,6 +16,33 @@ export type AuditRow = {
 
 export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
     try {
+        // Priority 1: traces.json (The new standard, redacted & safe)
+        try {
+            const jsonResponse = await fetch('/assets/traces.json');
+            if (jsonResponse.ok) {
+                const jsonData = await jsonResponse.json();
+                if (Array.isArray(jsonData)) {
+                    const data = jsonData.map((row: any) => ({
+                        timestamp: row.timestamp || row.test_date || row.date || new Date().toISOString(),
+                        model: row.model || row.model_id || 'Unknown',
+                        case_id: row.case_id || row.prompt_id || row.run_id || Math.random().toString(36).substring(7),
+                        category: row.category || 'Uncategorized',
+                        verdict: row.verdict || 'UNKNOWN',
+                        prompt: row.prompt || row.prompt_text || row.text || '',
+                        response: row.response || row.response_text || '',
+                        cost: parseFloat(row.cost || row.run_cost) || 0,
+                        tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
+                        latency_ms: parseInt(row.latency_ms) || 0,
+                        prompt_id: row.prompt_id || row.case_id || '',
+                    })).filter((row: any) => row.model);
+                    console.log("Loaded data from traces.json");
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn("Failed to load traces.json, falling back to CSV", e);
+        }
+
         const file = useRecent ? '/audit_recent.csv' : '/audit_log.csv';
         let response = await fetch(file);
 
