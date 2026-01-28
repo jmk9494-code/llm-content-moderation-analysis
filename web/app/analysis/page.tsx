@@ -228,6 +228,14 @@ export default function AnalysisPage() {
         return { chartData, activeModels };
     }, [filteredAuditData, longitudinalModels]);
 
+    // Extract unique dates for timeline
+    const timelineDates = useMemo(() => {
+        if (auditData.length === 0) return [];
+        return Array.from(new Set(auditData.map(d => d.timestamp?.split('T')[0] || '')))
+            .filter(d => d)
+            .sort();
+    }, [auditData]);
+
     // --- Actions ---
     const downloadAuditSample = () => {
         if (auditData.length === 0) return;
@@ -286,6 +294,9 @@ export default function AnalysisPage() {
         </div>
     );
 
+
+
+
     return (
         <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -300,35 +311,69 @@ export default function AnalysisPage() {
                             Advanced metrics, academic visuals, and automated research insights.
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                            <Clock className="w-4 h-4 text-slate-400" />
-                            <input
-                                type="date"
-                                className="border-none bg-transparent text-slate-600 text-xs focus:ring-0 cursor-pointer"
-                                value={dateRange.start}
-                                onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                            />
-                            <span className="text-slate-300">&mdash;</span>
-                            <input
-                                type="date"
-                                className="border-none bg-transparent text-slate-600 text-xs focus:ring-0 cursor-pointer"
-                                value={dateRange.end}
-                                onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                            />
-                            {(dateRange.start || dateRange.end) && (
-                                <button
-                                    onClick={() => setDateRange({ start: '', end: '' })}
-                                    className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-bold"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            )}
+
+                    {/* Timeline Slider */}
+                    {timelineDates.length > 0 && (
+                        <div className="flex-1 max-w-xl mx-4">
+                            <div className="flex justify-between text-xs text-slate-400 mb-2 uppercase font-bold tracking-wider">
+                                <span>Timeline</span>
+                                <span>{dateRange.start || 'Start'} &mdash; {dateRange.end || 'End'}</span>
+                            </div>
+                            <div className="relative h-6 flex items-center">
+                                {/* Track */}
+                                <div className="absolute left-0 right-0 h-1 bg-slate-200 rounded-full"></div>
+                                {/* Selected Range Bar (if range is valid) */}
+                                {dateRange.start && dateRange.end && (
+                                    <div
+                                        className="absolute h-1 bg-indigo-500 rounded-full transition-all duration-300"
+                                        style={{
+                                            left: `${(timelineDates.indexOf(dateRange.start) / (timelineDates.length - 1)) * 100}%`,
+                                            right: `${100 - ((timelineDates.indexOf(dateRange.end) / (timelineDates.length - 1)) * 100)}%`
+                                        }}
+                                    ></div>
+                                )}
+                                {/* Dots */}
+                                <div className="absolute inset-0 flex justify-between items-center w-full">
+                                    {timelineDates.map((date, idx) => {
+                                        const isSelected = (dateRange.start === date || dateRange.end === date);
+                                        const inRange = dateRange.start && dateRange.end && date > dateRange.start && date < dateRange.end;
+
+                                        return (
+                                            <div key={date} className="relative group">
+                                                <button
+                                                    onClick={() => {
+                                                        if (!dateRange.start || (dateRange.start && dateRange.end)) {
+                                                            // Start new selection
+                                                            setDateRange({ start: date, end: date });
+                                                        } else {
+                                                            // Completing range
+                                                            if (date < dateRange.start) setDateRange({ start: date, end: dateRange.start });
+                                                            else setDateRange({ ...dateRange, end: date });
+                                                        }
+                                                    }}
+                                                    className={`
+                                                        w-3 h-3 rounded-full transition-all duration-200 z-10 relative
+                                                        ${isSelected ? 'bg-indigo-600 scale-125 ring-2 ring-indigo-200' : 'bg-slate-300 hover:bg-slate-400 hover:scale-110'}
+                                                        ${inRange ? 'bg-indigo-400' : ''}
+                                                    `}
+                                                />
+                                                {/* Tooltip */}
+                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                    {date}
+                                                </div>
+                                                {/* Label for first and last only to avoid clutter */}
+                                                {(idx === 0 || idx === timelineDates.length - 1) && (
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-[10px] text-slate-400 font-mono">
+                                                        {date.slice(5)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
-                        <Link href="/dashboard" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                            &larr; Back to Dashboard
-                        </Link>
-                    </div>
+                    )}
                 </header>
 
                 {/* Tabs */}
