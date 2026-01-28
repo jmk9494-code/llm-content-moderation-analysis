@@ -565,9 +565,10 @@ export default function DashboardPage() {
               )}
             </div>
 
-
           </div>
-    </main >
+        )}
+      </div>
+    </main>
 
   );
 }
