@@ -50,6 +50,8 @@ export default function AnalysisPage() {
 
     // Longitudinal Filters
     const [longitudinalModels, setLongitudinalModels] = useState<string[]>([]);
+    const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+    const [humanKappa, setHumanKappa] = useState<number | null>(null);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -193,7 +195,10 @@ export default function AnalysisPage() {
 
     const longitudinalData = useMemo(() => {
         if (auditData.length === 0) return { chartData: [], activeModels: [] };
-        const filtered = auditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
+        let filtered = auditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
+        if (dateRange.start) filtered = filtered.filter((d: AuditRow) => (d.timestamp?.split('T')[0] || '') >= dateRange.start);
+        if (dateRange.end) filtered = filtered.filter((d: AuditRow) => (d.timestamp?.split('T')[0] || '') <= dateRange.end);
+
         const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown'))).filter(d => d !== 'Unknown').sort();
         const activeModels = longitudinalModels.length > 0 ? longitudinalModels : Array.from(new Set(filtered.map(d => d.model)));
 
@@ -211,7 +216,56 @@ export default function AnalysisPage() {
             return row;
         });
         return { chartData, activeModels };
-    }, [auditData, longitudinalModels]);
+    }, [auditData, longitudinalModels, dateRange]);
+
+    // --- Actions ---
+    const downloadAuditSample = () => {
+        if (auditData.length === 0) return;
+        const sample = [...auditData].sort(() => 0.5 - Math.random()).slice(0, 50);
+        const csv = Papa.unparse(sample.map((r: AuditRow) => ({
+            case_id: r.case_id,
+            prompt: r.prompt,
+            model: r.model,
+            ai_verdict: r.verdict,
+            human_verdict: ''
+        })));
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `human_audit_sample_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    const handleAuditUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        Papa.parse(file, {
+            header: true,
+            complete: (results: any) => {
+                const rows = results.data;
+                const valid = rows.filter((r: any) => r.ai_verdict && r.human_verdict);
+                if (valid.length === 0) return;
+                let agreed = 0;
+                const n = valid.length;
+                let aiSafeCount = 0;
+                let humanSafeCount = 0;
+
+                valid.forEach((r: any) => {
+                    const ai = (r.ai_verdict || '').toLowerCase().includes('safe') || (r.ai_verdict || '').includes('ALLOW') ? 'safe' : 'unsafe';
+                    const human = (r.human_verdict || '').toLowerCase().includes('safe') || (r.human_verdict || '').includes('ALLOW') ? 'safe' : 'unsafe';
+                    if (ai === human) agreed++;
+                    if (ai === 'safe') aiSafeCount++;
+                    if (human === 'safe') humanSafeCount++;
+                });
+
+                const po = agreed / n;
+                const pe = ((aiSafeCount / n) * (humanSafeCount / n)) + (((n - aiSafeCount) / n) * ((n - humanSafeCount) / n));
+                const kappa = (po - pe) / (1 - pe);
+                setHumanKappa(kappa > 0 ? kappa : 0);
+            }
+        });
+    };
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center text-slate-500 bg-slate-50">
@@ -306,7 +360,7 @@ export default function AnalysisPage() {
                     {activeTab === 'alignment' && (
                         <div className="space-y-6">
                             <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100 text-sm text-indigo-800">
-                                <strong>Figure 1: The Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
+                                <strong>Figure: The Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
                             </div>
                             {/* Option A: The interactive Pareto chart if iframe preferred */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[700px]">
@@ -333,7 +387,14 @@ export default function AnalysisPage() {
 
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
                     {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
-                    {activeTab === 'insights' && <DeepInsights driftData={driftData} consensusData={consensusData} />}
+                    {activeTab === 'insights' && (
+                        <div className="space-y-6">
+                            <div className="p-4 bg-sky-50 rounded-lg border border-sky-100 text-sm text-sky-800">
+                                <strong>Figure: Deep Insights.</strong> Longitudinal drift and consensus analysis.
+                            </div>
+                            <DeepInsights driftData={driftData} consensusData={consensusData} />
+                        </div>
+                    )}
 
                     {/* New Components */}
                     {activeTab === 'political' && (
@@ -349,7 +410,7 @@ export default function AnalysisPage() {
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <p className="text-sm text-slate-500 mb-4 text-center">
-                                        This tests the model's opinions. It asks the model 30 standard political questions (e.g., about taxes, authority) and maps its answers on the classic Economic (Left/Right) vs. Social (Libertarian/Authoritarian) chart.
+                                        Do models have political opinions? We test this by asking 30 standard political questions.
                                     </p>
                                     <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
                                         <img
@@ -401,7 +462,7 @@ export default function AnalysisPage() {
                     {activeTab === 'significance' && (
                         <div className="space-y-6">
                             <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-sm text-emerald-800">
-                                <strong>Figure 6: Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
+                                <strong>Figure: Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Pairwise Significance Results</h3>
@@ -439,6 +500,9 @@ export default function AnalysisPage() {
 
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
+                            <div className="p-4 bg-violet-50 rounded-lg border border-violet-100 text-sm text-violet-800">
+                                <strong>Figure: Reliability Score.</strong> Measures consistency across repeated prompts.
+                            </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
                                 <div className="text-5xl font-black text-indigo-600">{stats.reliability.score.toFixed(3)}</div>
@@ -455,22 +519,41 @@ export default function AnalysisPage() {
                                 </p>
 
                                 <div className="space-y-4">
-                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center group hover:border-indigo-200 transition-colors cursor-pointer" onClick={downloadAuditSample}>
                                         <div>
-                                            <div className="font-medium text-slate-900">Step 1: Download Sample</div>
+                                            <div className="font-medium text-slate-900 group-hover:text-indigo-700 flex items-center gap-2">
+                                                Step 1: Download Sample
+                                                <span className="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold">Action</span>
+                                            </div>
                                             <div className="text-xs text-slate-500">50 random traces for review</div>
                                         </div>
-                                        <span className="text-xs text-slate-400 italic">Run script to generate</span>
+                                        <button className="text-sm font-medium text-indigo-600 bg-white px-3 py-1.5 rounded border border-indigo-200 shadow-sm">
+                                            Download CSV
+                                        </button>
                                     </div>
 
                                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
                                         <div>
                                             <div className="font-medium text-slate-900">Step 2: Calculate Kappa</div>
-                                            <div className="text-xs text-slate-500">Compare Human vs AI labels</div>
+                                            <div className="text-xs text-slate-500">Upload filled CSV</div>
                                         </div>
-                                        <div className="font-mono text-2xl font-black text-slate-300">
-                                            0.00
-                                        </div>
+                                        {humanKappa !== null ? (
+                                            <div className="font-mono text-2xl font-black text-indigo-600">
+                                                {humanKappa.toFixed(3)}
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    accept=".csv"
+                                                    onChange={handleAuditUpload}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                />
+                                                <button className="text-sm font-medium text-slate-600 bg-white px-3 py-1.5 rounded border border-slate-300 shadow-sm pointer-events-none">
+                                                    Upload CSV
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -478,20 +561,51 @@ export default function AnalysisPage() {
                     )}
 
                     {activeTab === 'longitudinal' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
-                            <h3 className="text-lg font-bold mb-4">Refusal Rate Over Time</h3>
-                            <ResponsiveContainer width="100%" height="90%">
-                                <LineChart data={longitudinalData.chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis unit="%" />
-                                    <RechartsTooltip />
-                                    <Legend />
-                                    {longitudinalData.activeModels.map((m, i) => (
-                                        <Line key={m} type="monotone" dataKey={m} stroke={COLORS[i % COLORS.length]} strokeWidth={2} connectNulls />
-                                    ))}
-                                </LineChart>
-                            </ResponsiveContainer>
+                        <div className="space-y-6">
+                            <div className="p-4 bg-fuchsia-50 rounded-lg border border-fuchsia-100 text-sm text-fuchsia-800">
+                                <strong>Figure: Longitudinal Analysis.</strong> Tracks refusal rates over time to detect drift.
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                                    <h3 className="text-lg font-bold">Refusal Rate Over Time</h3>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="text-slate-500 font-medium uppercase text-xs">Filter by Date:</span>
+                                        <input
+                                            type="date"
+                                            className="border border-slate-200 rounded px-2 py-1 text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            value={dateRange.start}
+                                            onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                        />
+                                        <span className="text-slate-300">&mdash;</span>
+                                        <input
+                                            type="date"
+                                            className="border border-slate-200 rounded px-2 py-1 text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                            value={dateRange.end}
+                                            onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                        />
+                                        {(dateRange.start || dateRange.end) && (
+                                            <button
+                                                onClick={() => setDateRange({ start: '', end: '' })}
+                                                className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-bold"
+                                            >
+                                                CLEAR
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <ResponsiveContainer width="100%" height="90%">
+                                    <LineChart data={longitudinalData.chartData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="date" />
+                                        <YAxis unit="%" />
+                                        <RechartsTooltip />
+                                        <Legend />
+                                        {longitudinalData.activeModels.map((m, i) => (
+                                            <Line key={m} type="monotone" dataKey={m} stroke={COLORS[i % COLORS.length]} strokeWidth={2} connectNulls />
+                                        ))}
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -525,7 +639,7 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     return (
         <div className="space-y-6">
             <div className="p-4 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-100">
-                <strong>Figure 3: Semantic Clusters.</strong> Groups common refusal themes.
+                <strong>Figure: Semantic Clusters.</strong> Groups common refusal themes.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -562,19 +676,24 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
     });
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[600px]">
-            <h3 className="text-lg font-bold mb-2">Bias Compass</h3>
-            <ResponsiveContainer>
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
-                    <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
-                    <ReferenceLine x={0} stroke="#cbd5e1" label="Authoritarian / Libertarian" />
-                    <ReferenceLine y={0} stroke="#cbd5e1" label="Left / Right" />
-                    <Scatter data={scatterData} fill="#8884d8">{scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Scatter>
-                    <RechartsTooltip />
-                </ScatterChart>
-            </ResponsiveContainer>
+        <div className="space-y-6">
+            <div className="p-4 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-100">
+                <strong>Figure: Bias Compass.</strong> Maps model biases on economic and social axes.
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[600px]">
+                <h3 className="text-lg font-bold mb-2">Bias Compass</h3>
+                <ResponsiveContainer>
+                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
+                        <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
+                        <ReferenceLine x={0} stroke="#cbd5e1" label="Authoritarian / Libertarian" />
+                        <ReferenceLine y={0} stroke="#cbd5e1" label="Left / Right" />
+                        <Scatter data={scatterData} fill="#8884d8">{scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Scatter>
+                        <RechartsTooltip />
+                    </ScatterChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 }
