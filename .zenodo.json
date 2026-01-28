@@ -2,7 +2,8 @@
     "title": "ModerationBias: A Longitudinal Audit of LLM Censorship",
     "creators": [
         {
-            "name": "Your Name"
+            "name": "Kandel, J.",
+            "orcid": "0009-0008-8858-6072"
         }
     ],
     "description": "Automated benchmarking instrument for measuring refusal rates, paternalism, and political bias.",

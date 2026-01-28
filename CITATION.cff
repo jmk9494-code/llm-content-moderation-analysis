@@ -5,6 +5,7 @@ type: software
 authors:
   - family-names: "Kandel"
     given-names: "J."
+    orcid: "https://orcid.org/0009-0008-8858-6072"
     flavour: "Research Lead"
 repository-code: "https://github.com/jmk9494-code/llm-content-moderation-analysis"
 url: "https://llm-content-moderation-analysis.vercel.app"
