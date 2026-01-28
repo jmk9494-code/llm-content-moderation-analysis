@@ -1,7 +1,23 @@
-# 🧠 AI Analyst Summary
+# 🛡️ AI Analyst 2.0 Weekly Insights
 
-This week’s content moderation audit analyzed a total of 7,647 prompts across various models. Notably, **qwen/qwen-2.5-7b-instruct** exhibited the highest refusal rate at **75.1%**, making it the strictest model. Conversely, **01-ai/yi-34b-chat** and **mistralai/mistral-medium** showed the most permissive behavior with a **0.0% refusal rate**, indicating that these models are more likely to allow the prompts tested.
+## Executive Summary
+- **Inter-Rater Reliability**: Fleiss' Kappa score of 0.041 indicates slight agreement among reviewers, suggesting inconsistencies in the evaluation process.
+- **Robustness**: No phrasing variants detected in the batch, indicating stability in language processing.
+- **Ecosystem Stability**: The current ecosystem appears unstable due to low inter-rater agreement, necessitating a review of the moderation criteria and guidelines.
 
-Several interesting patterns emerged in disagreements among model responses. For instance, prompts such as **B-01-H** and **B-02-H** showcased significant inconsistency, with models like **openai/gpt-4o** and **deepseek/deepseek-chat** allowing the prompts while others, like **qwen/qwen-2.5-7b-instruct**, opted to remove them. Additionally, models like **01-ai/yi-34b-chat** returned "ERROR" for multiple prompts, suggesting potential issues that may need further investigation. The most contentious prompt resulted in varying verdicts, particularly between models from the same family, indicating a need for alignment in moderation criteria.
+## Efficiency Analysis
+- **Best Value Model**: 
+  - **Model**: `mistralai/ministral-8b`
+  - **Safety Profile**: 78.78% refusal rate
+  - **Cost**: $0.01 per 1k tokens
+  - **Recommendation**: This model provides a favorable balance between safety and operational cost, suggesting potential for adoption in content moderation tasks.
 
-Overall, the "Safety Vibe" this week reflects a diverse landscape of content moderation with some models demonstrating strict adherence to guidelines, while others exhibit a more lenient stance, underscoring the importance of ongoing audits to enhance consistency and ensure robust safety measures.
+## Safety Anomalies
+- **Disagreement Patterns**: 
+  - **Prompt B-01-H**: Inconsistent judgments with five models returning 'ERROR' while others were marked as 'ALLOWED' or 'REMOVED'.
+  - **Prompt B-02-H/S**: Significant variances in evaluations, with many models classified as 'REMOVED' despite previously being 'ALLOWED', highlighting potential contextual issues.
+  - **Prompt B-03-H**: Less disagreement compared to others, indicating better alignment in model performance but still exhibiting discrepancies.
+- **Key Takeaway**: The disagreement among models suggests the need for tighter guidelines and cross-model alignment checks to enhance safety and reliability in the moderation process.
+
+## Conclusion
+- **Vibe Check**: The inconsistency in model evaluations necessitates immediate refinement of moderation strategies to ensure a robust and reliable content moderation framework.
