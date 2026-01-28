@@ -346,7 +346,7 @@ export default function AnalysisPage() {
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <p className="text-sm text-slate-500 mb-4 text-center">
-                                        AI models mapped on Economic (X) vs Social (Y) axes based on 30 propositions.
+                                        This tests the model's opinions. It asks the model 30 standard political questions (e.g., about taxes, authority) and maps its answers on the classic Economic (Left/Right) vs. Social (Libertarian/Authoritarian) chart.
                                     </p>
                                     <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
                                         <img

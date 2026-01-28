@@ -212,3 +212,6 @@ audit.db
 visuals/embeddings.cache
 data/external/
 data/sensitive_topics.json
+
+# Local Database
+audit.db
