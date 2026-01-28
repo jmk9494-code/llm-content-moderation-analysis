@@ -1,4 +1,4 @@
-# LLM Content Moderation Analysis Platform 🛡️
+# LLM Content Moderation Analysis Platform
 
 ![CI](https://github.com/jmk9494-code/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -10,7 +10,7 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 
 **Live Dashboard**: [llm-content-moderation-analysis.vercel.app](https://llm-content-moderation-analysis.vercel.app)
 
-## ✨ Features
+## Features
 
 ### Dashboard
 - **Overview** - Real-time stats, heatmaps, interactive model filtering, and audit logs
@@ -19,12 +19,12 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 - **Efficiency** - Cost vs. Refusal Rate trade-offs
 - **Export** - Download comparison data as CSV
 
-- **Political Compass** 🧭 - Models mapped on Economic/Social axes (Authority vs Liberty).
-- **Paternalism Detection** 👶 - Measures if models treat "Teenagers" differently than "Researchers".
-- **Evidence Locker** 📂 - Full transparency explorer for raw audit traces.
-- **Automated Benchmarks** 🤖 - Self-updating weekly audits via GitHub Actions.
+- **Political Compass** - Models mapped on Economic/Social axes (Authority vs Liberty).
+- **Paternalism Detection** - Measures if models treat "Teenagers" differently than "Researchers".
+- **Evidence Locker** - Full transparency explorer for raw audit traces.
+- **Automated Benchmarks** - Self-updating weekly audits via GitHub Actions.
 
-## 🔬 Methodology
+## Methodology
 
 To minimize selection bias, sensitive topics (N=200) were grounded in Wikipedia's 'List of Controversial Issues' and filtered by search volume. We control for **System Prompt** variance by enforcing identical instructions across all models to ensure fair comparison.
 
@@ -34,7 +34,7 @@ To minimize selection bias, sensitive topics (N=200) were grounded in Wikipedia'
 - **Statistical Analysis** - Fleiss Kappa, Refusal Rate Agreement
 - **Cost Tracking** - Per-model cost calculation
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option A: Docker (Recommended)
 ```bash
@@ -57,7 +57,7 @@ python src/migrate_csv_to_sql.py  # Initialize DB
 cd web && npm install && npm run dev
 ```
 
-## 📊 Running Audits
+## Running Audits
 
 ### Manual Audit
 ```bash
@@ -82,7 +82,7 @@ python src/audit_runner.py --preset high    # Expensive tier
 | Medium     | Monthly (1st)                  | Balanced Models                 |
 | Expensive  | Bi-Monthly (Jan, Mar...)       | High Intelligence / Large       |
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 ├── src/                  # Python backend
@@ -104,14 +104,14 @@ python src/audit_runner.py --preset high    # Expensive tier
 ```
 
 
-## 🧪 Testing
+## Testing
 
 Run the test suite to verify statistical logic and backend functionality:
 ```bash
 python -m pytest tests/
 ```
 
-## 💻 Development
+## Development
 
 We use `ruff` for linting and `black` for formatting:
 ```bash
@@ -122,16 +122,16 @@ ruff check .
 black .
 ```
 
-## 🤝 Contributing
+## Contributing
 
 When adding new features, please ensure you:
 1.  Run the test suite (`python -m pytest tests/`).
 2.  Add regression tests for any bug fixes (see `tests/test_audit_runner.py` for examples).
 
-## 🛠️ Deployment
+## Deployment
 
 **Frontend (Vercel)**: Auto-deploys on push to main
 **GitHub Actions**: Handles scheduled model auditing
 
-## 📜 License
+## License
 Internal Research Tool - MIT License
