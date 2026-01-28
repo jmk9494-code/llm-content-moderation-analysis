@@ -37,7 +37,7 @@ export default function ComparePage() {
 
     useEffect(() => {
         setIsClient(true);
-        fetchAuditData()
+        fetchAuditData(false)
             .then(rows => {
                 // Filter out ERROR verdicts (broken models)
                 const cleanRows = (rows || []).filter((r: AuditRow) => r.verdict !== 'ERROR');
