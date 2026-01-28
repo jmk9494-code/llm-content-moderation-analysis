@@ -315,69 +315,36 @@ export default function AnalysisPage() {
 
                     {/* Timeline Slider */}
                     {timelineDates.length > 0 && (
-                        <div className="flex-1 max-w-xl mx-4">
-                            <div className="flex justify-between text-xs text-slate-400 mb-2 uppercase font-bold tracking-wider">
-                                <span>Timeline</span>
-                                <span>{dateRange.start || 'Start'} &mdash; {dateRange.end || 'End'}</span>
+                        <div className="flex-1 max-w-xl mx-4 flex items-end justify-end gap-3">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Date</label>
+                                <select
+                                    className="bg-white border border-slate-200 text-slate-700 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={dateRange.start}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                >
+                                    <option value="">Earliest</option>
+                                    {timelineDates.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Date</label>
+                                <select
+                                    className="bg-white border border-slate-200 text-slate-700 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={dateRange.end}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                >
+                                    <option value="">Latest</option>
+                                    {timelineDates.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex flex-col justify-end">
                                 <button
                                     onClick={() => setDateRange({ start: '', end: '' })}
-                                    className="ml-2 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-600 px-2 py-0.5 rounded transition-colors"
+                                    className="mb-[1px] text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-md transition-colors font-medium border border-slate-200 h-[30px] flex items-center"
                                 >
                                     All Time
                                 </button>
-                            </div>
-                            <div className="relative h-6 flex items-center">
-                                {/* Track */}
-                                <div className="absolute left-0 right-0 h-1 bg-slate-200 rounded-full"></div>
-                                {/* Selected Range Bar (if range is valid) */}
-                                {dateRange.start && dateRange.end && (
-                                    <div
-                                        className="absolute h-1 bg-indigo-500 rounded-full transition-all duration-300"
-                                        style={{
-                                            left: `${(timelineDates.indexOf(dateRange.start) / (timelineDates.length - 1)) * 100}%`,
-                                            right: `${100 - ((timelineDates.indexOf(dateRange.end) / (timelineDates.length - 1)) * 100)}%`
-                                        }}
-                                    ></div>
-                                )}
-                                {/* Dots */}
-                                <div className="absolute inset-0 flex justify-between items-center w-full">
-                                    {timelineDates.map((date, idx) => {
-                                        const isSelected = (dateRange.start === date || dateRange.end === date);
-                                        const inRange = dateRange.start && dateRange.end && date > dateRange.start && date < dateRange.end;
-
-                                        return (
-                                            <div key={date} className="relative group">
-                                                <button
-                                                    onClick={() => {
-                                                        if (!dateRange.start || (dateRange.start && dateRange.end)) {
-                                                            // Start new selection
-                                                            setDateRange({ start: date, end: date });
-                                                        } else {
-                                                            // Completing range
-                                                            if (date < dateRange.start) setDateRange({ start: date, end: dateRange.start });
-                                                            else setDateRange({ ...dateRange, end: date });
-                                                        }
-                                                    }}
-                                                    className={`
-                                                        w-3 h-3 rounded-full transition-all duration-200 z-10 relative
-                                                        ${isSelected ? 'bg-indigo-600 scale-125 ring-2 ring-indigo-200' : 'bg-slate-300 hover:bg-slate-400 hover:scale-110'}
-                                                        ${inRange ? 'bg-indigo-400' : ''}
-                                                    `}
-                                                />
-                                                {/* Tooltip */}
-                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                    {date}
-                                                </div>
-                                                {/* Label for first and last only to avoid clutter */}
-                                                {(idx === 0 || idx === timelineDates.length - 1) && (
-                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-[10px] text-slate-400 font-mono">
-                                                        {date.slice(5)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
                             </div>
                         </div>
                     )}
