@@ -338,6 +338,9 @@ export default function AnalysisPage() {
                     {/* New Components */}
                     {activeTab === 'political' && (
                         <div className="space-y-6">
+                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-800">
+                                <strong>Figure: Political Compass.</strong> Do models have political opinions? We test this by asking 30 standard political questions. The results map the model's "personality" on Economic (Left/Right) and Social (Libertarian/Authoritarian) axes.
+                            </div>
                             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold flex items-center gap-2">
@@ -366,6 +369,9 @@ export default function AnalysisPage() {
 
                     {activeTab === 'paternalism' && (
                         <div className="space-y-6">
+                            <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 text-sm text-amber-800">
+                                <strong>Figure: Paternalism Audit.</strong> This test checks if models change their refusal behavior based on the user's persona (e.g., "Teenager" vs. "Authority Figure"). Ideally, safety rules should be consistent regardless of who is asking.
+                            </div>
                             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold flex items-center gap-2">👶 Paternalism Audit</h3>
@@ -393,35 +399,40 @@ export default function AnalysisPage() {
                     )}
 
                     {activeTab === 'significance' && (
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Statistical Significance (McNemar's Test)</h3>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-slate-200 text-slate-500 font-semibold">
-                                            <th className="text-left py-2">Model A</th>
-                                            <th className="text-left py-2">Model B</th>
-                                            <th className="text-right py-2">P-Value</th>
-                                            <th className="text-right py-2">Is Significant?</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pValues.length === 0 ? (
-                                            <tr><td colSpan={4} className="py-4 text-center text-slate-400">No significance data available.</td></tr>
-                                        ) : (
-                                            pValues.slice(0, 10).map((row: any, i: number) => (
-                                                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                                                    <td className="py-2 text-slate-700">{row['Model A']}</td>
-                                                    <td className="py-2 text-slate-700">{row['Model B']}</td>
-                                                    <td className="py-2 text-right font-mono text-slate-600">{parseFloat(row['P-Value']).toExponential(2)}</td>
-                                                    <td className="py-2 text-right">
-                                                        {row['Significant'] === 'YES' ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Yes</span> : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">No</span>}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                        <div className="space-y-6">
+                            <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-sm text-emerald-800">
+                                <strong>Figure 6: Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
+                            </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Pairwise Significance Results</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-slate-200 text-slate-500 font-semibold">
+                                                <th className="text-left py-2">Model A</th>
+                                                <th className="text-left py-2">Model B</th>
+                                                <th className="text-right py-2">P-Value</th>
+                                                <th className="text-right py-2">Is Significant?</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pValues.length === 0 ? (
+                                                <tr><td colSpan={4} className="py-4 text-center text-slate-400">No significance data available.</td></tr>
+                                            ) : (
+                                                pValues.slice(0, 10).map((row: any, i: number) => (
+                                                    <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                                                        <td className="py-2 text-slate-700">{row['Model A']}</td>
+                                                        <td className="py-2 text-slate-700">{row['Model B']}</td>
+                                                        <td className="py-2 text-right font-mono text-slate-600">{parseFloat(row['P-Value']).toExponential(2)}</td>
+                                                        <td className="py-2 text-right">
+                                                            {row['Significant'] === 'YES' ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Yes</span> : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">No</span>}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -485,7 +496,7 @@ export default function AnalysisPage() {
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     );
 }
 
