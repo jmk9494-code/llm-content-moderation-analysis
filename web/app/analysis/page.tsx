@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X, Compass, AlertTriangle, Zap, BookOpen
+    Info, Database, Clock, Filter, X, Compass, AlertTriangle, Zap, BookOpen, Search
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -36,7 +36,7 @@ type BiasRow = {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AnalysisPage() {
-    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'insights'>('summary');
+    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'insights' | 'political' | 'paternalism' | 'evidence' | 'significance'>('summary');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
@@ -44,6 +44,7 @@ export default function AnalysisPage() {
     const [biasData, setBiasData] = useState<BiasRow[]>([]);
     const [driftData, setDriftData] = useState<any[]>([]);
     const [consensusData, setConsensusData] = useState<any[]>([]);
+    const [pValues, setPValues] = useState<any[]>([]);
     const [reportContent, setReportContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
@@ -100,6 +101,18 @@ export default function AnalysisPage() {
                         });
                     }
                 } catch (e) { console.warn("Consensus data not found"); }
+
+                try {
+                    const r7 = await fetch('/assets/p_values.csv');
+                    if (r7.ok) {
+                        const csvText = await r7.text();
+                        Papa.parse(csvText, {
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results: any) => setPValues(results.data)
+                        });
+                    }
+                } catch (e) { console.warn("P-Values CSV not found"); }
 
             } catch (err) {
                 console.error("Failed to load data", err);
@@ -236,6 +249,11 @@ export default function AnalysisPage() {
                     <TabButton active={activeTab === 'alignment'} onClick={() => setActiveTab('alignment')} icon={<Zap className="w-4 h-4" />}>Alignment Tax</TabButton>
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>Semantic Clusters</TabButton>
 
+                    <TabButton active={activeTab === 'political'} onClick={() => setActiveTab('political')} icon={<Compass className="w-4 h-4" />}>Political Compass</TabButton>
+                    <TabButton active={activeTab === 'paternalism'} onClick={() => setActiveTab('paternalism')} icon={<Info className="w-4 h-4" />}>Paternalism</TabButton>
+                    <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
+                    <TabButton active={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')} icon={<Search className="w-4 h-4" />}>Evidence</TabButton>
+
                     <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>Bias Compass</TabButton>
                     <TabButton active={activeTab === 'insights'} onClick={() => setActiveTab('insights')} icon={<TrendingUp className="w-4 h-4" />}>Deep Insights</TabButton>
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</TabButton>
@@ -317,12 +335,133 @@ export default function AnalysisPage() {
                     {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
                     {activeTab === 'insights' && <DeepInsights driftData={driftData} consensusData={consensusData} />}
 
+                    {/* New Components */}
+                    {activeTab === 'political' && (
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold flex items-center gap-2">
+                                        🧭 Political Compass
+                                    </h3>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <p className="text-sm text-slate-500 mb-4 text-center">
+                                        AI models mapped on Economic (X) vs Social (Y) axes based on 30 propositions.
+                                    </p>
+                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src="/political_compass.png"
+                                            alt="AI Political Compass"
+                                            className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'paternalism' && (
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold flex items-center gap-2">👶 Paternalism Audit</h3>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <p className="text-sm text-slate-500 mb-4 text-center">Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?</p>
+                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
+                                        <img src="/paternalism.png" alt="Paternalism Chart" className="object-contain w-full h-full hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>'; }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'evidence' && (
+                        <div className="bg-white rounded-xl border border-slate-200 p-8 shadow-sm flex flex-col items-center text-center max-w-2xl mx-auto">
+                            <h3 className="text-xl font-bold flex items-center gap-2 mb-4">📂 Evidence Locker</h3>
+                            <p className="text-slate-500 mb-8 max-w-md">
+                                Explore raw audit traces with full transparency. Identify cases where models exhibit "Paternalism" or inconsistent safety boundaries.
+                            </p>
+                            <a href="/explorer.html" target="_blank" className="inline-flex justify-center items-center px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium text-base gap-2">
+                                <Search className="w-5 h-5" /> Open Evidence Locker
+                            </a>
+                        </div>
+                    )}
+
+                    {activeTab === 'significance' && (
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Statistical Significance (McNemar's Test)</h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-slate-200 text-slate-500 font-semibold">
+                                            <th className="text-left py-2">Model A</th>
+                                            <th className="text-left py-2">Model B</th>
+                                            <th className="text-right py-2">P-Value</th>
+                                            <th className="text-right py-2">Is Significant?</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pValues.length === 0 ? (
+                                            <tr><td colSpan={4} className="py-4 text-center text-slate-400">No significance data available.</td></tr>
+                                        ) : (
+                                            pValues.slice(0, 10).map((row: any, i: number) => (
+                                                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                                                    <td className="py-2 text-slate-700">{row['Model A']}</td>
+                                                    <td className="py-2 text-slate-700">{row['Model B']}</td>
+                                                    <td className="py-2 text-right font-mono text-slate-600">{parseFloat(row['P-Value']).toExponential(2)}</td>
+                                                    <td className="py-2 text-right">
+                                                        {row['Significant'] === 'YES' ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Yes</span> : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">No</span>}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
                                 <div className="text-5xl font-black text-indigo-600">{stats.reliability.score.toFixed(3)}</div>
                                 <div className="text-slate-500">{stats.reliability.interpretation}</div>
+                            </div>
+
+                            {/* Human Audit Kit UI */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                    🕵️ Human Audit Kit
+                                </h3>
+                                <p className="text-sm text-slate-500 mb-6">
+                                    Calculate Inter-Rater Reliability (Cohen's Kappa) by validating AI verdicts against human judgment.
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                                        <div>
+                                            <div className="font-medium text-slate-900">Step 1: Download Sample</div>
+                                            <div className="text-xs text-slate-500">50 random traces for review</div>
+                                        </div>
+                                        <span className="text-xs text-slate-400 italic">Run script to generate</span>
+                                    </div>
+
+                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                                        <div>
+                                            <div className="font-medium text-slate-900">Step 2: Calculate Kappa</div>
+                                            <div className="text-xs text-slate-500">Compare Human vs AI labels</div>
+                                        </div>
+                                        <div className="font-mono text-2xl font-black text-slate-300">
+                                            0.00
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

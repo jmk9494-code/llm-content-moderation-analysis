@@ -508,7 +508,7 @@ export default function DashboardPage() {
                   {filteredData.length > 0 && stats.topCategories.length > 0 && (
                     <div className="bg-white p-6 rounded-xl border border-slate-200">
                       <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories (Refusal Rate)</h3>
-                      <div className="h-64">
+                      <div style={{ height: `${Math.max(300, stats.topCategories.length * 40)}px` }} className="min-h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats.topCategories} layout="vertical" margin={{ left: 40, right: 40 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
