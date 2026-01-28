@@ -14,6 +14,7 @@ import { calculateFleissKappa } from '@/lib/statistics';
 import Papa from 'papaparse';
 import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
 import { DeepInsights } from "@/components/DeepInsights";
+import { AuditWizard } from '@/components/ui/AuditWizard';
 
 
 // --- Types ---
@@ -318,6 +319,12 @@ export default function AnalysisPage() {
                             <div className="flex justify-between text-xs text-slate-400 mb-2 uppercase font-bold tracking-wider">
                                 <span>Timeline</span>
                                 <span>{dateRange.start || 'Start'} &mdash; {dateRange.end || 'End'}</span>
+                                <button
+                                    onClick={() => setDateRange({ start: '', end: '' })}
+                                    className="ml-2 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-600 px-2 py-0.5 rounded transition-colors"
+                                >
+                                    All Time
+                                </button>
                             </div>
                             <div className="relative h-6 flex items-center">
                                 {/* Track */}
@@ -599,43 +606,8 @@ export default function AnalysisPage() {
                                     Calculate Inter-Rater Reliability (Cohen's Kappa) by validating AI verdicts against human judgment.
                                 </p>
 
-                                <div className="space-y-4">
-                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center group hover:border-indigo-200 transition-colors cursor-pointer" onClick={downloadAuditSample}>
-                                        <div>
-                                            <div className="font-medium text-slate-900 group-hover:text-indigo-700 flex items-center gap-2">
-                                                Step 1: Download Sample
-                                                <span className="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold">Action</span>
-                                            </div>
-                                            <div className="text-xs text-slate-500">50 random traces for review</div>
-                                        </div>
-                                        <button className="text-sm font-medium text-indigo-600 bg-white px-3 py-1.5 rounded border border-indigo-200 shadow-sm">
-                                            Download CSV
-                                        </button>
-                                    </div>
-
-                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
-                                        <div>
-                                            <div className="font-medium text-slate-900">Step 2: Calculate Kappa</div>
-                                            <div className="text-xs text-slate-500">Upload filled CSV</div>
-                                        </div>
-                                        {humanKappa !== null ? (
-                                            <div className="font-mono text-2xl font-black text-indigo-600">
-                                                {humanKappa.toFixed(3)}
-                                            </div>
-                                        ) : (
-                                            <div className="relative">
-                                                <input
-                                                    type="file"
-                                                    accept=".csv"
-                                                    onChange={handleAuditUpload}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                />
-                                                <button className="text-sm font-medium text-slate-600 bg-white px-3 py-1.5 rounded border border-slate-300 shadow-sm pointer-events-none">
-                                                    Upload CSV
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                <div className="mt-4">
+                                    <AuditWizard data={auditData} />
                                 </div>
                             </div>
                         </div>
@@ -735,7 +707,14 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
     };
     const scatterData = biasData.map(row => {
         const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
-        return { ...row, x: base.x + (Math.random() - 0.5) * 0.4, y: base.y + (Math.random() - 0.5) * 0.4, z: 1 };
+        // Exclude judge_reasoning (heavy text) from the chart data to keep tooltip clean
+        return {
+            model: row.model,
+            leaning: row.leaning,
+            x: base.x + (Math.random() - 0.5) * 0.4,
+            y: base.y + (Math.random() - 0.5) * 0.4,
+            z: 1
+        };
     });
 
     return (
