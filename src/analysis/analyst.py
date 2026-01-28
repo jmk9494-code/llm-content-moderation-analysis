@@ -8,7 +8,7 @@ from src.logger import logger
 from src.statistics import calculate_fleiss_kappa, interpret_kappa
 from sqlalchemy import select
 
-def generate_weekly_report(output_dir=".", report_file="data/latest_report.md"):
+def generate_weekly_report(output_dir=".", report_file="web/public/latest_report.md"):
     """
     Analyst 2.0: Generates a comprehensive research report using advanced statistics.
     """

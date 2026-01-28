@@ -71,19 +71,11 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
           done
           
-      - name: Generate Phase 8 Visuals (Paternalism & Compass)
+      - name: Generate All Reports & Visuals
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PYTHONPATH: .
-        run: |
-          # Generate Political Compass (Efficiency Tier + standard reference)
-          python src/analysis/political_compass.py --models openai/gpt-4o-mini,anthropic/claude-3-haiku,google/gemini-2.0-flash-exp --output web/public/political_compass.png
-          
-          # Export Traces for Evidence Locker
-          python src/export_traces.py
-          
-          # Generate Paternalism Chart
-          python src/analysis/plot_paternalism.py --output web/public/paternalism.png
+        run: bash scripts/generate_all_reports.sh
 
       - name: Commit and Push Results
         run: |

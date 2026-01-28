@@ -17,26 +17,30 @@ python3 src/analysis/significance.py
 echo "📈 Analyzing Model Drift over time..."
 python3 src/analysis/drift.py
 
-# 3. Consensus & Bias
-echo "⚖️ Calculating Consensus Bias..."
-# This might fail without keys, but we'll try
-python3 src/analysis/consensus.py
+# 4. Bias Compass Analysis
+echo "⚖️ Analyzing Refusal Bias (requires API key)..."
+python3 src/analysis/bias.py
 
-# 4. Political Compass Chart (MOCK MODE enabled for quick viz)
+# 5. Political Compass Chart (MOCK MODE enabled for quick viz)
 echo "🧭 Generating Political Compass Chart (Mock Mode)..."
-python3 src/analysis/political_compass.py --mock --output web/public/political_compass.png
+python3 src/analysis/political_compass.py --mock
 
-# 5. Paternalism Audit Chart
+# 6. Paternalism Audit Chart
 echo "👶 Generating Paternalism Audit Chart..."
-python3 src/analysis/plot_paternalism.py --input $AUDIT_LOG --output web/public/paternalism.png
+python3 src/analysis/plot_paternalism.py
 
-# 6. JSON Conversion for Evidence Locker & Alignment Tax
+# 7. Alignment Tax (Pareto Frontier)
+echo "📉 Generating Alignment Tax Chart..."
+python3 scripts/visuals/plot_pareto.py
+
+# 8. JSON Conversion for Evidence Locker
 echo "📂 Converting CSV to JSON (traces.json)..."
 python3 scripts/convert_csv_to_json.py
 
-# 7. Semantic Clusters
-echo "🏷️ Generating Semantic Clusters..."
-python3 src/analysis/analyst.py --input $AUDIT_LOG --output web/public/clusters.json
+# 9. AI Analyst & Semantic Clusters
+echo "🏷️ Generating AI Analyst Report & Clusters..."
+python3 src/analysis/analyst.py
+python3 src/cluster_analysis_simple.py
 
 echo "✅ All reports generated successfully!"
 echo "Check your dashboard at http://localhost:3000/analysis"

@@ -71,6 +71,12 @@ jobs:
           done
           exit 1
 
+      - name: Generate All Reports & Visuals
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
+        run: bash scripts/generate_all_reports.sh
+
       - name: Commit and Push Results
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"

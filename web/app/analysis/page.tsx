@@ -677,22 +677,51 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
 
     return (
         <div className="space-y-6">
-            <div className="p-4 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-100">
-                <strong>Figure: Bias Compass.</strong> Maps model biases on economic and social axes.
+            <div className="p-4 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-100 leading-relaxed">
+                <div className="font-bold mb-1 flex items-center gap-2"><Compass className="w-4 h-4" /> Understanding the Bias Compass</div>
+                <p>This chart maps model refusal reasoning onto two primary axes:</p>
+                <ul className="mt-2 space-y-1 list-disc ml-5">
+                    <li><strong>Horizontal (Left vs. Right):</strong> Economic bias. Left favors collective safety and regulation; Right favors individual liberty and free markets.</li>
+                    <li><strong>Vertical (Authoritarian vs. Libertarian):</strong> Social bias. Authoritarian (Top) favors strict guardrails and authority; Libertarian (Bottom) favors freedom of speech and minimal intervention.</li>
+                </ul>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[600px]">
-                <h3 className="text-lg font-bold mb-2">Bias Compass</h3>
-                <ResponsiveContainer>
-                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 h-[650px] relative">
+                <h3 className="text-lg font-bold mb-6">Bias Compass</h3>
+
+                {/* Quadrant Labels Overlay */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-12 opacity-40 font-bold text-[10px] uppercase tracking-widest text-slate-400">
+                    <div className="flex justify-between">
+                        <span>Left-Authoritarian</span>
+                        <span>Right-Authoritarian</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>Left-Libertarian</span>
+                        <span>Right-Libertarian</span>
+                    </div>
+                </div>
+
+                <ResponsiveContainer width="100%" height="90%">
+                    <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
                         <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
-                        <ReferenceLine x={0} stroke="#cbd5e1" label="Authoritarian / Libertarian" />
-                        <ReferenceLine y={0} stroke="#cbd5e1" label="Left / Right" />
-                        <Scatter data={scatterData} fill="#8884d8">{scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Scatter>
-                        <RechartsTooltip />
+
+                        {/* Custom Reference Lines with Edge Labels */}
+                        <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'top', value: 'Authoritarian ⬆️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
+                        <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'bottom', value: 'Libertarian ⬇️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
+                        <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'insideLeft', value: '⬅️ Economic Left', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 10 }} />
+                        <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'insideRight', value: 'Economic Right ➡️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 10 }} />
+
+                        <Scatter data={scatterData} fill="#8884d8">
+                            {scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        </Scatter>
+                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
                     </ScatterChart>
                 </ResponsiveContainer>
+
+                <div className="mt-4 text-center text-xs text-slate-400 italic">
+                    Note: Points are jittered slightly for visibility. Data represents AI-judged "leaning" of specific model responses.
+                </div>
             </div>
         </div>
     );

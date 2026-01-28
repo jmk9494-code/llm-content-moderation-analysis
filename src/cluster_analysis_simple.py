@@ -5,7 +5,7 @@ import collections
 import re
 import os
 
-INPUT_FILE = "data/audit_log.csv"
+INPUT_FILE = "web/public/audit_log.csv"
 OUTPUT_CLUSTERS = "web/public/clusters.json"
 OUTPUT_SIMILARITY = "web/public/similarity.json"
 

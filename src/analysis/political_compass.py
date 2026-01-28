@@ -155,7 +155,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", type=str, default="openai/gpt-4o-mini,anthropic/claude-3-haiku")
     parser.add_argument("--mock", action="store_true", help="Generate random scores for testing/visualization")
-    parser.add_argument("--output", type=str, default="visuals/political_compass.png", help="Output path for the plot")
+    parser.add_argument("--output", type=str, default="web/public/political_compass.png", help="Output path for the plot")
     args = parser.parse_args()
     
     model_list = args.models.split(",")
