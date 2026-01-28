@@ -13,7 +13,7 @@ import uuid
 import datetime
 
 # Internal Imports
-from src.analyst import generate_weekly_report
+from src.analysis.analyst import generate_weekly_report
 from src.database import init_db, ModelRegistry, Prompt, AuditResult
 from src.config import settings
 from src.config import settings
@@ -23,6 +23,8 @@ from src.taxonomy import TaxonomyClassifier
 from loaders.standard_benchmarks import load_xstest
 from src.modules.translator import PromptTranslator
 from src.augmentations.personas import PERSONAS
+from src.loaders import load_prompts
+from src.utils.snapshot_manager import save_snapshot
 
 # Global temperature override (set via CLI)
 TEMPERATURE_OVERRIDE = None
@@ -146,6 +148,25 @@ def update_trends(audit_file='audit_log.csv', trends_file='data/trends.csv'):
         logger.info(f"✅ Trends updated: {len(trends)} rows written to {trends_file}")
     except Exception as e:
         logger.error(f"Failed to update trends: {e}")
+
+def export_recent_data(audit_file='audit_log.csv', output_file='web/public/audit_recent.csv', days=7):
+    """Exports only the last N days of audit data for faster frontend loading."""
+    try:
+        if not os.path.exists(audit_file): return
+        
+        df = pd.read_csv(audit_file)
+        if df.empty: return
+        
+        # Ensure date format
+        df['test_date'] = pd.to_datetime(df['test_date'])
+        
+        cutoff_date = datetime.datetime.now() - datetime.timedelta(days=days)
+        recent_df = df[df['test_date'] >= cutoff_date]
+        
+        recent_df.to_csv(output_file, index=False)
+        logger.info(f"✅ Exported recent data ({days} days): {len(recent_df)} rows to {output_file}")
+    except Exception as e:
+        logger.error(f"Failed to export recent data: {e}")
 
 # --- Core Logic ---
 
@@ -482,19 +503,7 @@ def export_metadata(output_path="web/public/models.json"):
 
 # --- Loaders and Entry Point ---
 
-def load_prompts(file_path, limit=None):
-    prompts = []
-    with open(file_path, mode='r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for i, row in enumerate(reader):
-            if limit and i >= limit:
-                break
-            p_id = row.get('Prompt_ID') or row.get('id')
-            cat = row.get('Category') or row.get('category')
-            text = row.get('Prompt_Text') or row.get('text')
-            if p_id and text:
-                prompts.append({'id': p_id, 'category': cat, 'text': text})
-    return prompts
+
 
 def main():
     parser = argparse.ArgumentParser(description="LLM Content Moderation Auditor (Async/JSON)")
@@ -711,6 +720,12 @@ def main():
     # Update trends file for the dashboard
     logger.info("📈 Updating longitudinal trends...")
     update_trends(args.output, "data/trends.csv")
+    
+    logger.info("🚀 Exporting Light Mode data (Recent 7 Days)...")
+    export_recent_data(args.output, "web/public/audit_recent.csv")
+
+    logger.info("📸 Saving Daily Snapshot...")
+    save_snapshot(args.output)
     
     logger.info("🧠 Running AI Analyst...")
     generate_weekly_report(args.output, "data/latest_report.md")

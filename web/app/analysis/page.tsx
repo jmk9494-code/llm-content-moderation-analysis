@@ -12,21 +12,12 @@ import {
 } from 'recharts';
 import { calculateFleissKappa } from '@/lib/statistics';
 import Papa from 'papaparse';
+import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
+import { DeepInsights } from "@/components/DeepInsights";
 
 
 // --- Types ---
-type AuditRow = {
-    model: string;
-    verdict: string;
-    prompt: string;
-    response: string;
-    cost: number;
-    category: string;
-    case_id: string;
-    prompt_id?: string;
-    timestamp?: string;
-};
-
+// --- Types ---
 type Cluster = {
     cluster_id: number;
     size: number;
@@ -45,12 +36,14 @@ type BiasRow = {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AnalysisPage() {
-    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'prompts'>('summary');
+    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'insights'>('summary');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
     const [clusters, setClusters] = useState<Cluster[]>([]);
     const [biasData, setBiasData] = useState<BiasRow[]>([]);
+    const [driftData, setDriftData] = useState<any[]>([]);
+    const [consensusData, setConsensusData] = useState<any[]>([]);
     const [reportContent, setReportContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
@@ -60,9 +53,9 @@ export default function AnalysisPage() {
     useEffect(() => {
         const loadAll = async () => {
             try {
-                const r1 = await fetch('/api/audit');
-                const j1 = await r1.json();
-                if (j1.data) setAuditData(j1.data);
+                // Fetch audit data client-side to avoid API limits
+                const data = await fetchAuditData();
+                setAuditData(data);
 
                 try {
                     const r2 = await fetch('/clusters.json');
@@ -88,6 +81,25 @@ export default function AnalysisPage() {
                         });
                     }
                 } catch (e) { console.warn("Bias log not found"); }
+
+                try {
+                    const r5 = await fetch('/drift_report.json');
+                    if (r5.ok) setDriftData(await r5.json());
+                } catch (e) { console.warn("Drift report not found"); }
+
+                try {
+                    const r6 = await fetch('/consensus_bias.csv');
+                    if (r6.ok) {
+                        const csvText = await r6.text();
+                        Papa.parse(csvText, {
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results: any) => {
+                                setConsensusData(results.data);
+                            }
+                        });
+                    }
+                } catch (e) { console.warn("Consensus data not found"); }
 
             } catch (err) {
                 console.error("Failed to load data", err);
@@ -223,7 +235,9 @@ export default function AnalysisPage() {
                     <TabButton active={activeTab === 'triggers'} onClick={() => setActiveTab('triggers')} icon={<AlertTriangle className="w-4 h-4" />}>Trigger List</TabButton>
                     <TabButton active={activeTab === 'alignment'} onClick={() => setActiveTab('alignment')} icon={<Zap className="w-4 h-4" />}>Alignment Tax</TabButton>
                     <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>Semantic Clusters</TabButton>
+                    <TabButton active={activeTab === 'clusters'} onClick={() => setActiveTab('clusters')} icon={<Tag className="w-4 h-4" />}>Semantic Clusters</TabButton>
                     <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>Bias Compass</TabButton>
+                    <TabButton active={activeTab === 'insights'} onClick={() => setActiveTab('insights')} icon={<TrendingUp className="w-4 h-4" />}>Deep Insights</TabButton>
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</TabButton>
                     <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>Longitudinal</TabButton>
                 </div>
@@ -301,6 +315,7 @@ export default function AnalysisPage() {
 
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
                     {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
+                    {activeTab === 'insights' && <DeepInsights driftData={driftData} consensusData={consensusData} />}
 
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">

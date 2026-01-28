@@ -11,7 +11,29 @@ sns.set_context("paper")
 sns.set_style("whitegrid")
 plt.rcParams['font.family'] = 'serif'
 
+import json
+
 DB_PATH = "audit.db"
+MODELS_PATH = "data/models.json"
+
+def load_model_registry():
+    if not os.path.exists(MODELS_PATH):
+        return {}
+    with open(MODELS_PATH, 'r') as f:
+        models = json.load(f)
+        return {m['id']: m for m in models}
+
+MODEL_REGISTRY = load_model_registry()
+
+def get_display_name(model_id):
+    if model_id in MODEL_REGISTRY:
+        return MODEL_REGISTRY[model_id].get('display_name', MODEL_REGISTRY[model_id].get('name', model_id))
+    return model_id.split('/')[-1]
+
+def get_strict_id(model_id):
+    if model_id in MODEL_REGISTRY:
+        return MODEL_REGISTRY[model_id].get('strict_id', model_id)
+    return model_id
 
 def load_data():
     """
@@ -98,7 +120,7 @@ def plot_pareto_static(metrics_df, output_path="paper/figures/pareto_alignment.p
         plt.text(
             row["False Refusal Rate (FRR)"] + 0.01, 
             row["True Refusal Rate (TRR)"] + 0.01, 
-            row["Model"].split('/')[-1], 
+            get_display_name(row["Model"]), 
             fontsize=9
         )
         
@@ -128,7 +150,14 @@ def plot_pareto_interactive(metrics_df, output_path="visuals/pareto_alignment.ht
         hover_data=["Total Benign", "Total Sensitive"],
         title="Alignment Tax (Pareto Frontier)",
         range_x=[0, 1],
-        range_y=[0, 1]
+        range_y=[0, 1],
+        hover_name="Model"
+    )
+    
+    # Update hover template to show strict ID
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>Strict ID: %{customdata[0]}<br>FRR: %{x:.2f}<br>TRR: %{y:.2f}",
+        customdata=[[get_strict_id(m) for m in metrics_df['Model']]]
     )
     
     fig.update_traces(marker=dict(size=12, line=dict(width=2, color='DarkSlateGrey')))

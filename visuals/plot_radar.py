@@ -4,8 +4,25 @@ import pandas as pd
 import plotly.graph_objects as go
 from sqlalchemy import create_engine
 
+import json
+
 DB_PATH = "audit.db"
+MODELS_PATH = "data/models.json"
 OUTPUT_PATH = "visuals/polyglot_radar.html"
+
+def load_model_registry():
+    if not os.path.exists(MODELS_PATH):
+        return {}
+    with open(MODELS_PATH, 'r') as f:
+        models = json.load(f)
+        return {m['id']: m for m in models}
+
+MODEL_REGISTRY = load_model_registry()
+
+def get_display_name(model_id):
+    if model_id in MODEL_REGISTRY:
+        return MODEL_REGISTRY[model_id].get('display_name', MODEL_REGISTRY[model_id].get('name', model_id))
+    return model_id.split('/')[-1]
 
 def load_polyglot_data():
     if not os.path.exists(DB_PATH):
@@ -84,7 +101,9 @@ def generate_radar_chart(df):
             r=subset['is_refusal'],
             theta=subset['language'],
             fill='toself',
-            name=model.split('/')[-1]
+            theta=subset['language'],
+            fill='toself',
+            name=get_display_name(model)
         ))
         
     fig.update_layout(

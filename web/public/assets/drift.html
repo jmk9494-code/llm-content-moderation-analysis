@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Safety Drift Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>body { font-family: sans-serif; margin: 0; padding: 20px; }</style>
+</head>
+<body>
+    <h2>🛡️ Safety Drift: Refusal Rate Over Time</h2>
+    <div id="driftChart" style="width:100%;height:600px;"></div>
+    <script>
+        var traces = [{"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "' which constitutes a negative stereotype and violates the Hate Speech policy.\"\""}, {"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "01-ai/yi-34b-chat"}, {"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "118"}, {"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "269"}, {"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "Unknown"}, {"x": ["2026-01-27"], "y": [0.8527], "type": "scatter", "mode": "lines+markers", "name": "anthropic/claude-3-haiku"}, {"x": ["2026-01-27"], "y": [0.7972], "type": "scatter", "mode": "lines+markers", "name": "anthropic/claude-3.5-haiku"}, {"x": ["2026-01-27"], "y": [0.5766], "type": "scatter", "mode": "lines+markers", "name": "anthropic/claude-3.5-sonnet"}, {"x": ["2026-01-27"], "y": [0.789], "type": "scatter", "mode": "lines+markers", "name": "deepseek/deepseek-chat"}, {"x": ["2026-01-27"], "y": [0.6796], "type": "scatter", "mode": "lines+markers", "name": "google/gemini-2.0-flash-001"}, {"x": ["2026-01-27"], "y": [0.8635], "type": "scatter", "mode": "lines+markers", "name": "google/gemini-2.0-flash-lite-001"}, {"x": ["2026-01-27"], "y": [0.3045], "type": "scatter", "mode": "lines+markers", "name": "google/gemini-2.5-pro"}, {"x": ["2026-01-27"], "y": [0.8222], "type": "scatter", "mode": "lines+markers", "name": "mistralai/ministral-8b"}, {"x": ["2026-01-27"], "y": [0.8149], "type": "scatter", "mode": "lines+markers", "name": "mistralai/mistral-large"}, {"x": ["2026-01-27"], "y": [0.0], "type": "scatter", "mode": "lines+markers", "name": "mistralai/mistral-medium"}, {"x": ["2026-01-27"], "y": [0.7675], "type": "scatter", "mode": "lines+markers", "name": "mistralai/mistral-small-24b-instruct-2501"}, {"x": ["2026-01-27"], "y": [0.717], "type": "scatter", "mode": "lines+markers", "name": "openai/gpt-4o"}, {"x": ["2026-01-27"], "y": [0.8384], "type": "scatter", "mode": "lines+markers", "name": "openai/gpt-4o-mini"}, {"x": ["2026-01-27"], "y": [0.6953], "type": "scatter", "mode": "lines+markers", "name": "qwen/qwen-2.5-72b-instruct"}, {"x": ["2026-01-27"], "y": [0.882], "type": "scatter", "mode": "lines+markers", "name": "qwen/qwen-2.5-7b-instruct"}, {"x": ["2026-01-27"], "y": [0.8306], "type": "scatter", "mode": "lines+markers", "name": "qwen/qwen-plus"}, {"x": ["2026-01-27"], "y": [0.7634], "type": "scatter", "mode": "lines+markers", "name": "x-ai/grok-3-mini"}];
+        
+        var layout = {
+            title: 'Refusal Rate by Model',
+            xaxis: { title: 'Audit Date' },
+            yaxis: { title: 'Refusal Rate', tickformat: '.0%', range: [0, 1] },
+            hovermode: 'closest'
+        };
+        
+        Plotly.newPlot('driftChart', traces, layout);
+    </script>
+</body>
+</html>

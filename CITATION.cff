@@ -1,16 +1,20 @@
 cff-version: 1.2.0
+title: "LLM Content Moderation Analysis Platform"
 message: "If you use this software, please cite it as below."
+type: software
 authors:
-- family-names: "Kandel"
-  given-names: "J."
-title: "LLM Content Moderation Analysis Instrument"
-version: 1.0.0
-date-released: 2026-01-27
-url: "https://github.com/jmk9494-code/llm-content-moderation-analysis"
-preferred-citation:
-  type: article
-  authors:
   - family-names: "Kandel"
     given-names: "J."
-  title: "Quantifying the Alignment Tax: A Multi-Lingual Audit of LLM Censorship"
-  year: 2026
+    flavour: "Research Lead"
+repository-code: "https://github.com/jmk9494-code/llm-content-moderation-analysis"
+url: "https://llm-content-moderation-analysis.vercel.app"
+abstract: "A comprehensive research platform for auditing and analyzing how Large Language Models handle content moderation decisions, featuring multi-model auditing, bias analysis, and statistical significance testing."
+keywords:
+  - "llm"
+  - "content-moderation"
+  - "bias-analysis"
+  - "ai-safety"
+  - "audit"
+license: "MIT"
+version: "1.0.0"
+date-released: 2026-01-27

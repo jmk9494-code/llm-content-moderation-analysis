@@ -211,3 +211,4 @@ audit.db
 # Deep Dive Analysis Artifacts
 visuals/embeddings.cache
 data/external/
+data/sensitive_topics.json

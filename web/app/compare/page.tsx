@@ -4,18 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { ChevronDown, BarChart2, AlertCircle, CheckCircle, Zap, Shield, ArrowRightLeft, Search, Filter, Calendar, X } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
-type AuditRow = {
-    timestamp: string;
-    model: string;
-    case_id: string;
-    category: string;
-    verdict: string;
-    prompt: string;
-    response: string;
-    cost: number;
-    tokens_used: number;
-    latency_ms: number;
-};
+import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
 
 // Provider Logo Helper using LogoKit API
 const LOGOKIT_API_KEY = 'pk_fra468443f1ecbf16b1c64';
@@ -48,15 +37,14 @@ export default function ComparePage() {
 
     useEffect(() => {
         setIsClient(true);
-        fetch('/api/audit')
-            .then(r => r.json())
-            .then(res => {
+        fetchAuditData()
+            .then(rows => {
                 // Filter out ERROR verdicts (broken models)
-                const rows = (res.data || []).filter((r: AuditRow) => r.verdict !== 'ERROR');
-                setData(rows);
+                const cleanRows = (rows || []).filter((r: AuditRow) => r.verdict !== 'ERROR');
+                setData(cleanRows);
 
                 // Set defaults: first two unique models
-                const uniqueModels = Array.from(new Set(rows.map((r: AuditRow) => r.model))) as string[];
+                const uniqueModels = Array.from(new Set(cleanRows.map((r: AuditRow) => r.model))) as string[];
                 if (uniqueModels.length > 0) setModelA(uniqueModels[0]);
                 if (uniqueModels.length > 1) setModelB(uniqueModels[1]);
                 else if (uniqueModels.length > 0) setModelB(uniqueModels[0]);

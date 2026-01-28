@@ -1,6 +1,5 @@
 import pandas as pd
-from src.analyst import generate_weekly_report
-from src.analyst import generate_weekly_report
+from src.analysis.analyst import generate_weekly_report
 from src.audit_runner import update_trends
 
 def finalize():

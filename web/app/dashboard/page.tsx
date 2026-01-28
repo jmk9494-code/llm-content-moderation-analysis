@@ -14,18 +14,10 @@ import { DataTable, SortableHeader } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ReferenceLine } from 'recharts';
 
-export type AuditRow = {
-  timestamp: string;
-  model: string;
-  case_id: string;
-  category: string;
-  verdict: string;
-  prompt: string;
-  response: string;
-  cost: number;
-  tokens_used: number;
-  latency_ms: number;
-};
+import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
+
+// Type AuditRow is now imported from @/lib/data-loading
+
 
 // Columns for Audit Log table
 const auditColumns: ColumnDef<AuditRow>[] = [
@@ -91,14 +83,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // 1. Fetch Audit Data
-    fetch('/api/audit')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) {
-          const cleanData = json.data.filter((d: AuditRow) => d.verdict !== 'ERROR');
-          setData(cleanData);
-          addToast({ type: 'success', title: 'Data loaded', message: `${cleanData.length} audit records` });
-        }
+    // 1. Fetch Audit Data (Client-side)
+    fetchAuditData()
+      .then((cleanData) => {
+        setData(cleanData);
+        addToast({ type: 'success', title: 'Data loaded', message: `${cleanData.length} audit records` });
         setLoading(false);
       })
       .catch((err) => {

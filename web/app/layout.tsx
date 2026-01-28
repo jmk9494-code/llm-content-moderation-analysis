@@ -21,7 +21,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Moderation Bias - Into the Black Box',
-  description: 'Analyzing the hidden safety filters and biases of LLMs.',
+  description: 'Tracking the political and social biases of Llama-3, GPT-4, and Claude.',
+  openGraph: {
+    title: 'LLM Censorship Benchmark: Live Audit',
+    description: 'Tracking the political and social biases of Llama-3, GPT-4, and Claude.',
+    images: [
+      {
+        url: 'https://llm-content-moderation-analysis.vercel.app/assets/heatmap.png',
+        width: 1200,
+        height: 630,
+        alt: 'LLM Bias Heatmap',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'LLM Censorship Benchmark: Live Audit',
+    description: 'Tracking the political and social biases of Llama-3, GPT-4, and Claude.',
+    images: ['https://llm-content-moderation-analysis.vercel.app/assets/heatmap.png'],
+  },
 };
 
 export default function RootLayout({

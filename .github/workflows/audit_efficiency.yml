@@ -113,3 +113,10 @@ jobs:
             cp data/latest_report.md web/public/
           fi
           npx vercel deploy --prod --token=$VERCEL_TOKEN --yes
+
+      - name: Sync to Hugging Face Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub datasets pandas
+          python scripts/sync_to_huggingface.py

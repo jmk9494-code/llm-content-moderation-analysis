@@ -1,7 +1,9 @@
 [
     {
         "id": "openai/gpt-4o",
+        "strict_id": "openai/gpt-4o",
         "name": "GPT-4o",
+        "display_name": "GPT-4o",
         "provider": "OpenAI",
         "region": "US",
         "tier": "High",
@@ -10,7 +12,9 @@
     },
     {
         "id": "openai/gpt-4o-mini",
+        "strict_id": "openai/gpt-4o-mini",
         "name": "GPT-4o Mini",
+        "display_name": "GPT-4o Mini",
         "provider": "OpenAI",
         "region": "US",
         "tier": "Low",
@@ -19,7 +23,9 @@
     },
     {
         "id": "anthropic/claude-3.5-sonnet",
+        "strict_id": "anthropic/claude-3.5-sonnet",
         "name": "Claude 3.5 Sonnet",
+        "display_name": "Claude 3.5 Sonnet",
         "provider": "Anthropic",
         "region": "US",
         "tier": "High",
@@ -28,7 +34,9 @@
     },
     {
         "id": "anthropic/claude-3-haiku",
+        "strict_id": "anthropic/claude-3-haiku",
         "name": "Claude 3 Haiku",
+        "display_name": "Claude 3 Haiku",
         "provider": "Anthropic",
         "region": "US",
         "tier": "Low",
@@ -37,7 +45,9 @@
     },
     {
         "id": "google/gemini-2.0-flash-001",
+        "strict_id": "google/gemini-2.0-flash-001",
         "name": "Gemini 2.0 Flash",
+        "display_name": "Gemini 2.0 Flash",
         "provider": "Google",
         "region": "US",
         "tier": "Mid",
@@ -46,7 +56,9 @@
     },
     {
         "id": "deepseek/deepseek-chat",
+        "strict_id": "deepseek/deepseek-chat",
         "name": "DeepSeek V3",
+        "display_name": "DeepSeek V3",
         "provider": "DeepSeek",
         "region": "China",
         "tier": "High",
@@ -55,7 +67,9 @@
     },
     {
         "id": "qwen/qwen-2.5-72b-instruct",
+        "strict_id": "qwen/qwen-2.5-72b-instruct",
         "name": "Qwen 2.5 72B",
+        "display_name": "Qwen 2.5 72B",
         "provider": "Alibaba",
         "region": "China",
         "tier": "High",
@@ -64,7 +78,9 @@
     },
     {
         "id": "qwen/qwen-2.5-7b-instruct",
+        "strict_id": "qwen/qwen-2.5-7b-instruct",
         "name": "Qwen 2.5 7B",
+        "display_name": "Qwen 2.5 7B",
         "provider": "Alibaba",
         "region": "China",
         "tier": "Low",
@@ -73,7 +89,9 @@
     },
     {
         "id": "01-ai/yi-34b-chat",
+        "strict_id": "01-ai/yi-34b-chat",
         "name": "Yi 34B",
+        "display_name": "Yi 34B",
         "provider": "01.AI",
         "region": "China",
         "tier": "Mid",
@@ -82,7 +100,9 @@
     },
     {
         "id": "mistralai/mistral-large",
+        "strict_id": "mistralai/mistral-large",
         "name": "Mistral Large",
+        "display_name": "Mistral Large",
         "provider": "Mistral AI",
         "region": "Europe",
         "tier": "High",
@@ -91,7 +111,9 @@
     },
     {
         "id": "mistralai/mistral-medium",
+        "strict_id": "mistralai/mistral-medium",
         "name": "Mistral Medium",
+        "display_name": "Mistral Medium",
         "provider": "Mistral AI",
         "region": "Europe",
         "tier": "Mid",
@@ -100,7 +122,9 @@
     },
     {
         "id": "google/gemini-2.5-pro",
+        "strict_id": "google/gemini-2.5-pro",
         "name": "Gemini 2.5 Pro",
+        "display_name": "Gemini 2.5 Pro",
         "provider": "Google",
         "region": "US",
         "tier": "High",
@@ -109,7 +133,9 @@
     },
     {
         "id": "google/gemini-2.0-flash-lite-001",
+        "strict_id": "google/gemini-2.0-flash-lite-001",
         "name": "Gemini 2.0 Flash Lite",
+        "display_name": "Gemini 2.0 Flash Lite",
         "provider": "Google",
         "region": "US",
         "tier": "Low",
@@ -118,7 +144,9 @@
     },
     {
         "id": "anthropic/claude-3.5-haiku",
+        "strict_id": "anthropic/claude-3.5-haiku",
         "name": "Claude 3.5 Haiku",
+        "display_name": "Claude 3.5 Haiku",
         "provider": "Anthropic",
         "region": "US",
         "tier": "Mid",
@@ -127,7 +155,9 @@
     },
     {
         "id": "mistralai/mistral-small-24b-instruct-2501",
+        "strict_id": "mistralai/mistral-small-24b-instruct-2501",
         "name": "Mistral Small 3",
+        "display_name": "Mistral Small 3",
         "provider": "Mistral AI",
         "region": "Europe",
         "tier": "Mid",
@@ -136,7 +166,9 @@
     },
     {
         "id": "mistralai/ministral-8b",
+        "strict_id": "mistralai/ministral-8b",
         "name": "Ministral 8B",
+        "display_name": "Ministral 8B",
         "provider": "Mistral AI",
         "region": "Europe",
         "tier": "Low",
@@ -145,7 +177,9 @@
     },
     {
         "id": "qwen/qwen-plus",
+        "strict_id": "qwen/qwen-plus",
         "name": "Qwen Plus",
+        "display_name": "Qwen Plus",
         "provider": "Alibaba",
         "region": "China",
         "tier": "Mid",
@@ -154,7 +188,9 @@
     },
     {
         "id": "x-ai/grok-3",
+        "strict_id": "x-ai/grok-3",
         "name": "Grok 3",
+        "display_name": "Grok 3",
         "provider": "xAI",
         "region": "US",
         "tier": "Mid",
@@ -163,7 +199,9 @@
     },
     {
         "id": "x-ai/grok-3-mini",
+        "strict_id": "x-ai/grok-3-mini",
         "name": "Grok 3 Mini",
+        "display_name": "Grok 3 Mini",
         "provider": "xAI",
         "region": "US",
         "tier": "Low",

@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/jmk9494-code/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![Dataset: Hugging Face](https://img.shields.io/badge/Dataset-Hugging%20Face-FFD21E)](https://huggingface.co/datasets/your-username/your-dataset)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
@@ -23,6 +24,10 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 - **Paternalism Detection** 👶 - Measures if models treat "Teenagers" differently than "Researchers".
 - **Evidence Locker** 📂 - Full transparency explorer for raw audit traces.
 - **Automated Benchmarks** 🤖 - Self-updating weekly audits via GitHub Actions.
+
+## 🔬 Methodology
+
+To minimize selection bias, sensitive topics (N=200) were grounded in Wikipedia's 'List of Controversial Issues' and filtered by search volume. We control for **System Prompt** variance by enforcing identical instructions across all models to ensure fair comparison.
 
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
