@@ -125,15 +125,26 @@ export default function AnalysisPage() {
         loadAll();
     }, []);
 
+    // Global Date Filter Logic
+    const filteredAuditData = useMemo(() => {
+        if (!dateRange.start && !dateRange.end) return auditData;
+        return auditData.filter((d: AuditRow) => {
+            const date = d.timestamp?.split('T')[0] || '';
+            if (dateRange.start && date < dateRange.start) return false;
+            if (dateRange.end && date > dateRange.end) return false;
+            return true;
+        });
+    }, [auditData, dateRange]);
+
     const stats = useMemo(() => {
-        if (auditData.length === 0) return null;
-        const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
-        const prompts = Array.from(new Set(auditData.map((d: AuditRow) => d.case_id || d.prompt_id || d.prompt)));
-        const reliability = calculateFleissKappa(auditData, models, prompts);
+        if (filteredAuditData.length === 0) return null;
+        const models = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.model)));
+        const prompts = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.case_id || d.prompt_id || d.prompt)));
+        const reliability = calculateFleissKappa(filteredAuditData, models, prompts);
 
         const distributionMap = new Map<string, number>();
         prompts.forEach(p => {
-            const relevant = auditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
+            const relevant = filteredAuditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
             if (relevant.length === 0) return;
             const safeCount = relevant.filter((d: AuditRow) => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
@@ -148,13 +159,13 @@ export default function AnalysisPage() {
         const distribution = Array.from(distributionMap.entries()).map(([name, value]) => ({ name, value }));
 
         return { reliability, models, prompts, distribution };
-    }, [auditData]);
+    }, [filteredAuditData]);
 
     const efficiencyData = useMemo(() => {
-        if (auditData.length === 0) return [];
-        const models = Array.from(new Set(auditData.map((d: AuditRow) => d.model)));
+        if (filteredAuditData.length === 0) return [];
+        const models = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.model)));
         return models.map(m => {
-            const rows = auditData.filter((d: AuditRow) => d.model === m);
+            const rows = filteredAuditData.filter((d: AuditRow) => d.model === m);
             const total = rows.length;
             const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict)).length;
             const cost = rows.reduce((acc: number, curr: AuditRow) => acc + (curr.cost || 0), 0);
@@ -166,16 +177,16 @@ export default function AnalysisPage() {
                 total
             };
         }).filter(m => m.total > 0);
-    }, [auditData]);
+    }, [filteredAuditData]);
 
     // Calculate Trigger Words (Top words in refused prompts)
     const triggerWords = useMemo(() => {
-        if (auditData.length === 0) return [];
+        if (filteredAuditData.length === 0) return [];
 
         const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'this', 'that', 'it', 'i', 'you', 'he', 'she', 'they', 'we', 'me', 'him', 'her', 'them', 'us', 'my', 'your', 'his', 'her', 'their', 'our', 'what', 'which', 'who', 'whom', 'whose', 'why', 'how', 'where', 'when', 'can', 'could', 'should', 'would', 'will', 'may', 'might', 'must', 'do', 'does', 'did', 'done', 'doing', 'have', 'has', 'had', 'having', 'not', 'no', 'yes', 'if', 'then', 'else', 'from', 'as', 'so', 'than', 'just', 'very', 'really', 'too', 'much', 'many', 'more', 'most', 'some', 'any', 'all', 'none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'make', 'write', 'create', 'generate', 'tell', 'me', 'about', 'like', 'know']);
 
         const wordCounts: Record<string, number> = {};
-        const refusedPrompts = auditData.filter(d => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict));
+        const refusedPrompts = filteredAuditData.filter(d => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict));
 
         refusedPrompts.forEach(row => {
             if (!row.prompt) return;
@@ -191,13 +202,12 @@ export default function AnalysisPage() {
             .map(([word, count]) => ({ word, count }))
             .sort((a, b) => b.count - a.count)
             .slice(0, 30); // Top 30 triggers
-    }, [auditData]);
+    }, [filteredAuditData]);
 
     const longitudinalData = useMemo(() => {
-        if (auditData.length === 0) return { chartData: [], activeModels: [] };
-        let filtered = auditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
-        if (dateRange.start) filtered = filtered.filter((d: AuditRow) => (d.timestamp?.split('T')[0] || '') >= dateRange.start);
-        if (dateRange.end) filtered = filtered.filter((d: AuditRow) => (d.timestamp?.split('T')[0] || '') <= dateRange.end);
+        if (filteredAuditData.length === 0) return { chartData: [], activeModels: [] };
+        // filteredAuditData is already date-filtered
+        let filtered = filteredAuditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
 
         const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown'))).filter(d => d !== 'Unknown').sort();
         const activeModels = longitudinalModels.length > 0 ? longitudinalModels : Array.from(new Set(filtered.map(d => d.model)));
@@ -216,7 +226,7 @@ export default function AnalysisPage() {
             return row;
         });
         return { chartData, activeModels };
-    }, [auditData, longitudinalModels, dateRange]);
+    }, [filteredAuditData, longitudinalModels]);
 
     // --- Actions ---
     const downloadAuditSample = () => {
@@ -290,9 +300,35 @@ export default function AnalysisPage() {
                             Advanced metrics, academic visuals, and automated research insights.
                         </p>
                     </div>
-                    <Link href="/dashboard" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                        &larr; Back to Dashboard
-                    </Link>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            <input
+                                type="date"
+                                className="border-none bg-transparent text-slate-600 text-xs focus:ring-0 cursor-pointer"
+                                value={dateRange.start}
+                                onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            />
+                            <span className="text-slate-300">&mdash;</span>
+                            <input
+                                type="date"
+                                className="border-none bg-transparent text-slate-600 text-xs focus:ring-0 cursor-pointer"
+                                value={dateRange.end}
+                                onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            />
+                            {(dateRange.start || dateRange.end) && (
+                                <button
+                                    onClick={() => setDateRange({ start: '', end: '' })}
+                                    className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-bold"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
+                        <Link href="/dashboard" className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                            &larr; Back to Dashboard
+                        </Link>
+                    </div>
                 </header>
 
                 {/* Tabs */}
@@ -306,12 +342,12 @@ export default function AnalysisPage() {
                     <TabButton active={activeTab === 'political'} onClick={() => setActiveTab('political')} icon={<Compass className="w-4 h-4" />}>Political Compass</TabButton>
                     <TabButton active={activeTab === 'paternalism'} onClick={() => setActiveTab('paternalism')} icon={<Info className="w-4 h-4" />}>Paternalism</TabButton>
                     <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
-                    <TabButton active={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')} icon={<Search className="w-4 h-4" />}>Evidence</TabButton>
 
                     <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>Bias Compass</TabButton>
                     <TabButton active={activeTab === 'insights'} onClick={() => setActiveTab('insights')} icon={<TrendingUp className="w-4 h-4" />}>Deep Insights</TabButton>
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</TabButton>
                     <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>Longitudinal</TabButton>
+                    <TabButton active={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')} icon={<Search className="w-4 h-4" />}>Evidence</TabButton>
                 </div>
 
                 {/* Content */}
@@ -337,8 +373,8 @@ export default function AnalysisPage() {
 
                     {activeTab === 'triggers' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-red-50 rounded-lg border border-red-100 text-sm text-red-800">
-                                <strong>Figure 4: The Trigger List.</strong> This chart reveals the most common words found in prompts that were refused by models. These "trigger words" are often strong indicators of what topics models are sensitive to.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Trigger List.</strong> The most common words found in prompts that were refused by models. These "trigger words" are often strong indicators of what topics models are sensitive to.
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-6">Top Trigger Words</h3>
@@ -359,8 +395,8 @@ export default function AnalysisPage() {
 
                     {activeTab === 'alignment' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100 text-sm text-indigo-800">
-                                <strong>Figure: The Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
                             </div>
                             {/* Option A: The interactive Pareto chart if iframe preferred */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[700px]">
@@ -389,8 +425,8 @@ export default function AnalysisPage() {
                     {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
                     {activeTab === 'insights' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-sky-50 rounded-lg border border-sky-100 text-sm text-sky-800">
-                                <strong>Figure: Deep Insights.</strong> Longitudinal drift and consensus analysis.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Deep Insights.</strong> Longitudinal drift and consensus analysis.
                             </div>
                             <DeepInsights driftData={driftData} consensusData={consensusData} />
                         </div>
@@ -399,8 +435,8 @@ export default function AnalysisPage() {
                     {/* New Components */}
                     {activeTab === 'political' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-800">
-                                <strong>Figure: Political Compass.</strong> Do models have political opinions? We test this by asking 30 standard political questions. The results map the model's "personality" on Economic (Left/Right) and Social (Libertarian/Authoritarian) axes.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Political Compass.</strong> Do models have political opinions? We test this by asking 30 standard political questions. The results map the model's "personality" on Economic (Left/Right) and Social (Libertarian/Authoritarian) axes.
                             </div>
                             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                                 <div className="flex justify-between items-center mb-4">
@@ -430,8 +466,8 @@ export default function AnalysisPage() {
 
                     {activeTab === 'paternalism' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 text-sm text-amber-800">
-                                <strong>Figure: Paternalism Audit.</strong> This test checks if models change their refusal behavior based on the user's persona (e.g., "Teenager" vs. "Authority Figure"). Ideally, safety rules should be consistent regardless of who is asking.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Paternalism Audit.</strong> This test checks if models change their refusal behavior based on the user's persona (e.g., "Teenager" vs. "Authority Figure"). Ideally, safety rules should be consistent regardless of who is asking.
                             </div>
                             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                                 <div className="flex justify-between items-center mb-4">
@@ -461,8 +497,8 @@ export default function AnalysisPage() {
 
                     {activeTab === 'significance' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-sm text-emerald-800">
-                                <strong>Figure: Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Pairwise Significance Results</h3>
@@ -500,8 +536,8 @@ export default function AnalysisPage() {
 
                     {activeTab === 'reliability' && stats && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-violet-50 rounded-lg border border-violet-100 text-sm text-violet-800">
-                                <strong>Figure: Reliability Score.</strong> Measures consistency across repeated prompts.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Reliability Score.</strong> Measures consistency across repeated prompts.
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-2">Fleiss' Kappa Score</h3>
@@ -562,34 +598,16 @@ export default function AnalysisPage() {
 
                     {activeTab === 'longitudinal' && (
                         <div className="space-y-6">
-                            <div className="p-4 bg-fuchsia-50 rounded-lg border border-fuchsia-100 text-sm text-fuchsia-800">
-                                <strong>Figure: Longitudinal Analysis.</strong> Tracks refusal rates over time to detect drift.
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Longitudinal Analysis.</strong> Tracks refusal rates over time to detect drift.
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                                     <h3 className="text-lg font-bold">Refusal Rate Over Time</h3>
                                     <div className="flex items-center gap-2 text-sm">
                                         <span className="text-slate-500 font-medium uppercase text-xs">Filter by Date:</span>
-                                        <input
-                                            type="date"
-                                            className="border border-slate-200 rounded px-2 py-1 text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                            value={dateRange.start}
-                                            onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                        />
-                                        <span className="text-slate-300">&mdash;</span>
-                                        <input
-                                            type="date"
-                                            className="border border-slate-200 rounded px-2 py-1 text-slate-600 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                                            value={dateRange.end}
-                                            onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                        />
                                         {(dateRange.start || dateRange.end) && (
-                                            <button
-                                                onClick={() => setDateRange({ start: '', end: '' })}
-                                                className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-bold"
-                                            >
-                                                CLEAR
-                                            </button>
+                                            <span className="text-xs text-slate-400 italic">Global filtered applied</span>
                                         )}
                                     </div>
                                 </div>
@@ -638,8 +656,8 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     const pieData = clusters.map((c, i) => ({ name: `Cluster ${i + 1}`, value: c.size, keywords: c.keywords.join(', ') }));
     return (
         <div className="space-y-6">
-            <div className="p-4 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-100">
-                <strong>Figure: Semantic Clusters.</strong> Groups common refusal themes.
+            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                <strong>Semantic Clusters.</strong> Groups common refusal themes.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -677,7 +695,7 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
 
     return (
         <div className="space-y-6">
-            <div className="p-4 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-100 leading-relaxed">
+            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
                 <div className="font-bold mb-1 flex items-center gap-2"><Compass className="w-4 h-4" /> Understanding the Bias Compass</div>
                 <p>This chart maps model refusal reasoning onto two primary axes:</p>
                 <ul className="mt-2 space-y-1 list-disc ml-5">
