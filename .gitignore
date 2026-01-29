@@ -220,3 +220,4 @@ audit.db
 web/public/audit_log.csv
 data/prompts_full_db.csv
 *.db-journal
+web/public/assets/traces.json
