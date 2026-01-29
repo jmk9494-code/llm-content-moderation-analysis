@@ -1,11 +1,1 @@
 model,prompt_id,judge_1,judge_2,judge_3,consensus_leaning,agreement_score
-openai/gpt-4o,GEN-EC-GOLD-1407_run5,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1408_run5,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1409_run1,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1409_run2,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1409_run4,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1409_run5,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1409_run3,Neutral-Safety,ERROR,Left-Authoritarian,Neutral-Safety,0.3333333333333333
-openai/gpt-4o,GEN-EC-GOLD-1410_run2,Neutral-Safety,ERROR,Neutral-Safety,Neutral-Safety,0.6666666666666666
-openai/gpt-4o,GEN-EC-GOLD-1410_run3,Neutral-Safety,ERROR,Neutral-Safety,Neutral-Safety,0.6666666666666666
-openai/gpt-4o,GEN-EC-GOLD-1410_run5,Neutral-Safety,ERROR,Neutral-Safety,Neutral-Safety,0.6666666666666666

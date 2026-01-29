@@ -117,6 +117,11 @@ export default function AnalysisPage() {
                     }
                 } catch (e) { console.warn("P-Values CSV not found"); }
 
+                try {
+                    const r8 = await fetch('/clusters.json');
+                    if (r8.ok) setClusters(await r8.json());
+                } catch (e) { console.warn("Clusters JSON not found"); }
+
             } catch (err) {
                 console.error("Failed to load data", err);
             } finally {
@@ -165,7 +170,8 @@ export default function AnalysisPage() {
     const efficiencyData = useMemo(() => {
         if (filteredAuditData.length === 0) return [];
         const models = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.model)));
-        return models.map(m => {
+        console.log("Calculated Efficiency Data Models:", models);
+        const data = models.map(m => {
             const rows = filteredAuditData.filter((d: AuditRow) => d.model === m);
             const total = rows.length;
             const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict)).length;
@@ -178,6 +184,8 @@ export default function AnalysisPage() {
                 total
             };
         }).filter(m => m.total > 0);
+        console.log("Final Efficiency Data:", data);
+        return data;
     }, [filteredAuditData]);
 
     // Calculate Trigger Words (Top words in refused prompts)
@@ -425,17 +433,23 @@ export default function AnalysisPage() {
                             {/* Option B: Simplified React Scatter if HTML fails or for quick view */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 h-[400px]">
                                 <h4 className="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wider">Simplified Scatter View</h4>
-                                <ResponsiveContainer width="100%" height="90%">
-                                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                        <CartesianGrid />
-                                        <XAxis type="number" dataKey="costPer1k" name="Cost" unit="$" label={{ value: 'Cost ($/1k)', position: 'bottom' }} />
-                                        <YAxis type="number" dataKey="refusalRate" name="Refusals" unit="%" label={{ value: 'Refusal Rate %', angle: -90, position: 'insideLeft' }} />
-                                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
-                                        <Scatter name="Models" data={efficiencyData} fill="#8884d8">
-                                            {efficiencyData.map((e, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                        </Scatter>
-                                    </ScatterChart>
-                                </ResponsiveContainer>
+                                {efficiencyData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="90%">
+                                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                            <CartesianGrid />
+                                            <XAxis type="number" dataKey="costPer1k" name="Cost" unit="$" label={{ value: 'Cost ($/1k)', position: 'bottom' }} />
+                                            <YAxis type="number" dataKey="refusalRate" name="Refusals" unit="%" label={{ value: 'Refusal Rate %', angle: -90, position: 'insideLeft' }} />
+                                            <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
+                                            <Scatter name="Models" data={efficiencyData} fill="#8884d8">
+                                                {efficiencyData.map((e, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                            </Scatter>
+                                        </ScatterChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-slate-400">
+                                        No efficiency data available
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

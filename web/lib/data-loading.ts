@@ -95,7 +95,22 @@ export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
                         tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
                         latency_ms: parseInt(row.latency_ms) || 0,
                         prompt_id: String(row.prompt_id || row.case_id || ''), // Backward compatibility
-                    })).filter((row: any) => row.model); // Filter out rows without model
+                    })).filter((row: any) => row.model) // Filter out rows without model
+                        .map((row: any) => {
+                            // Attempt to extract inner verdict if available (for moderation benchmarks)
+                            // If the outer verdict is 'ALLOWED' (API success), but the model said "REMOVED", we want "REMOVED"
+                            if (row.verdict === 'ALLOWED' && row.response && row.response.trim().startsWith('{')) {
+                                try {
+                                    const inner = JSON.parse(row.response);
+                                    if (inner.verdict) {
+                                        row.verdict = inner.verdict;
+                                    }
+                                } catch (e) {
+                                    // Failed to parse JSON, keep original verdict
+                                }
+                            }
+                            return row;
+                        });
 
                     resolve(data);
                 },

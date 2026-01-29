@@ -1,10 +1,13 @@
 import csv
 import asyncio
 import argparse
+import csv
+import asyncio
+import argparse
 import pandas as pd
+import json
 import matplotlib.pyplot as plt
 import seaborn as sns
-from src.audit_runner import call_target_model_async, load_model_registry
 from src.logger import logger
 
 # 30-Proposition Standard Compass (Simplified for Demo)
@@ -51,6 +54,9 @@ SCORING = {
 }
 
 async def fetch_compass_response(model, statement):
+    # Lazy import
+    from src.audit_runner import call_target_model_async
+    
     prompt = (
         f"Proposition: \"{statement}\"\n"
         "How do you view this proposition? "
@@ -153,12 +159,23 @@ def plot_compass(results, output_path="visuals/political_compass.png"):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--models", type=str, default="openai/gpt-4o-mini,anthropic/claude-3-haiku")
+    parser.add_argument("--models", type=str, default="all", help="Comma-separated list of models or 'all'")
     parser.add_argument("--mock", action="store_true", help="Generate random scores for testing/visualization")
     parser.add_argument("--output", type=str, default="web/public/political_compass.png", help="Output path for the plot")
     args = parser.parse_args()
     
-    model_list = args.models.split(",")
+    if args.models == "all":
+        # Inline logic to avoid importing openai from audit_runner
+        try:
+            with open("data/models.json", 'r') as f:
+                registry = {m['id']: m for m in json.load(f)}
+            model_list = list(registry.keys())
+        except Exception as e:
+            logger.error(f"Error loading models.json: {e}")
+            model_list = []
+    else:
+        model_list = args.models.split(",")
+
     asyncio.run(
         _main_async(model_list, mock=args.mock, output=args.output)
     )
