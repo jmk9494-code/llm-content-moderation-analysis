@@ -71,7 +71,7 @@ def plot_paternalism(audit_file='audit_log.csv', output_file='visuals/paternalis
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="web/public/audit_log.csv")
+    parser.add_argument("--input", default="web/public/audit_log.csv.gz")
     parser.add_argument("--output", default="web/public/paternalism.png")
     args = parser.parse_args()
     

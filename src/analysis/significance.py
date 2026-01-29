@@ -5,7 +5,7 @@ import os
 from statsmodels.stats.contingency_tables import mcnemar
 
 # Standardized Path
-AUDIT_LOG_PATH = "web/public/audit_log.csv"
+AUDIT_LOG_PATH = "web/public/audit_log.csv.gz"
 OUTPUT_PATH = "web/public/assets/p_values.csv"
 
 def calculate_significance():

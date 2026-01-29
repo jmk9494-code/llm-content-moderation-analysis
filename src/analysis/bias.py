@@ -62,7 +62,7 @@ async def classify_bias(sem, row):
 
 async def run_bias_analysis():
     # Read audit log
-    df = pd.read_csv('web/public/audit_log.csv')
+    df = pd.read_csv('web/public/audit_log.csv.gz')
     
     # Filter for REMOVED only
     # Filter for refusal-like verdicts

@@ -102,7 +102,7 @@ def calculate_drift_stats(df):
     return results
 
 def run_drift_analysis():
-    csv_path = 'web/public/audit_log.csv'
+    csv_path = 'web/public/audit_log.csv.gz'
     if not os.path.exists(csv_path):
         csv_path = 'audit_log.csv'
         if not os.path.exists(csv_path):

@@ -32,7 +32,7 @@ def load_data():
     """
     Loads audit results from CSV.
     """
-    path = "web/public/audit_log.csv"
+    path = "web/public/audit_log.csv.gz"
     if not os.path.exists(path):
         path = "audit_log.csv"
         
