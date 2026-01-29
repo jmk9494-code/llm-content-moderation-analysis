@@ -84,7 +84,7 @@ export default function LandingPage() {
               <div className="text-slate-400">Models Tracked</div>
             </div>
             <div className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700 backdrop-blur-sm">
-              <div className="text-4xl font-bold text-amber-400 mb-2">10k+</div>
+              <div className="text-4xl font-bold text-amber-400 mb-2">100k+</div>
               <div className="text-slate-400">Data Points</div>
             </div>
           </div>

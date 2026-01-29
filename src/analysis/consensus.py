@@ -8,6 +8,8 @@ import numpy as np
 
 try:
     from openai import AsyncOpenAI
+    from dotenv import load_dotenv
+    load_dotenv()
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
@@ -66,12 +68,12 @@ async def run_consensus_analysis(limit=None):
         api_key=os.getenv("OPENROUTER_API_KEY"),
     )
 
-    csv_path = 'audit_log.csv'
+    csv_path = 'web/public/audit_log.csv.gz'
     if not os.path.exists(csv_path):
-        csv_path = 'web/public/audit_log.csv'
+        csv_path = 'audit_log.csv.gz'
     
     if not os.path.exists(csv_path):
-        print(f"❌ Could not find audit_log.csv")
+        print(f"❌ Could not find audit_log.csv.gz")
         return
 
     df = pd.read_csv(csv_path)

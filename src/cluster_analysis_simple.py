@@ -5,7 +5,9 @@ import collections
 import re
 import os
 
-INPUT_FILE = "web/public/audit_log.csv"
+import gzip
+
+INPUT_FILE = "web/public/audit_log.csv.gz"
 OUTPUT_CLUSTERS = "web/public/clusters.json"
 OUTPUT_SIMILARITY = "web/public/similarity.json"
 
@@ -30,7 +32,8 @@ def main():
     # 1. Read Data
     refusals = []
     try:
-        with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+        opener = gzip.open if INPUT_FILE.endswith('.gz') else open
+        with opener(INPUT_FILE, 'rt', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 v = row.get('verdict', '').upper()
