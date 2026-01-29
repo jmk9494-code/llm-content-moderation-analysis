@@ -43,12 +43,12 @@ export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
             console.warn("Failed to load traces.json, falling back to CSV", e);
         }
 
-        const file = useRecent ? '/audit_recent.csv' : '/audit_log.csv';
+        const file = useRecent ? '/audit_recent.csv' : '/audit_log.csv.gz';
         let response = await fetch(file);
 
-        // Fallback to full log if recent missing (e.g. first run)
-        if (!response.ok && useRecent) {
-            console.warn("Recent audit log not found, falling back to full history.");
+        // Fallback to uncompressed if .gz missing
+        if (!response.ok) {
+            console.warn(`Compressed file ${file} not found, falling back to .csv`);
             response = await fetch('/audit_log.csv');
         }
 
@@ -56,7 +56,19 @@ export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
             throw new Error(`Failed to fetch audit log: ${response.statusText}`);
         }
 
-        const csvText = await response.text();
+        let csvText = '';
+        if (response.headers.get('Content-Type')?.includes('gzip') || file.endsWith('.gz')) {
+            // Decompress stream
+            const ds = new DecompressionStream('gzip');
+            const decompressedStream = response.body?.pipeThrough(ds);
+            if (decompressedStream) {
+                csvText = await new Response(decompressedStream).text();
+            } else {
+                csvText = await response.text(); // Fallback
+            }
+        } else {
+            csvText = await response.text();
+        }
 
         return new Promise((resolve, reject) => {
             Papa.parse(csvText, {

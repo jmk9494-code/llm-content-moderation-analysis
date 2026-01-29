@@ -215,3 +215,8 @@ data/sensitive_topics.json
 
 # Local Database
 audit.db
+
+# Large Data Files
+web/public/audit_log.csv
+data/prompts_full_db.csv
+*.db-journal

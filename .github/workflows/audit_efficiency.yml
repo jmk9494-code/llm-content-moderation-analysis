@@ -77,6 +77,9 @@ jobs:
           PYTHONPATH: .
         run: bash scripts/generate_all_reports.sh
 
+      - name: Compress Data
+        run: python scripts/compress_data.py
+
       - name: Commit and Push Results
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -84,9 +87,17 @@ jobs:
           git stash push -m "New analysis data" --include-untracked
           git pull --rebase origin main
           git stash pop || echo "Warning: Stash pop reported conflicts."
+          
+          # Add compressed, ignore raw
+          git add web/public/audit_log.csv.gz audit.db
+          # Ensure raw file is untracked 
+          git rm --cached web/public/audit_log.csv || true
+          
+          # Add everything else
           git add .
+          
           if ! git diff --cached --quiet; then
-            git commit -m "Auto-update: Low Tier Audit for $(date +%Y-%m-%d)"
+            git commit -m "Auto-update: Low Tier Audit for $(date +%Y-%m-%d) [compressed]"
             git push origin main
           else
             echo "No changes to commit"
