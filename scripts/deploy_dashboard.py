@@ -40,6 +40,26 @@ def deploy_dashboard():
             print(f"⚠️ Warning: Source file missing: {src_path}")
             
     print(f"\nDeployment Complete. {success_count}/{len(assets_map)} assets transferred.")
+    
+    # Generate traces.json for Evidence Locker & Performance
+    try:
+        import pandas as pd
+        csv_path = "web/public/audit_log.csv"
+        if os.path.exists(csv_path):
+            print("🔄 Generating traces.json from audit_log.csv...")
+            df = pd.read_csv(csv_path)
+            # Ensure consistency with data-loading.ts expectations
+            # (Timestamp, model, etc. are standard in audit_log.csv)
+            json_path = os.path.join(PUBLIC_ASSETS_DIR, "traces.json")
+            df.to_json(json_path, orient="records")
+            print(f"✅ Generated {json_path}")
+        else:
+            print(f"⚠️ Warning: {csv_path} not found. Skipping traces.json generation.")
+    except ImportError:
+        print("⚠️ Warning: pandas not installed. Skipping traces.json generation.")
+    except Exception as e:
+        print(f"❌ Error generating traces.json: {e}")
+
     print("Dashboard available at: web/public/deep_dive.html")
 
 if __name__ == "__main__":
