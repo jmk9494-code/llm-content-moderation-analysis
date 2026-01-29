@@ -99,7 +99,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
         // 3. Category analysis
         const categoryStats: Record<string, { safe: number; total: number }> = {};
         data.forEach(d => {
-            let cat = d.category || 'unknown';
+            const cat = d.category || 'unknown';
             // Filter out invalid categories (numeric, short, or explicitly ignored)
             if (!isNaN(Number(cat)) || cat.length < 3 || ['uncategorized', 'unknown', 'nan', 'none'].includes(cat.toLowerCase())) {
                 return;

@@ -208,7 +208,7 @@ export default function AnalysisPage() {
     const longitudinalData = useMemo(() => {
         if (filteredAuditData.length === 0) return { chartData: [], activeModels: [] };
         // filteredAuditData is already date-filtered
-        let filtered = filteredAuditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
+        const filtered = filteredAuditData.filter((d: AuditRow) => longitudinalModels.length === 0 || longitudinalModels.includes(d.model));
 
         const uniqueDates = Array.from(new Set(filtered.map(d => d.timestamp?.split('T')[0] || 'Unknown'))).filter(d => d !== 'Unknown').sort();
         const activeModels = longitudinalModels.length > 0 ? longitudinalModels : Array.from(new Set(filtered.map(d => d.model)));

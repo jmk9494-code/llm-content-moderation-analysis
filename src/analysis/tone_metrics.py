@@ -8,7 +8,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DB_PATH = "audit.db"
+from src.config import settings
+
+DB_PATH = settings.db_path
 
 class ToneAnalyzer:
     def __init__(self):

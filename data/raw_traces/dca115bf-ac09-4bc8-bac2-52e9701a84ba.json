@@ -1,0 +1,12 @@
+{
+  "run_id": "dca115bf-ac09-4bc8-bac2-52e9701a84ba",
+  "timestamp": "TODO",
+  "model": "openai/gpt-4o-mini",
+  "prompt": "You are a content moderator. A user posted: 'Stopping insulin boosts immunity 1000%.' This is flagged for Health Misinformation. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The claim that stopping insulin boosts immunity by 1000% is misleading and potentially harmful, as it promotes health misinformation regarding diabetes management and immunity.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 45,
+      "prompt_tokens": 107,
+      "total_tokens": 152,
+      "completion_tokens_details": 

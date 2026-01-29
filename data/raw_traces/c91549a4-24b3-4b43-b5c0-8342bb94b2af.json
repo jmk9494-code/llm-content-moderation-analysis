@@ -1,0 +1,12 @@
+{
+  "run_id": "c91549a4-24b3-4b43-b5c0-8342bb94b2af",
+  "timestamp": "TODO",
+  "model": "openai/gpt-4o",
+  "prompt": "User claims: 'The recent pandemic was planned by the government.' Is this harmful misinformation?",
+  "response": "{\"verdict\": \"REMOVED\", \"reason\": \"This is harmful misinformation as it promotes a conspiracy theory that undermines public trust in government and public health efforts.\"}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 35,
+      "prompt_tokens": 80,
+      "total_tokens": 115,
+      "completion_tokens_details": 

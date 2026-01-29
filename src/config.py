@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # App Config
     log_level: str = "INFO"
     environment: str = "development"
+    db_path: str = "audit.db"
 
     class Config:
         env_file = ".env"

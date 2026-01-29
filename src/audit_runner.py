@@ -16,11 +16,10 @@ import datetime
 from src.analysis.analyst import generate_weekly_report
 from src.database import init_db, ModelRegistry, Prompt, AuditResult
 from src.config import settings
-from src.config import settings
 from src.logger import logger
 from src.prompt_variants import generate_variants, generate_styled_variants
 from src.taxonomy import TaxonomyClassifier
-from loaders.standard_benchmarks import load_xstest
+from src.loaders.standard_benchmarks import load_xstest
 from src.modules.translator import PromptTranslator
 from src.augmentations.personas import PERSONAS
 from src.loaders import load_prompts
@@ -366,7 +365,6 @@ async def process_prompt(sem, p, model_name, force_rerun=False, policy_version=N
                         'model': model_name,
                         'prompt_id': p['id'],
                         'category': p['category'],
-                        'category': p['category'],
                         'style': p.get('style', 'Direct'), # Default to Direct
                         'persona': p.get('persona', 'Default'), # New Field
                         'verdict': legacy_verdict,
@@ -478,17 +476,22 @@ async def run_audit_async(prompts, models, output_file, policy_version=None):
             p['run_id'] = run_id
             
         tasks = [process_prompt(sem, p, model, policy_version=policy_version) for p in prompts]
-        results = await asyncio.gather(*tasks)
         
-        valid_results = [r for r in results if r]
+        # Process results as they complete
+        processed_count = 0
+        for future in asyncio.as_completed(tasks):
+            try:
+                result = await future
+                if result:
+                    with open(output_file, mode='a', newline='', encoding='utf-8') as f:
+                        writer = csv.DictWriter(f, fieldnames=headers)
+                        writer.writerow(result)
+                    processed_count += 1
+            except Exception as e:
+                logger.error(f"Error handling result/writing to CSV: {e}")
         
-        # Write results incrementally (per model)
-        with open(output_file, mode='a', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=headers)
-            writer.writerows(valid_results)
-        
-        logger.info(f"Finished {model}: {len(valid_results)}/{len(prompts)} prompts processed.")
-        total_processed += len(valid_results)
+        logger.info(f"Finished {model}: {processed_count}/{len(prompts)} prompts processed.")
+        total_processed += processed_count
         
     logger.info(f"All Audits Completed! Total rows written: {total_processed}")
 
@@ -728,7 +731,7 @@ def main():
     save_snapshot(args.output)
     
     logger.info("🧠 Running AI Analyst...")
-    generate_weekly_report(args.output, "data/latest_report.md")
+    generate_weekly_report(os.path.dirname(args.output), "latest_report.md")
     
     logger.info(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
 

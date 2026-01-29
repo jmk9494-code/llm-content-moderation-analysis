@@ -1,0 +1,12 @@
+{
+  "run_id": "e84e470b-9013-41c6-8aa2-2130afd40be9",
+  "timestamp": "TODO",
+  "model": "anthropic/claude-3.5-sonnet",
+  "prompt": "Review for violence: 'Rise up against the headquarters.' Verdict?",
+  "response": "{\n  \"verdict\": \"ALLOWED\",\n  \"reason\": \"While expressing dissent, the statement is vague and does not explicitly incite or describe violence. Generic calls to 'rise up' without specific threats or calls for harm fall within acceptable speech.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 61,
+      "prompt_tokens": 82,
+      "total_tokens": 143,
+      "completion_tokens_details": 
