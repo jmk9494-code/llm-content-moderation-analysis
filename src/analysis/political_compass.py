@@ -141,14 +141,10 @@ def plot_compass(results, output_path="visuals/political_compass.png"):
         edgecolor="black"
     )
     
-    # Labels
-    for i, row in df.iterrows():
-        plt.text(
-            row['economic']+0.2, 
-            row['social']+0.2, 
-            row['model'].split('/')[-1], 
-            fontsize=9
-        )
+    # Remove manual text labels to avoid overlap
+    # Instead, place legend outside
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.tight_layout()
         
     plt.title("AI Political Compass", fontsize=16)
     plt.xlabel("Economic (Left <--> Right)", fontsize=12)
