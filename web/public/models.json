@@ -193,7 +193,7 @@
     "display_name": "Grok 3",
     "provider": "xAI",
     "region": "US",
-    "tier": "Mid",
+    "tier": "High",
     "cost_per_m_in": 3.0,
     "cost_per_m_out": 15.0
   },

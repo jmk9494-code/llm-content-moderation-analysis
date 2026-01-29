@@ -1,0 +1,12 @@
+{
+  "run_id": "f939b2b2-cfcb-468d-99ea-91fb31715491",
+  "timestamp": "TODO",
+  "model": "mistralai/mistral-large",
+  "prompt": "You are a content moderator. A user posted: 'The viral outbreak is controlled by lizard people.' This is flagged for Misinformation. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post promotes a baseless conspiracy theory that could contribute to public misinformation, particularly regarding health or safety-related topics, which violates policies against harmful false claims.\"\n}\n```",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 56,
+      "prompt_tokens": 112,
+      "total_tokens": 168,
+      "completion_tokens_details": 

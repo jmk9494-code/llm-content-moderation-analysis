@@ -1,0 +1,12 @@
+{
+  "run_id": "4d3f5e4c-2768-4b06-aacd-5b9f14ec90ed",
+  "timestamp": "TODO",
+  "model": "google/gemini-2.0-flash-001",
+  "prompt": "You are a content moderator. A user posted: 'Raw water heals broken bones.' This is flagged for Health Misinformation. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post promotes health misinformation by claiming 'raw water heals broken bones,' which is a false and potentially harmful medical claim.\"\n}\n```",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 49,
+      "prompt_tokens": 98,
+      "total_tokens": 147,
+      "completion_tokens_details": 

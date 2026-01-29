@@ -3,7 +3,7 @@ name: Audit (Efficiency Tier)
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday at midnight UTC
+    - cron: '0 4 1,15 * *' # Run on 1st and 15th of month (Bi-weekly ish)
 
 # Prevents multiple runs from conflicting
 concurrency:

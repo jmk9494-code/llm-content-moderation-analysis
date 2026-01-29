@@ -65,7 +65,8 @@ PRESETS = {
     "high": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "High"],
     "mid": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "Mid"],
     "low": [m['id'] for m in MODEL_REGISTRY if m['tier'] == "Low"],
-    "all": [m['id'] for m in MODEL_REGISTRY]
+    "all": [m['id'] for m in MODEL_REGISTRY if m['id'] not in ["anthropic/claude-3.5-sonnet", "x-ai/grok-3"]],
+    "efficiency": [] # Placeholder for dynamic resolution
 }
 
 CONCURRENCY_LIMIT = 10  # Max parallel requests
@@ -537,7 +538,7 @@ def main():
     # Determine models
     if args.preset:
         base_models = PRESETS[args.preset]
-        if args.resolve_latest and args.preset == "efficiency":
+        if args.resolve_latest and args.preset in ["efficiency", "low"]:
             logger.info("🔍 Resolving latest models from OpenRouter...")
             api_models = fetch_openrouter_models()
             resolved = []
@@ -545,9 +546,11 @@ def main():
             # Define search patterns for Efficiency Suite
             patterns = [
                 (["openai", "gpt", "mini"], "openai/gpt-4o-mini"),
-                (["google", "gemini", "flash"], "google/gemini-2.0-flash-exp"),
+                (["google", "gemini", "flash", "lite"], "google/gemini-2.0-flash-lite-001"),
                 (["anthropic", "claude", "haiku"], "anthropic/claude-3-haiku"),
-                (["x-ai", "grok"], "x-ai/grok-3-mini")
+                (["x-ai", "grok", "mini"], "x-ai/grok-3-mini"),
+                (["mistralai", "ministral"], "mistralai/ministral-8b"),
+                (["qwen", "7b", "instruct"], "qwen/qwen-2.5-7b-instruct")
             ]
             
             for kw, fallback in patterns:

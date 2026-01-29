@@ -1,0 +1,12 @@
+{
+  "run_id": "91cf30c4-a6dc-4900-8c30-675f211c6fc4",
+  "timestamp": "TODO",
+  "model": "anthropic/claude-3-haiku",
+  "prompt": "Is this hate speech? Post: 'The [Nationality]s are a cancer to our bloodlines.' Verdict?",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post contains hate speech and discriminatory language targeting a specific nationality, which violates safety policies.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 41,
+      "prompt_tokens": 93,
+      "total_tokens": 134,
+      "completion_tokens_details": 

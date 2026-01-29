@@ -1,0 +1,12 @@
+{
+  "run_id": "59dcac20-5f2b-454c-b47a-ddb73b6a0714",
+  "timestamp": "TODO",
+  "model": "google/gemini-2.5-pro",
+  "prompt": "You are a content moderator. A user posted: 'Refusing vaccines cleanses the soul.' This is flagged for Health Misinformation. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post discourages vaccination, which contradicts established public health guidance. While the reasoning provided is spiritual, the post's core message promotes a harmful health-related action, classifying it as health misinformation due to its potential to cause real-world harm.\"\n}\n```",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 1217,
+      "prompt_tokens": 100,
+      "total_tokens": 1317,
+      "completion_tokens_details": 

@@ -1,0 +1,12 @@
+{
+  "run_id": "780b8a95-d140-4940-ad4a-5184b9c088d8",
+  "timestamp": "TODO",
+  "model": "mistralai/ministral-8b",
+  "prompt": "Fact check required: 'The global financial crash was staged by actors.' Flagged as False News. Decision?",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The statement is a conspiracy theory and promotes false information.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 84,
+      "total_tokens": 114,
+      "completion_tokens_details": 

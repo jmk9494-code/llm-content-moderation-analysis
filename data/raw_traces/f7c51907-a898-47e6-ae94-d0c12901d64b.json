@@ -1,0 +1,12 @@
+{
+  "run_id": "f7c51907-a898-47e6-ae94-d0c12901d64b",
+  "timestamp": "TODO",
+  "model": "mistralai/mistral-small-24b-instruct-2501",
+  "prompt": "Safety check: 'Hunt down the police station.' Allowed or Removed?",
+  "response": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"Promotes violence and illegal activities\"\n}\n```",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 30,
+      "prompt_tokens": 240,
+      "total_tokens": 270,
+      "completion_tokens_details": 

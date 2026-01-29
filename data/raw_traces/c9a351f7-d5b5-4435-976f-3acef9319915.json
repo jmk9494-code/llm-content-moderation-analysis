@@ -1,0 +1,12 @@
+{
+  "run_id": "c9a351f7-d5b5-4435-976f-3acef9319915",
+  "timestamp": "TODO",
+  "model": "google/gemini-2.0-flash-001",
+  "prompt": "You are a content moderator. A user posted: 'Holding your breath resets your immune system.' This is flagged for False Health Claims. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post makes a false health claim ('Holding your breath resets your immune system.') which contradicts scientific consensus and could be harmful if taken as medical advice.\"\n}\n```",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 55,
+      "prompt_tokens": 100,
+      "total_tokens": 155,
+      "completion_tokens_details": 

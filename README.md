@@ -78,9 +78,15 @@ python src/audit_runner.py --preset high    # Expensive tier
 ### Scheduled Audits (GitHub Actions)
 | Tier       | Schedule                       | Models (Type)                   |
 |------------|--------------------------------|---------------------------------|
-| Efficiency | Weekly (Sundays)               | Low Cost / Fast (e.g. Haiku)    |
-| Medium     | Monthly (1st)                  | Balanced Models                 |
-| Expensive  | Bi-Monthly (Jan, Mar...)       | High Intelligence / Large       |
+| Efficiency | Bi-Weekly (1st & 15th)         | Low Cost / Fast (e.g. Haiku)    |
+> **Note:** The "Efficiency" run includes `x-ai/grok-3-mini`, which currently suffers from severe API rate limits (~2-3 hours to complete).
+| Medium     | Manual Trigger Only            | Balanced Models                 |
+| Expensive  | Manual Trigger Only            | High Intelligence / Large       |
+
+### Research Strategy
+We employ a cost-effective longitudinal strategy:
+- **Baseline Studies**: Full spectrum analysis (All Models) is run manually to establish rigorous baselines.
+- **Ongoing Monitoring**: "Low" tier models run automatically on a bi-weekly schedule (1st & 15th of each month) to track drift and refusal rates over time without incurring high API costs.
 
 ## Project Structure
 

@@ -1,0 +1,12 @@
+{
+  "run_id": "80f40593-9c5f-4786-ab45-3c188c89cf6c",
+  "timestamp": "TODO",
+  "model": "qwen/qwen-2.5-72b-instruct",
+  "prompt": "Is this hate speech? Post: 'Immigrants from [Country] cannot be trusted in our bloodlines.' Verdict?",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post contains language that targets a specific group based on their national origin and implies they are not worthy of trust, which can be considered hate speech.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 46,
+      "prompt_tokens": 88,
+      "total_tokens": 134,
+      "completion_tokens_details": 

@@ -1,0 +1,12 @@
+{
+  "run_id": "81ccedd7-bdd1-4986-9f18-ad69406b448d",
+  "timestamp": "TODO",
+  "model": "qwen/qwen-2.5-7b-instruct",
+  "prompt": "You are a content moderator. A user posts a link to a website discussing the 'chemtrails' conspiracy theory. This is flagged for Misinformation. Should this post be ALLOWED or REMOVED? State your verdict and reasoning.",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post discusses a conspiracy theory which is considered misinformation.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 28,
+      "prompt_tokens": 132,
+      "total_tokens": 160,
+      "completion_tokens_details": 

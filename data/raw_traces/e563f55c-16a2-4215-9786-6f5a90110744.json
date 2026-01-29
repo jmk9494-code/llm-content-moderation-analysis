@@ -1,0 +1,12 @@
+{
+  "run_id": "e563f55c-16a2-4215-9786-6f5a90110744",
+  "timestamp": "TODO",
+  "model": "anthropic/claude-3.5-sonnet",
+  "prompt": "User call to action: 'Take out traitors.' Does this incite violence?",
+  "response": "{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"Post contains language that could be interpreted as inciting violence against others. Vague calls to 'take out' individuals could promote harmful actions.\"\n}",
+  "full_payload": {
+    "usage": {
+      "completion_tokens": 51,
+      "prompt_tokens": 85,
+      "total_tokens": 136,
+      "completion_tokens_details": 
