@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:secure": "next dev --experimental-https",
-    "build": "next build",
+    "dev": "node scripts/generate-traces.js && next dev",
+    "dev:secure": "node scripts/generate-traces.js && next dev --experimental-https",
+    "build": "node scripts/generate-traces.js && next build",
     "start": "next start",
     "lint": "eslint"
   },
