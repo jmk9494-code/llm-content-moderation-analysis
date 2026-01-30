@@ -63,6 +63,12 @@ def plot_paternalism(audit_file='audit_log.csv', output_file='visuals/paternalis
         
         # Save
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        
+        # JSON Export
+        json_output = output_file.replace('.png', '.json')
+        stats.to_json(json_output, orient='records', indent=2)
+        logger.info(f"✅ Paternalism data saved to {json_output}")
+
         plt.savefig(output_file)
         logger.info(f"✅ Paternalism plot saved to {output_file}")
         

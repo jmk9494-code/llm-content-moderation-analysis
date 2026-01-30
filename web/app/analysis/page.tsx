@@ -45,7 +45,14 @@ export default function AnalysisPage() {
     const [biasData, setBiasData] = useState<BiasRow[]>([]);
     const [driftData, setDriftData] = useState<any[]>([]);
     const [consensusData, setConsensusData] = useState<any[]>([]);
+
     const [pValues, setPValues] = useState<any[]>([]);
+
+    // Interactive Data
+    const [politicalData, setPoliticalData] = useState<any[]>([]);
+    const [paternalismData, setPaternalismData] = useState<any[]>([]);
+    const [triggerData, setTriggerData] = useState<any[]>([]);
+
     const [reportContent, setReportContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
@@ -121,6 +128,22 @@ export default function AnalysisPage() {
                     const r8 = await fetch('/clusters.json');
                     if (r8.ok) setClusters(await r8.json());
                 } catch (e) { console.warn("Clusters JSON not found"); }
+
+                // Fetch Interactive Data
+                try {
+                    const rp = await fetch('/political_compass.json');
+                    if (rp.ok) setPoliticalData(await rp.json());
+                } catch (e) { console.warn("Political Compass JSON not found"); }
+
+                try {
+                    const rpat = await fetch('/paternalism.json');
+                    if (rpat.ok) setPaternalismData(await rpat.json());
+                } catch (e) { console.warn("Paternalism JSON not found"); }
+
+                try {
+                    const rtrig = await fetch('/assets/trigger_words.json');
+                    if (rtrig.ok) setTriggerData(await rtrig.json());
+                } catch (e) { console.warn("Trigger Words JSON not found"); }
 
             } catch (err) {
                 console.error("Failed to load data", err);
@@ -224,8 +247,8 @@ export default function AnalysisPage() {
     }, [filteredAuditData]);
 
     // Trigger Words - Removed client-side calculation (too heavy). 
-    // We now use the pre-generated static image /assets/wordcloud.png
-    const triggerWords: any[] = [];
+    // We now use the pre-generated JSON /assets/trigger_words.json or fallback to static image
+    const triggerWords = triggerData;
 
     const longitudinalData = useMemo(() => {
         if (filteredAuditData.length === 0) return { chartData: [], activeModels: [] };
@@ -419,16 +442,30 @@ export default function AnalysisPage() {
                             </div>
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold mb-6">Top Trigger Words</h3>
-                                <div className="h-[500px] flex items-center justify-center bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
-                                    <img
-                                        src="/assets/wordcloud.png"
-                                        alt="Top Trigger Words Word Cloud"
-                                        className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                            (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-center p-8"><p class="text-slate-400 mb-2">Word cloud not available</p><p class="text-xs text-slate-300">Run analysis/trigger_extraction.py to generate.</p></div>';
-                                        }}
-                                    />
+                                <div className="h-[500px]">
+                                    {triggerWords.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={triggerWords} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                                <XAxis type="number" />
+                                                <YAxis dataKey="word" type="category" width={100} tick={{ fontSize: 12 }} />
+                                                <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                                <Bar dataKey="count" fill="#ef4444" name="Refusals" radius={[0, 4, 4, 0]} barSize={20} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="h-[500px] flex items-center justify-center bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                                            <img
+                                                src="/assets/wordcloud.png"
+                                                alt="Top Trigger Words Word Cloud"
+                                                className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-center p-8"><p class="text-slate-400 mb-2">Word cloud not available</p><p class="text-xs text-slate-300">Run analysis/trigger_extraction.py to generate.</p></div>';
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -495,16 +532,49 @@ export default function AnalysisPage() {
                                     <p className="text-sm text-slate-500 mb-4 text-center">
                                         Do models have political opinions? We test this by asking 30 standard political questions.
                                     </p>
-                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src="/political_compass.png"
-                                            alt="AI Political Compass"
-                                            className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
-                                            }}
-                                        />
+                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden p-4">
+                                        {politicalData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis type="number" dataKey="economic" domain={[-10, 10]} name="Economic" label={{ value: 'Economic (Left <-> Right)', position: 'bottom', offset: 0 }} />
+                                                    <YAxis type="number" dataKey="social" domain={[-10, 10]} name="Social" label={{ value: 'Social (Lib <-> Auth)', angle: -90, position: 'insideLeft' }} />
+                                                    <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                                                        if (active && payload && payload.length) {
+                                                            const d = payload[0].payload;
+                                                            return (
+                                                                <div className="bg-white p-2 border border-slate-200 shadow-md rounded text-xs">
+                                                                    <strong>{d.model}</strong>
+                                                                    <br />Econ: {d.economic.toFixed(2)}
+                                                                    <br />Soc: {d.social.toFixed(2)}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    }} />
+
+                                                    {/* Quadrant Colors (Approximate via Reference Areas if needed, but simple Scatter is fine) */}
+                                                    <ReferenceLine x={0} stroke="#000" />
+                                                    <ReferenceLine y={0} stroke="#000" />
+
+                                                    <Scatter name="Models" data={politicalData} fill="#8884d8">
+                                                        {politicalData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Scatter>
+                                                </ScatterChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <img
+                                                src="/political_compass.png"
+                                                alt="AI Political Compass"
+                                                className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
+                                                }}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -522,8 +592,25 @@ export default function AnalysisPage() {
                                 </div>
                                 <div className="flex flex-col items-center">
                                     <p className="text-sm text-slate-500 mb-4 text-center">Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?</p>
-                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden">
-                                        <img src="/paternalism.png" alt="Paternalism Chart" className="object-contain w-full h-full hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>'; }} />
+                                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden p-4">
+                                        {paternalismData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={paternalismData} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis type="number" domain={[0, 100]} unit="%" />
+                                                    <YAxis type="category" dataKey="model" width={120} tick={{ fontSize: 10 }} />
+                                                    <RechartsTooltip />
+                                                    <Legend />
+                                                    <Bar dataKey="refusal_rate" name="Refusal Rate" fill="#8884d8">
+                                                        {paternalismData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.persona === 'Authority' ? '#3b82f6' : entry.persona === 'Layperson' ? '#eab308' : '#94a3b8'} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <img src="/paternalism.png" alt="Paternalism Chart" className="object-contain w-full h-full hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>'; }} />
+                                        )}
                                     </div>
                                 </div>
                             </div>
