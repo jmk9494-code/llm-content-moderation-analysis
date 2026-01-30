@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
     Brain, Tag, BarChart2, ShieldCheck, DollarSign, FileText, TrendingUp,
-    Info, Database, Clock, Filter, X, Compass, AlertTriangle, Zap, BookOpen, Search
+    Info, Database, Clock, Filter, X, Compass, AlertTriangle, Zap, BookOpen, Search, Scale
 } from 'lucide-react';
 import {
     ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -13,7 +13,9 @@ import {
 import { calculateFleissKappa } from '@/lib/statistics';
 import Papa from 'papaparse';
 import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
-import { DeepInsights } from "@/components/DeepInsights";
+
+import { CouncilConsensus } from "@/components/CouncilConsensus";
+import { ModelDrift } from "@/components/ModelDrift";
 import { AuditWizard } from '@/components/ui/AuditWizard';
 
 
@@ -37,12 +39,11 @@ type BiasRow = {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AnalysisPage() {
-    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'bias' | 'insights' | 'political' | 'paternalism' | 'evidence' | 'significance'>('summary');
+    const [activeTab, setActiveTab] = useState<'summary' | 'alignment' | 'clusters' | 'triggers' | 'reliability' | 'longitudinal' | 'consensus' | 'drift' | 'political' | 'paternalism' | 'evidence' | 'significance'>('summary');
 
     // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
     const [clusters, setClusters] = useState<Cluster[]>([]);
-    const [biasData, setBiasData] = useState<BiasRow[]>([]);
     const [driftData, setDriftData] = useState<any[]>([]);
     const [consensusData, setConsensusData] = useState<any[]>([]);
 
@@ -79,19 +80,8 @@ export default function AnalysisPage() {
                     if (j3.content) setReportContent(j3.content);
                 } catch (e) { console.warn("Report not found"); }
 
-                try {
-                    const r4 = await fetch('/bias_log.csv');
-                    if (r4.ok) {
-                        const csvText = await r4.text();
-                        Papa.parse(csvText, {
-                            header: true,
-                            skipEmptyLines: true,
-                            complete: (results: any) => {
-                                setBiasData(results.data as BiasRow[]);
-                            }
-                        });
-                    }
-                } catch (e) { console.warn("Bias log not found"); }
+
+
 
                 try {
                     const r5 = await fetch('/drift_report.json');
@@ -407,8 +397,11 @@ export default function AnalysisPage() {
                     <TabButton active={activeTab === 'paternalism'} onClick={() => setActiveTab('paternalism')} icon={<Info className="w-4 h-4" />}>Paternalism</TabButton>
                     <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
 
-                    <TabButton active={activeTab === 'bias'} onClick={() => setActiveTab('bias')} icon={<Compass className="w-4 h-4" />}>Bias Compass</TabButton>
-                    <TabButton active={activeTab === 'insights'} onClick={() => setActiveTab('insights')} icon={<TrendingUp className="w-4 h-4" />}>Deep Insights</TabButton>
+                    <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
+
+                    <TabButton active={activeTab === 'consensus'} onClick={() => setActiveTab('consensus')} icon={<Scale className="w-4 h-4" />}>Council Consensus</TabButton>
+                    <TabButton active={activeTab === 'drift'} onClick={() => setActiveTab('drift')} icon={<TrendingUp className="w-4 h-4" />}>Model Stability</TabButton>
+
                     <TabButton active={activeTab === 'reliability'} onClick={() => setActiveTab('reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</TabButton>
                     <TabButton active={activeTab === 'longitudinal'} onClick={() => setActiveTab('longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>Longitudinal</TabButton>
                     <TabButton active={activeTab === 'evidence'} onClick={() => setActiveTab('evidence')} icon={<Search className="w-4 h-4" />}>Evidence</TabButton>
@@ -506,13 +499,22 @@ export default function AnalysisPage() {
                     )}
 
                     {activeTab === 'clusters' && <SemanticClustersView clusters={clusters} />}
-                    {activeTab === 'bias' && <BiasCompassView biasData={biasData} allModels={stats?.models || []} />}
-                    {activeTab === 'insights' && (
+
+                    {activeTab === 'consensus' && (
                         <div className="space-y-6">
                             <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                                <strong>Deep Insights.</strong> Longitudinal drift and consensus analysis.
+                                <strong>Council Consensus.</strong> Agreement level among 3 judges on refusal reasons.
                             </div>
-                            <DeepInsights driftData={driftData} consensusData={consensusData} />
+                            <CouncilConsensus data={consensusData} />
+                        </div>
+                    )}
+
+                    {activeTab === 'drift' && (
+                        <div className="space-y-6">
+                            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+                                <strong>Model Stability (Drift).</strong> Change in Refusal Rate (Start vs End Date).
+                            </div>
+                            <ModelDrift data={driftData} />
                         </div>
                     )}
 
@@ -782,142 +784,8 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     );
 }
 
-function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allModels: string[] }) {
-    const [selectedModels, setSelectedModels] = useState<string[]>([]);
-    const [selectedLeanings, setSelectedLeanings] = useState<string[]>([]);
 
-    // Derived: Unique leanings
-    const allLeanings = Array.from(new Set(biasData.map(d => d.leaning))).sort();
 
-    // Toggle Helpers
-    const toggleModel = (m: string) => setSelectedModels(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
-    const toggleLeaning = (l: string) => setSelectedLeanings(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
-
-    const leaningCoords: Record<string, { x: number, y: number }> = {
-        'Left-Libertarian': { x: -0.7, y: -0.5 }, 'Left-Authoritarian': { x: -0.7, y: 0.5 },
-        'Right-Libertarian': { x: 0.7, y: -0.5 }, 'Right-Authoritarian': { x: 0.7, y: 0.5 }, 'Neutral-Safety': { x: 0, y: 0 }
-    };
-
-    const filteredData = useMemo(() => {
-        return biasData.filter(row => {
-            if (selectedModels.length > 0 && !selectedModels.includes(row.model)) return false;
-            if (selectedLeanings.length > 0 && !selectedLeanings.includes(row.leaning)) return false;
-            return true;
-        });
-    }, [biasData, selectedModels, selectedLeanings]);
-
-    const scatterData = useMemo(() => {
-        return filteredData.map(row => {
-            const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
-            return {
-                model: row.model,
-                leaning: row.leaning,
-                x: base.x + (Math.random() - 0.5) * 0.4,
-                y: base.y + (Math.random() - 0.5) * 0.4,
-                z: 1
-            };
-        });
-    }, [filteredData]);
-
-    // Smart Zoom: Calculate domain based on data extent
-    const zoomDomain = useMemo(() => {
-        if (scatterData.length === 0) return [-1, 1];
-        let maxExt = 0.25; // Minimum zoom level (prevent excessive zooming on empty center)
-        scatterData.forEach(p => {
-            maxExt = Math.max(maxExt, Math.abs(p.x), Math.abs(p.y));
-        });
-        const limit = Math.min(1, maxExt * 1.2); // Add 20% padding, max at 1.0
-        return [-limit, limit];
-    }, [scatterData]);
-
-    return (
-        <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <div className="font-bold mb-1 flex items-center gap-2"><Compass className="w-4 h-4" /> Understanding the Bias Compass</div>
-                <p>This chart maps model refusal reasoning onto two primary axes:</p>
-                <ul className="mt-2 space-y-1 list-disc ml-5">
-                    <li><strong>Horizontal (Left vs. Right):</strong> Economic bias. Left favors collective safety and regulation; Right favors individual liberty and free markets.</li>
-                    <li><strong>Vertical (Authoritarian vs. Libertarian):</strong> Social bias. Authoritarian (Top) favors strict guardrails and authority; Libertarian (Bottom) favors freedom of speech and minimal intervention.</li>
-                </ul>
-            </div>
-
-            {/* Filters Control Panel */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div className="flex flex-col md:flex-row gap-6">
-                    <div className="flex-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Filter by Model</label>
-                        <div className="flex flex-wrap gap-2">
-                            {allModels.map(m => (
-                                <button
-                                    key={m}
-                                    onClick={() => toggleModel(m)}
-                                    className={`px-2 py-1 text-xs rounded-md border transition-colors ${selectedModels.includes(m) ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-medium' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                                >
-                                    {m.split('/').pop()}
-                                </button>
-                            ))}
-                            <button onClick={() => setSelectedModels([])} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-600 underline">Reset</button>
-                        </div>
-                    </div>
-                    <div className="flex-1 border-t md:border-t-0 md:border-l border-slate-100 md:pl-6 pt-4 md:pt-0">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Filter by Leaning</label>
-                        <div className="flex flex-wrap gap-2">
-                            {allLeanings.map(l => (
-                                <button
-                                    key={l}
-                                    onClick={() => toggleLeaning(l)}
-                                    className={`px-2 py-1 text-xs rounded-md border transition-colors ${selectedLeanings.includes(l) ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-medium' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
-                                >
-                                    {l}
-                                </button>
-                            ))}
-                            <button onClick={() => setSelectedLeanings([])} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-600 underline">Reset</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 h-[650px] relative">
-                <h3 className="text-lg font-bold mb-6">Bias Compass</h3>
-
-                {/* Quadrant Labels Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-12 opacity-40 font-bold text-[10px] uppercase tracking-widest text-slate-400">
-                    <div className="flex justify-between">
-                        <span>Left-Authoritarian</span>
-                        <span>Right-Authoritarian</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span>Left-Libertarian</span>
-                        <span>Right-Libertarian</span>
-                    </div>
-                </div>
-
-                <ResponsiveContainer width="100%" height="90%">
-                    <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="x" domain={[zoomDomain[0], zoomDomain[1]]} hide />
-                        <YAxis type="number" dataKey="y" domain={[zoomDomain[0], zoomDomain[1]]} hide />
-
-                        {/* Custom Reference Lines with Edge Labels */}
-                        <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'top', value: 'Authoritarian ⬆️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
-                        <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'bottom', value: 'Libertarian ⬇️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
-                        <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'insideLeft', value: '⬅️ Economic Left', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 10 }} />
-                        <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'insideRight', value: 'Economic Right ➡️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold', offset: 10 }} />
-
-                        <Scatter data={scatterData} fill="#8884d8">
-                            {scatterData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Scatter>
-                        <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
-                    </ScatterChart>
-                </ResponsiveContainer>
-
-                <div className="mt-4 text-center text-xs text-slate-400 italic">
-                    Note: Points are jittered slightly for visibility. Data represents AI-judged "leaning" of specific model responses.
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // Model Registry Component
 function ModelRegistryTable() {

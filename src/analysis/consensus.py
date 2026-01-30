@@ -47,6 +47,7 @@ async def get_judge_verdict(client, sem, model, content):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": content}
                 ],
+                max_tokens=1000,
                 response_format={"type": "json_object"}
             )
             data = json.loads(response.choices[0].message.content)
@@ -60,50 +61,9 @@ async def run_consensus_analysis(limit=None):
     
     api_key = os.getenv("OPENROUTER_API_KEY")
     if not HAS_OPENAI or not api_key:
-        print("⚠️ OpenAI/OpenRouter not configured. Generating MOCK consensus data for visualization.")
-        # Generate Mock Data
-        mock_data = []
-        # If audit_log.csv.gz exists, try to get models from there, otherwise use a default list
-        csv_path = 'web/public/audit_log.csv.gz'
-        if not os.path.exists(csv_path):
-            csv_path = 'audit_log.csv.gz'
-        
-        if os.path.exists(csv_path):
-            temp_df = pd.read_csv(csv_path)
-            models = temp_df['model'].unique() if 'model' in temp_df.columns else ["mock-model-1", "mock-model-2"]
-        else:
-            models = ["mock-model-1", "mock-model-2"]
-
-        import random
-        for m in models:
-            # Generate 5-10 mock entries per model
-            for i in range(random.randint(5, 10)):
-                leanings = ["Left-Libertarian", "Right-Authoritarian", "Right-Libertarian", "Left-Authoritarian", "Neutral-Safety"]
-                chosen_leaning = random.choice(leanings)
-                
-                # Random agreement (Split vs Unanimous)
-                if random.random() > 0.3:
-                    # High agreement
-                    votes = [chosen_leaning, chosen_leaning, chosen_leaning]
-                    score = 1.0
-                else:
-                    # Split decision
-                    votes = [chosen_leaning, chosen_leaning, random.choice(leanings)]
-                    score = 0.66
-                
-                mock_data.append({
-                    "model": m,
-                    "prompt_id": f"mock-{i}",
-                    "judge_1": votes[0],
-                    "judge_2": votes[1],
-                    "judge_3": votes[2],
-                    "consensus_leaning": chosen_leaning,
-                    "agreement_score": score
-                })
-        
-        pd.DataFrame(mock_data).to_csv(out_path, index=False)
-        print(f"✅ Mock consensus data saved to {out_path} ({len(mock_data)} rows)")
+        print("⚠️ OpenAI/OpenRouter not configured. Cannot run consensus analysis.")
         return
+
 
     client = AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",

@@ -19,44 +19,8 @@ def calculate_drift_stats(df):
     # Group by Model
     models = df['model'].unique()
     
-    # MOCK DATA GENERATION IF INSUFFICIENT HISTORY
-    # If we have < 2 unique dates globally, we assume this is a demo/single-run environment.
-    # We will simulate "past" data for the purpose of the visualization.
-    unique_dates_global = df['test_date'].dt.date.unique()
-    SIMULATE_HISTORY = len(unique_dates_global) < 2
-    
-    if SIMULATE_HISTORY:
-        print("⚠️ Insufficient historical data found. Generating SIMULATED drift data for visualization.")
-        import datetime
-        import random
-        today = datetime.date.today()
-        start_date = today - datetime.timedelta(days=30)
-        end_date = today
-        
-        for model in models:
-            # Randomly decide if model drifted
-            is_stable = random.random() > 0.3
-            
-            start_rate = random.uniform(2.0, 15.0)
-            if is_stable:
-                end_rate = start_rate + random.uniform(-0.5, 0.5)
-                is_significant = False
-            else:
-                change = random.uniform(1.5, 5.0) * (1 if random.random() > 0.5 else -1)
-                end_rate = start_rate + change
-                is_significant = True
-            
-            results.append({
-                "model": model,
-                "start_date": str(start_date),
-                "end_date": str(end_date),
-                "start_refusal_rate": round(start_rate, 2),
-                "end_refusal_rate": round(end_rate, 2),
-                "rate_change": round(end_rate - start_rate, 2),
-                "p_value": 0.04 if is_significant else 0.6,
-                "significant_change": is_significant
-            })
-        return results
+    # SIMULATION REMOVED
+
 
     # REAL ANALYSIS (Only runs if we have actual history)
     
@@ -161,47 +125,8 @@ def run_drift_analysis():
     analysis_results = calculate_drift_stats(df)
     print(f"✅ Drift Analysis Complete. Found {len(analysis_results)} models with history.")
     
-    # If results are "boring" (only 1 model or no drift), force mock data for visualization
-    has_drift = any(r['rate_change'] != 0 for r in analysis_results)
-    if len(analysis_results) < 2 or not has_drift:
-        print("⚠️ Real drift data is trivial (no changes or few models). augmenting with SIMULATED data for demo.")
-        import datetime
-        import random
-        today = datetime.date.today()
-        
-        # Mock models if we don't have enough
-        mock_models = [r['model'] for r in analysis_results]
-        if len(mock_models) < 4:
-            mock_models.extend(["anthropic/claude-3-opus", "google/gemini-1.5-pro", "meta-llama/llama-3-70b-instruct"])
-            mock_models = list(set(mock_models))
-            
-        analysis_results = []
-        for model in mock_models:
-            start_date = today - datetime.timedelta(days=30)
-            end_date = today
-            
-            # Randomly decide if model drifted
-            is_stable = random.random() > 0.4
-            
-            start_rate = random.uniform(2.0, 15.0)
-            if is_stable:
-                end_rate = start_rate + random.uniform(-0.5, 0.5)
-                is_significant = False
-            else:
-                change = random.uniform(1.5, 5.0) * (1 if random.random() > 0.5 else -1)
-                end_rate = start_rate + change
-                is_significant = True
-            
-            analysis_results.append({
-                "model": model,
-                "start_date": str(start_date),
-                "end_date": str(end_date),
-                "start_refusal_rate": round(start_rate, 2),
-                "end_refusal_rate": round(end_rate, 2),
-                "rate_change": round(end_rate - start_rate, 2),
-                "p_value": 0.04 if is_significant else 0.6,
-                "significant_change": is_significant
-            })
+    # SIMULATION REMOVED - Using only real data
+
             
     # Save as JSON for frontend
     out_path = 'web/public/drift_report.json'

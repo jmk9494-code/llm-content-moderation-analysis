@@ -1,42 +1,12 @@
 [
   {
     "model": "01-ai/yi-34b-chat",
-    "start_date": "2025-12-30",
+    "start_date": "2026-01-28",
     "end_date": "2026-01-29",
-    "start_refusal_rate": 9.43,
-    "end_refusal_rate": 5.66,
-    "rate_change": -3.77,
-    "p_value": 0.04,
-    "significant_change": true
-  },
-  {
-    "model": "google/gemini-1.5-pro",
-    "start_date": "2025-12-30",
-    "end_date": "2026-01-29",
-    "start_refusal_rate": 11.85,
-    "end_refusal_rate": 11.96,
-    "rate_change": 0.11,
-    "p_value": 0.6,
-    "significant_change": false
-  },
-  {
-    "model": "anthropic/claude-3-opus",
-    "start_date": "2025-12-30",
-    "end_date": "2026-01-29",
-    "start_refusal_rate": 9.67,
-    "end_refusal_rate": 9.34,
-    "rate_change": -0.34,
-    "p_value": 0.6,
-    "significant_change": false
-  },
-  {
-    "model": "meta-llama/llama-3-70b-instruct",
-    "start_date": "2025-12-30",
-    "end_date": "2026-01-29",
-    "start_refusal_rate": 9.65,
-    "end_refusal_rate": 10.13,
-    "rate_change": 0.48,
-    "p_value": 0.6,
+    "start_refusal_rate": 0.0,
+    "end_refusal_rate": 0.0,
+    "rate_change": 0.0,
+    "p_value": 0.5,
     "significant_change": false
   }
 ]
