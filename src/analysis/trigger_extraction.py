@@ -32,7 +32,12 @@ def extract_triggers(input_file, output_file):
         
         # Process prompts
         # Handle NaN prompts
-        prompts = refusals['prompt'].dropna().astype(str)
+        prompt_col = 'prompt' if 'prompt' in df.columns else 'prompt_text'
+        if prompt_col not in df.columns:
+            logger.error(f"Neither 'prompt' nor 'prompt_text' column found. Columns: {df.columns.tolist()}")
+            return
+
+        prompts = refusals[prompt_col].dropna().astype(str)
         
         for prompt in prompts:
             # Clean and tokenize
@@ -55,12 +60,17 @@ def extract_triggers(input_file, output_file):
         logger.info(f"✅ Trigger words saved to {output_file}")
         
     except Exception as e:
-        logger.error(f"Failed to extract triggers: {e}")
+        print(f"❌ Failed to extract triggers: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
+    print("🚀 Starting trigger extraction...")
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", default="web/public/audit_log.csv.gz")
     parser.add_argument("--output", default="web/public/assets/trigger_words.json")
     args = parser.parse_args()
     
+    print(f"📂 Input: {args.input}")
+    print(f"📂 Output: {args.output}")
     extract_triggers(args.input, args.output)
