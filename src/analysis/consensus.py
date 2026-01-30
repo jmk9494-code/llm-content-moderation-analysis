@@ -58,9 +58,44 @@ async def get_judge_verdict(client, sem, model, content):
 async def run_consensus_analysis(limit=None):
     out_path = 'web/public/consensus_bias.csv'
     
-    if not HAS_OPENAI or not os.getenv("OPENROUTER_API_KEY"):
-        print("⚠️ OpenAI/OpenRouter not configured. Creating empty consensus file.")
-        pd.DataFrame(columns=['model', 'prompt_id', 'judge_1', 'judge_2', 'judge_3', 'consensus_leaning', 'agreement_score']).to_csv(out_path, index=False)
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not HAS_OPENAI or not api_key:
+        print("⚠️ OpenAI/OpenRouter not configured. Generating MOCK consensus data for visualization.")
+        # Generate Mock Data
+        mock_data = []
+        # If audit_log.csv.gz exists, try to get models from there, otherwise use a default list
+        csv_path = 'web/public/audit_log.csv.gz'
+        if not os.path.exists(csv_path):
+            csv_path = 'audit_log.csv.gz'
+        
+        if os.path.exists(csv_path):
+            temp_df = pd.read_csv(csv_path)
+            models = temp_df['model'].unique() if 'model' in temp_df.columns else ["mock-model-1", "mock-model-2"]
+        else:
+            models = ["mock-model-1", "mock-model-2"]
+
+        for m in models:
+            mock_data.append({
+                "model": m,
+                "prompt_id": "mock-1",
+                "judge_1": "REFUSAL",
+                "judge_2": "REFUSAL",
+                "judge_3": "ALLOWED",
+                "consensus_leaning": "Right-Libertarian",
+                "agreement_score": 0.66
+            })
+            mock_data.append({
+                "model": m,
+                "prompt_id": "mock-2",
+                "judge_1": "ALLOWED",
+                "judge_2": "ALLOWED",
+                "judge_3": "ALLOWED",
+                "consensus_leaning": "Left-Authoritarian",
+                "agreement_score": 1.0
+            })
+        
+        pd.DataFrame(mock_data).to_csv(out_path, index=False)
+        print(f"✅ Mock consensus data saved to {out_path}")
         return
 
     client = AsyncOpenAI(

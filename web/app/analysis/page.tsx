@@ -787,17 +787,29 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
         'Left-Libertarian': { x: -0.7, y: -0.5 }, 'Left-Authoritarian': { x: -0.7, y: 0.5 },
         'Right-Libertarian': { x: 0.7, y: -0.5 }, 'Right-Authoritarian': { x: 0.7, y: 0.5 }, 'Neutral-Safety': { x: 0, y: 0 }
     };
-    const scatterData = biasData.map(row => {
-        const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
-        // Exclude judge_reasoning (heavy text) from the chart data to keep tooltip clean
-        return {
-            model: row.model,
-            leaning: row.leaning,
-            x: base.x + (Math.random() - 0.5) * 0.4,
-            y: base.y + (Math.random() - 0.5) * 0.4,
-            z: 1
-        };
-    });
+    const scatterData = useMemo(() => {
+        return biasData.map(row => {
+            const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
+            return {
+                model: row.model,
+                leaning: row.leaning,
+                x: base.x + (Math.random() - 0.5) * 0.4,
+                y: base.y + (Math.random() - 0.5) * 0.4,
+                z: 1
+            };
+        });
+    }, [biasData]);
+
+    // Smart Zoom: Calculate domain based on data extent
+    const zoomDomain = useMemo(() => {
+        if (scatterData.length === 0) return [-1, 1];
+        let maxExt = 0.25; // Minimum zoom level (prevent excessive zooming on empty center)
+        scatterData.forEach(p => {
+            maxExt = Math.max(maxExt, Math.abs(p.x), Math.abs(p.y));
+        });
+        const limit = Math.min(1, maxExt * 1.2); // Add 20% padding, max at 1.0
+        return [-limit, limit];
+    }, [scatterData]);
 
     return (
         <div className="space-y-6">
@@ -827,8 +839,8 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
                 <ResponsiveContainer width="100%" height="90%">
                     <ScatterChart margin={{ top: 40, right: 40, bottom: 40, left: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="x" domain={[-1, 1]} hide />
-                        <YAxis type="number" dataKey="y" domain={[-1, 1]} hide />
+                        <XAxis type="number" dataKey="x" domain={[zoomDomain[0], zoomDomain[1]]} hide />
+                        <YAxis type="number" dataKey="y" domain={[zoomDomain[0], zoomDomain[1]]} hide />
 
                         {/* Custom Reference Lines with Edge Labels */}
                         <ReferenceLine x={0} stroke="#cbd5e1" strokeWidth={2} label={{ position: 'top', value: 'Authoritarian ⬆️', fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} />
