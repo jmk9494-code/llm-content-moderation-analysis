@@ -144,24 +144,49 @@ export default function AnalysisPage() {
 
     const stats = useMemo(() => {
         if (filteredAuditData.length === 0) return null;
-        const models = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.model)));
-        const prompts = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.case_id || d.prompt_id || d.prompt)));
+
+        // Single pass optimizations
+        const uniqueModels = new Set<string>();
+        const uniquePrompts = new Set<string>();
+        const promptMap = new Map<string, AuditRow[]>();
+
+        // 1. Build Index (O(N))
+        filteredAuditData.forEach((row) => {
+            uniqueModels.add(row.model);
+            const pId = row.case_id || row.prompt_id || row.prompt;
+            uniquePrompts.add(pId);
+
+            if (!promptMap.has(pId)) promptMap.set(pId, []);
+            promptMap.get(pId)!.push(row);
+        });
+
+        const models = Array.from(uniqueModels);
+        const prompts = Array.from(uniquePrompts);
+
+        // 2. Calculate Reliability (Delegate to lib, assuming it's reasonably optimized)
         const reliability = calculateFleissKappa(filteredAuditData, models, prompts);
 
+        // 3. Calculate Distribution (O(P))
         const distributionMap = new Map<string, number>();
-        prompts.forEach(p => {
-            const relevant = filteredAuditData.filter((d: AuditRow) => (d.case_id === p || d.prompt_id === p || d.prompt === p) && d.verdict !== 'ERROR');
+
+        promptMap.forEach((rows, pId) => {
+            // Filter error/unknown verdicts from calculation if needed, but assuming filteredAuditData is clean enough or fast enough to filter small arrays
+            const relevant = rows.filter(d => d.verdict !== 'ERROR');
             if (relevant.length === 0) return;
-            const safeCount = relevant.filter((d: AuditRow) => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
+
+            const safeCount = relevant.filter(d => d.verdict === 'ALLOWED' || d.verdict === 'safe' || d.verdict === 'safe_response').length;
             const percentage = (safeCount / relevant.length);
+
             let bucket = "";
             if (relevant.length === 1) bucket = "Single Model (N/A)";
             else if (percentage === 0) bucket = "0% (All Unsafe)";
             else if (percentage === 1) bucket = "100% (All Safe)";
             else if (percentage < 0.5) bucket = "< 50% Safe";
             else if (percentage >= 0.5) bucket = "> 50% Safe";
+
             distributionMap.set(bucket, (distributionMap.get(bucket) || 0) + 1);
         });
+
         const distribution = Array.from(distributionMap.entries()).map(([name, value]) => ({ name, value }));
 
         return { reliability, models, prompts, distribution };
@@ -169,49 +194,38 @@ export default function AnalysisPage() {
 
     const efficiencyData = useMemo(() => {
         if (filteredAuditData.length === 0) return [];
-        const models = Array.from(new Set(filteredAuditData.map((d: AuditRow) => d.model)));
-        console.log("Calculated Efficiency Data Models:", models);
-        const data = models.map(m => {
-            const rows = filteredAuditData.filter((d: AuditRow) => d.model === m);
-            const total = rows.length;
-            const refused = rows.filter((d: AuditRow) => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict)).length;
-            const cost = rows.reduce((acc: number, curr: AuditRow) => acc + (curr.cost || 0), 0);
+
+        // Single pass aggregation
+        const modelStats = new Map<string, { total: number, refused: number, cost: number }>();
+
+        filteredAuditData.forEach(row => {
+            if (!modelStats.has(row.model)) {
+                modelStats.set(row.model, { total: 0, refused: 0, cost: 0 });
+            }
+            const stats = modelStats.get(row.model)!;
+            stats.total++;
+            stats.cost += (row.cost || 0);
+            if (['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(row.verdict)) {
+                stats.refused++;
+            }
+        });
+
+        const data = Array.from(modelStats.entries()).map(([model, stats]) => {
             return {
-                name: m.split('/').pop(),
-                fullName: m,
-                refusalRate: (refused / total) * 100,
-                costPer1k: (cost / total) * 1000,
-                total
+                name: model.split('/').pop(),
+                fullName: model,
+                refusalRate: (stats.refused / stats.total) * 100,
+                costPer1k: (stats.cost / stats.total) * 1000,
+                total: stats.total
             };
         }).filter(m => m.total > 0);
-        console.log("Final Efficiency Data:", data);
+
         return data;
     }, [filteredAuditData]);
 
-    // Calculate Trigger Words (Top words in refused prompts)
-    const triggerWords = useMemo(() => {
-        if (filteredAuditData.length === 0) return [];
-
-        const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'this', 'that', 'it', 'i', 'you', 'he', 'she', 'they', 'we', 'me', 'him', 'her', 'them', 'us', 'my', 'your', 'his', 'her', 'their', 'our', 'what', 'which', 'who', 'whom', 'whose', 'why', 'how', 'where', 'when', 'can', 'could', 'should', 'would', 'will', 'may', 'might', 'must', 'do', 'does', 'did', 'done', 'doing', 'have', 'has', 'had', 'having', 'not', 'no', 'yes', 'if', 'then', 'else', 'from', 'as', 'so', 'than', 'just', 'very', 'really', 'too', 'much', 'many', 'more', 'most', 'some', 'any', 'all', 'none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'make', 'write', 'create', 'generate', 'tell', 'me', 'about', 'like', 'know']);
-
-        const wordCounts: Record<string, number> = {};
-        const refusedPrompts = filteredAuditData.filter(d => ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(d.verdict));
-
-        refusedPrompts.forEach(row => {
-            if (!row.prompt) return;
-            const words = row.prompt.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
-            words.forEach(w => {
-                if (w.length > 3 && !stopWords.has(w)) {
-                    wordCounts[w] = (wordCounts[w] || 0) + 1;
-                }
-            });
-        });
-
-        return Object.entries(wordCounts)
-            .map(([word, count]) => ({ word, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 30); // Top 30 triggers
-    }, [filteredAuditData]);
+    // Trigger Words - Removed client-side calculation (too heavy). 
+    // We now use the pre-generated static image /assets/wordcloud.png
+    const triggerWords: any[] = [];
 
     const longitudinalData = useMemo(() => {
         if (filteredAuditData.length === 0) return { chartData: [], activeModels: [] };
