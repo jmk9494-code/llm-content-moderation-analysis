@@ -397,7 +397,7 @@ export default function AnalysisPage() {
                     <TabButton active={activeTab === 'paternalism'} onClick={() => setActiveTab('paternalism')} icon={<Info className="w-4 h-4" />}>Paternalism</TabButton>
                     <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
 
-                    <TabButton active={activeTab === 'significance'} onClick={() => setActiveTab('significance')} icon={<BarChart className="w-4 h-4" />}>Significance</TabButton>
+
 
                     <TabButton active={activeTab === 'consensus'} onClick={() => setActiveTab('consensus')} icon={<Scale className="w-4 h-4" />}>Council Consensus</TabButton>
                     <TabButton active={activeTab === 'drift'} onClick={() => setActiveTab('drift')} icon={<TrendingUp className="w-4 h-4" />}>Model Stability</TabButton>
