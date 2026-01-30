@@ -782,13 +782,32 @@ function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     );
 }
 
-function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[] }) {
+function BiasCompassView({ biasData, allModels }: { biasData: BiasRow[], allModels: string[] }) {
+    const [selectedModels, setSelectedModels] = useState<string[]>([]);
+    const [selectedLeanings, setSelectedLeanings] = useState<string[]>([]);
+
+    // Derived: Unique leanings
+    const allLeanings = Array.from(new Set(biasData.map(d => d.leaning))).sort();
+
+    // Toggle Helpers
+    const toggleModel = (m: string) => setSelectedModels(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
+    const toggleLeaning = (l: string) => setSelectedLeanings(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+
     const leaningCoords: Record<string, { x: number, y: number }> = {
         'Left-Libertarian': { x: -0.7, y: -0.5 }, 'Left-Authoritarian': { x: -0.7, y: 0.5 },
         'Right-Libertarian': { x: 0.7, y: -0.5 }, 'Right-Authoritarian': { x: 0.7, y: 0.5 }, 'Neutral-Safety': { x: 0, y: 0 }
     };
+
+    const filteredData = useMemo(() => {
+        return biasData.filter(row => {
+            if (selectedModels.length > 0 && !selectedModels.includes(row.model)) return false;
+            if (selectedLeanings.length > 0 && !selectedLeanings.includes(row.leaning)) return false;
+            return true;
+        });
+    }, [biasData, selectedModels, selectedLeanings]);
+
     const scatterData = useMemo(() => {
-        return biasData.map(row => {
+        return filteredData.map(row => {
             const base = leaningCoords[row.leaning] || { x: 0, y: 0 };
             return {
                 model: row.model,
@@ -798,7 +817,7 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
                 z: 1
             };
         });
-    }, [biasData]);
+    }, [filteredData]);
 
     // Smart Zoom: Calculate domain based on data extent
     const zoomDomain = useMemo(() => {
@@ -821,6 +840,43 @@ function BiasCompassView({ biasData }: { biasData: BiasRow[], allModels: string[
                     <li><strong>Vertical (Authoritarian vs. Libertarian):</strong> Social bias. Authoritarian (Top) favors strict guardrails and authority; Libertarian (Bottom) favors freedom of speech and minimal intervention.</li>
                 </ul>
             </div>
+
+            {/* Filters Control Panel */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Filter by Model</label>
+                        <div className="flex flex-wrap gap-2">
+                            {allModels.map(m => (
+                                <button
+                                    key={m}
+                                    onClick={() => toggleModel(m)}
+                                    className={`px-2 py-1 text-xs rounded-md border transition-colors ${selectedModels.includes(m) ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-medium' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    {m.split('/').pop()}
+                                </button>
+                            ))}
+                            <button onClick={() => setSelectedModels([])} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-600 underline">Reset</button>
+                        </div>
+                    </div>
+                    <div className="flex-1 border-t md:border-t-0 md:border-l border-slate-100 md:pl-6 pt-4 md:pt-0">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Filter by Leaning</label>
+                        <div className="flex flex-wrap gap-2">
+                            {allLeanings.map(l => (
+                                <button
+                                    key={l}
+                                    onClick={() => toggleLeaning(l)}
+                                    className={`px-2 py-1 text-xs rounded-md border transition-colors ${selectedLeanings.includes(l) ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-medium' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    {l}
+                                </button>
+                            ))}
+                            <button onClick={() => setSelectedLeanings([])} className="px-2 py-1 text-xs text-slate-400 hover:text-slate-600 underline">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 h-[650px] relative">
                 <h3 className="text-lg font-bold mb-6">Bias Compass</h3>
 

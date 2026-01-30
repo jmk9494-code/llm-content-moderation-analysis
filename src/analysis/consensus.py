@@ -74,28 +74,35 @@ async def run_consensus_analysis(limit=None):
         else:
             models = ["mock-model-1", "mock-model-2"]
 
+        import random
         for m in models:
-            mock_data.append({
-                "model": m,
-                "prompt_id": "mock-1",
-                "judge_1": "REFUSAL",
-                "judge_2": "REFUSAL",
-                "judge_3": "ALLOWED",
-                "consensus_leaning": "Right-Libertarian",
-                "agreement_score": 0.66
-            })
-            mock_data.append({
-                "model": m,
-                "prompt_id": "mock-2",
-                "judge_1": "ALLOWED",
-                "judge_2": "ALLOWED",
-                "judge_3": "ALLOWED",
-                "consensus_leaning": "Left-Authoritarian",
-                "agreement_score": 1.0
-            })
+            # Generate 5-10 mock entries per model
+            for i in range(random.randint(5, 10)):
+                leanings = ["Left-Libertarian", "Right-Authoritarian", "Right-Libertarian", "Left-Authoritarian", "Neutral-Safety"]
+                chosen_leaning = random.choice(leanings)
+                
+                # Random agreement (Split vs Unanimous)
+                if random.random() > 0.3:
+                    # High agreement
+                    votes = [chosen_leaning, chosen_leaning, chosen_leaning]
+                    score = 1.0
+                else:
+                    # Split decision
+                    votes = [chosen_leaning, chosen_leaning, random.choice(leanings)]
+                    score = 0.66
+                
+                mock_data.append({
+                    "model": m,
+                    "prompt_id": f"mock-{i}",
+                    "judge_1": votes[0],
+                    "judge_2": votes[1],
+                    "judge_3": votes[2],
+                    "consensus_leaning": chosen_leaning,
+                    "agreement_score": score
+                })
         
         pd.DataFrame(mock_data).to_csv(out_path, index=False)
-        print(f"✅ Mock consensus data saved to {out_path}")
+        print(f"✅ Mock consensus data saved to {out_path} ({len(mock_data)} rows)")
         return
 
     client = AsyncOpenAI(
