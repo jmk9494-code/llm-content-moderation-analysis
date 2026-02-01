@@ -739,4 +739,9 @@ def main():
     logger.info(f"Total Session Runtime: {time.time() - start_time:.2f} seconds")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.exception("CRITICAL: Unhandled exception during audit run")
+        import sys
+        sys.exit(1)
