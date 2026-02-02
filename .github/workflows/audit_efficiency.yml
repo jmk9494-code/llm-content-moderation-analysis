@@ -45,6 +45,7 @@ jobs:
       - name: Run Unit Tests
         env:
           OPENROUTER_API_KEY: "mock_key_for_ci"
+          PYTHONPATH: .
         run: |
           python -m pytest -W ignore::DeprecationWarning
 
