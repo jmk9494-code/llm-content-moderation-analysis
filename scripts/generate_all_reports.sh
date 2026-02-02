@@ -3,7 +3,12 @@
 # Configuration
 AUDIT_LOG="web/public/audit_log.csv.gz"
 export PYTHONPATH="."
-PYTHON_CMD="./.venv/bin/python"
+# Check for virtual environment, otherwise use system python (for CI)
+if [ -f "./.venv/bin/python" ]; then
+    PYTHON_CMD="./.venv/bin/python"
+else
+    PYTHON_CMD="python"
+fi
 
 echo "🚀 Starting Full Analysis Pipeline..."
 
