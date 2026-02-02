@@ -19,6 +19,11 @@ def calculate_drift_stats(df):
     # Group by Model
     models = df['model'].unique()
     
+    # SIMULATION REMOVED
+
+
+    # REAL ANALYSIS (Only runs if we have actual history)
+    
     for model in models:
         m_df = df[df['model'] == model].sort_values('test_date')
         
@@ -118,7 +123,11 @@ def run_drift_analysis():
         df = pd.read_csv(csv_path, error_bad_lines=False)
     
     analysis_results = calculate_drift_stats(df)
+    print(f"✅ Drift Analysis Complete. Found {len(analysis_results)} models with history.")
     
+    # SIMULATION REMOVED - Using only real data
+
+            
     # Save as JSON for frontend
     out_path = 'web/public/drift_report.json'
     with open(out_path, 'w') as f:
@@ -127,7 +136,6 @@ def run_drift_analysis():
     # Also save as CSV for easy reading
     pd.DataFrame(analysis_results).to_csv('web/public/drift_report.csv', index=False)
     
-    print(f"✅ Drift Analysis Complete. Found {len(analysis_results)} models with history.")
     for r in analysis_results:
         sig = "⚠️ SIGNIFICANT" if r['significant_change'] else "Stable"
         print(f"  - {r['model']}: {r['start_refusal_rate']}% -> {r['end_refusal_rate']}% ({sig})")

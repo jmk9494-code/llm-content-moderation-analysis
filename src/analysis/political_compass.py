@@ -191,6 +191,12 @@ async def _main_async(models, mock=False, output="visuals/political_compass.png"
     else:
         data = await run_compass_analysis(models)
     
+    # JSON Export
+    json_output = output.replace('.png', '.json')
+    with open(json_output, 'w') as f:
+        json.dump(data, f, indent=2)
+    logger.info(f"✅ Compass data saved to {json_output}")
+
     plot_compass(data, output_path=output)
 
 if __name__ == "__main__":

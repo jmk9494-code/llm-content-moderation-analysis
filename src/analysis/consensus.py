@@ -47,6 +47,7 @@ async def get_judge_verdict(client, sem, model, content):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": content}
                 ],
+                max_tokens=1000,
                 response_format={"type": "json_object"}
             )
             data = json.loads(response.choices[0].message.content)
@@ -58,10 +59,11 @@ async def get_judge_verdict(client, sem, model, content):
 async def run_consensus_analysis(limit=None):
     out_path = 'web/public/consensus_bias.csv'
     
-    if not HAS_OPENAI or not os.getenv("OPENROUTER_API_KEY"):
-        print("⚠️ OpenAI/OpenRouter not configured. Creating empty consensus file.")
-        pd.DataFrame(columns=['model', 'prompt_id', 'judge_1', 'judge_2', 'judge_3', 'consensus_leaning', 'agreement_score']).to_csv(out_path, index=False)
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not HAS_OPENAI or not api_key:
+        print("⚠️ OpenAI/OpenRouter not configured. Cannot run consensus analysis.")
         return
+
 
     client = AsyncOpenAI(
         base_url="https://openrouter.ai/api/v1",

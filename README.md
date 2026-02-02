@@ -15,7 +15,7 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ### Dashboard
 - **Overview** - Real-time stats, heatmaps, interactive model filtering, and audit logs
 - **Compare** - Side-by-side model comparison with statistical significance tests
-- **Analysis** - **Bias Compass** (All Models), Longitudinal Study (Multi-model support), and **Weekly AI Analyst** reports
+- **Analysis** - **Council Consensus**, **Model Stability**, Longitudinal Study (Multi-model support), and **Weekly AI Analyst** reports
 - **Efficiency** - Cost vs. Refusal Rate trade-offs
 - **Export** - Download comparison data as CSV
 
@@ -30,7 +30,8 @@ To minimize selection bias, sensitive topics (N=200) were grounded in Wikipedia'
 
 ### Backend
 - **Multi-Model Auditing** - Test OpenAI, Anthropic, Google, and open-source models
-- **Bias Analysis** - Quadrant mapping of refusal reasoning (Left/Right/Auth/Lib)
+- **Council Consensus** - Agreement level among judges
+- **Model Stability** - Change in refusal rates over time
 - **Statistical Analysis** - Fleiss Kappa, Refusal Rate Agreement
 - **Cost Tracking** - Per-model cost calculation
 
@@ -94,7 +95,7 @@ We employ a cost-effective longitudinal strategy:
 ├── src/                  # Python backend
 │   ├── audit_runner.py   # Main auditing script
 │   ├── analyst.py        # AI Analysis agent
-│   ├── analyze_bias.py   # Bias compass calculation
+
 │   ├── statistics.py     # Statistical analysis
 │   ├── policy_tuner.py   # Policy optimization
 │   └── migrate_csv_to_sql.py # DB initialization
