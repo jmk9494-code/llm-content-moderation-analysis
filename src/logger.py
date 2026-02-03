@@ -49,8 +49,21 @@ def log_raw_trace(run_id, model, prompt, response_text, full_payload=None):
             "full_payload": full_payload or {}
         }
         
+        def safe_serialize(obj):
+            """fallback for non-serializable objects"""
+            # Check for Pydantic models (OpenAI V1 uses them)
+            if hasattr(obj, 'model_dump'):
+                return obj.model_dump()
+            if hasattr(obj, 'dict'):
+                return obj.dict()
+            # Check for generic objects
+            if hasattr(obj, '__dict__'):
+                return obj.__dict__
+            # Fallback to string
+            return str(obj)
+
         with open(filename, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2, default=safe_serialize)
             
     except Exception as e:
         print(f"Failed to log raw trace: {e}")
