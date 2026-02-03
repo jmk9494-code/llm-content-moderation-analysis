@@ -75,14 +75,14 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
           done
           
+      - name: Compress Data
+        run: python scripts/compress_data.py
+
       - name: Generate All Reports & Visuals
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PYTHONPATH: .
         run: bash scripts/generate_all_reports.sh
-
-      - name: Compress Data
-        run: python scripts/compress_data.py
 
       - name: Commit and Push Results
         run: |

@@ -39,9 +39,9 @@ $PYTHON_CMD src/analysis/plot_paternalism.py
 echo "📉 Generating Alignment Tax Chart..."
 $PYTHON_CMD scripts/visuals/plot_pareto.py
 
-# 8. JSON Conversion (SKIPPED - favoring Gzip CSV)
-# echo "📂 Converting CSV to JSON (traces.json)..."
-# $PYTHON_CMD scripts/convert_csv_to_json.py
+# 8. Evidence Locker Data (Traces JSON)
+echo "📂 Generating Evidence Locker Data (traces.json)..."
+$PYTHON_CMD scripts/create_sample_traces.py
 
 # 9. AI Analyst & Semantic Clusters
 echo "🏷️ Generating AI Analyst Report & Clusters..."
