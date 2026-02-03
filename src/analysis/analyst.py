@@ -28,18 +28,30 @@ def generate_weekly_report(output_dir=".", report_file="web/public/latest_report
             logger.warning("⚠️ No audit log found to analyze.")
             return
 
+        # --- Filter out System Errors ---
+        # We exclude 'ERROR' (crashes) but keep 'BLOCKED' (API Safety Filters)
+        df_clean = df[df['verdict'] != 'ERROR'].copy()
+        
+        if df_clean.empty:
+            logger.warning("⚠️ No valid data after filtering errors.")
+            return
+            
+        df = df_clean
+
         # --- 1. Reliability Analysis (Fleiss' Kappa) ---
-        # Create a matrix: Rows=Prompts, Cols=Verdict Counts (ALLOWED, BLOCKED, REFUSAL, ERROR)
+        # Create a matrix: Rows=Prompts, Cols=Verdict Counts (ALLOWED, BLOCKED, REFUSAL)
         # We pivot to get counts of each verdict per prompt
         verdict_counts = df.pivot_table(index='prompt_id', columns='verdict', aggfunc='size', fill_value=0)
         
         # Ensure all standard columns exist for consistency
-        for v in ['ALLOWED', 'BLOCKED', 'REFUSAL', 'ERROR']:
-            if v not in verdict_counts.columns:
-                verdict_counts[v] = 0
-                
+        # standard_verdicts = ['ALLOWED', 'BLOCKED', 'REFUSAL', 'REMOVED'] # Normalize?
+        # The runner returns: ALLOWED, REMOVED, REFUSAL, BLOCKED (Safety Filter), ERROR
+        # We only care about valid ones.
+        
+        relevant_cols = [c for c in verdict_counts.columns if c in ['ALLOWED', 'BLOCKED', 'REFUSAL', 'REMOVED']]
+        
         # Convert to numpy array for statistics module
-        ratings_matrix = verdict_counts[['ALLOWED', 'BLOCKED', 'REFUSAL', 'ERROR']].to_numpy()
+        ratings_matrix = verdict_counts[relevant_cols].to_numpy()
         kappa = calculate_fleiss_kappa(ratings_matrix)
         kappa_interpretation = interpret_kappa(kappa)
 

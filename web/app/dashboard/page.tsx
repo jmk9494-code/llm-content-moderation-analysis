@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { StatCard, StatCardGrid } from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle, FileText, Database, ShieldCheck } from 'lucide-react';
+import { Activity, Calendar, Clock, RefreshCw, Search, X, AlertTriangle, FileText, Database, ShieldCheck, AlertOctagon } from 'lucide-react';
 import Papa from 'papaparse';
 import HeatmapTable from '@/components/HeatmapTable';
 import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
@@ -45,8 +45,14 @@ const auditColumns: ColumnDef<AuditRow>[] = [
     cell: ({ row }) => {
       const verdict = row.getValue('verdict') as string;
       const isRefusal = ['REMOVED', 'REFUSAL', 'unsafe'].includes(verdict);
+      const isError = ['ERROR', 'BLOCKED'].includes(verdict);
+
+      let colorClass = 'bg-green-100 text-green-700';
+      if (isRefusal) colorClass = 'bg-red-100 text-red-700';
+      if (isError) colorClass = 'bg-gray-100 text-gray-700 border border-gray-300';
+
       return (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${isRefusal ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
           {verdict}
         </span>
       );
@@ -81,7 +87,6 @@ export default function DashboardPage() {
   const [biasData, setBiasData] = useState<any[]>([]);
 
   useEffect(() => {
-    // 1. Fetch Audit Data
     // 1. Fetch Audit Data (Client-side)
     fetchAuditData(false)
       .then((cleanData) => {
@@ -205,9 +210,19 @@ export default function DashboardPage() {
     return filtered;
   }, [data, selectedModel, selectedCategory, selectedRegion, selectedDate, keyword, filterOptions]);
 
+  // Valid Data for Analysis (Excluding Errors)
+  const validData = useMemo(() => {
+    return filteredData.filter(d => d.verdict !== 'ERROR' && d.verdict !== 'BLOCKED');
+  }, [filteredData]);
+
   // Calculate stats
   const stats = useMemo(() => {
     const totalAudits = data.length;
+
+    // System Errors
+    const systemErrors = data.filter(d => d.verdict === 'ERROR' || d.verdict === 'BLOCKED').length;
+    const systemErrorRate = totalAudits > 0 ? (systemErrors / totalAudits) * 100 : 0;
+
     const uniqueModels = new Set(data.map(d => d.model)).size;
     const uniqueDates = new Set(data
       .map(d => d.timestamp && typeof d.timestamp === 'string' ? d.timestamp.split('T')[0] : null)
@@ -219,16 +234,16 @@ export default function DashboardPage() {
     const daysSinceStart = Math.floor((new Date().getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
     const hoursSinceUpdate = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60));
 
-    // Refusal stats
-    const refusals = data.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length;
-    const refusalRate = totalAudits > 0 ? (refusals / totalAudits) * 100 : 0;
+    // Refusal stats (Using valid data logic)
+    const validAudits = data.filter(d => d.verdict !== 'ERROR' && d.verdict !== 'BLOCKED');
+    const refusals = validAudits.filter(d => d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe').length;
+    const refusalRate = validAudits.length > 0 ? (refusals / validAudits.length) * 100 : 0;
 
-    // Top categories by refusals
-    // Top categories by refusal rate
+    // Top categories by refusals (using valid audits only)
     const catCounts: Record<string, number> = {};
     const catTotalCounts: Record<string, number> = {};
 
-    data.forEach(d => {
+    validAudits.forEach(d => {
       catTotalCounts[d.category] = (catTotalCounts[d.category] || 0) + 1;
       if (d.verdict === 'REFUSAL' || d.verdict === 'REMOVED' || d.verdict === 'unsafe') {
         catCounts[d.category] = (catCounts[d.category] || 0) + 1;
@@ -271,7 +286,8 @@ export default function DashboardPage() {
     return {
       totalAudits, uniqueModels, uniqueDates, firstDate, lastDate, daysSinceStart, hoursSinceUpdate,
       refusals, refusalRate, topCategories,
-      efficiencyTier, mediumTier, expensiveTier
+      efficiencyTier, mediumTier, expensiveTier,
+      systemErrors, systemErrorRate
     };
   }, [data]);
 
@@ -363,15 +379,27 @@ export default function DashboardPage() {
               />
             </StatCardGrid>
 
-            {/* Full Width Refusal Rate Card */}
-            <StatCard
-              title="Overall Refusal Rate"
-              value={`${stats.refusalRate.toFixed(1)}%`}
-              icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
-              description={`${stats.refusals} of ${stats.totalAudits} censored`}
-              delay={0.4}
-              className="flex flex-col items-center text-center justify-center w-full bg-slate-50/50 border-slate-200/60 shadow-sm"
-            />
+            {/* Error & Refusal Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <StatCard
+                title="System Error Rate"
+                value={`${stats.systemErrorRate.toFixed(1)}%`}
+                icon={<AlertOctagon className={`h-5 w-5 ${stats.systemErrorRate > 5 ? 'text-red-600' : 'text-slate-600'}`} />}
+                description={`${stats.systemErrors} system failures (API/Network)`}
+                delay={0.35}
+                className={`flex flex-col items-center text-center justify-center w-full border-slate-200/60 shadow-sm ${stats.systemErrorRate > 0 ? 'bg-red-50/50' : 'bg-slate-50/50'}`}
+              />
+
+              {/* Full Width Refusal Rate Card */}
+              <StatCard
+                title="Effective Refusal Rate"
+                value={`${stats.refusalRate.toFixed(1)}%`}
+                icon={<AlertTriangle className={`h-5 w-5 ${stats.refusalRate > 30 ? 'text-red-600' : stats.refusalRate > 15 ? 'text-amber-600' : 'text-emerald-600'}`} />}
+                description={`${stats.refusals} censures (excluding errors)`}
+                delay={0.4}
+                className="flex flex-col items-center text-center justify-center w-full bg-slate-50/50 border-slate-200/60 shadow-sm"
+              />
+            </div>
 
             {/* Filter Controls */}
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
@@ -460,27 +488,27 @@ export default function DashboardPage() {
             {/* Main Content Grid - Overview */}
             <div className="space-y-6">
 
-              {/* Model Comparison */}
-              {filteredData.length > 0 && (
+              {/* Model Comparison - Uses VALID data (no errors) */}
+              {validData.length > 0 && (
                 <ModelComparison
-                  data={filteredData}
+                  data={validData}
                   onModelSelect={(model) => setSelectedModel(model)}
                 />
               )}
 
-              {/* Heatmap Visualization (Pillar 5) */}
-              {filteredData.length > 0 && (
+              {/* Heatmap Visualization (Pillar 5) - Uses VALID data (no errors) */}
+              {validData.length > 0 && (
                 <div className="space-y-4">
                   <CensorshipHeatmap
-                    data={filteredData}
+                    data={validData}
                     title="Category Sensitivity Heatmap"
                     description="This table visualizes refusal rates by category. Red cells indicate strict blocking/refusal, while green cells indicate permissiveness."
                   />
                 </div>
               )}
 
-              {/* Top Censorship Categories Chart */}
-              {filteredData.length > 0 && stats.topCategories.length > 0 && (
+              {/* Top Censorship Categories Chart - Uses stats which are already derived from VALID data */}
+              {validData.length > 0 && stats.topCategories.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
                   <h3 className="text-lg font-bold mb-4">🚫 Top Refusal Categories (Refusal Rate)</h3>
                   <div style={{ height: `${Math.max(300, stats.topCategories.length * 40)}px` }} className="min-h-[300px]">
@@ -504,7 +532,7 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Audit Log Table */}
+              {/* Audit Log Table - Uses FILTERED data (INCLUDES errors if they match filter) */}
               {filteredData.length > 0 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
                   <div className="flex justify-between items-center mb-4">
@@ -526,7 +554,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${['REMOVED', 'REFUSAL', 'unsafe'].includes(row.verdict) ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                            <span className={`w-2 h-2 rounded-full ${['REMOVED', 'REFUSAL', 'unsafe'].includes(row.verdict) ? 'bg-red-500' : ['ERROR', 'BLOCKED'].includes(row.verdict) ? 'bg-gray-500' : 'bg-green-500'}`}></span>
                             Response
                           </h4>
                           <div className="bg-slate-100 p-4 rounded-lg border border-slate-200 font-mono text-xs text-slate-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
@@ -573,8 +601,7 @@ export default function DashboardPage() {
   );
 }
 
-
-
+// ... unchanged parts
 type BiasRow = { model: string; leaning: string; confidence: number };
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe', '#00C49F'];
 
