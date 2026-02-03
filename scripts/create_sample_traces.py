@@ -7,7 +7,7 @@ output_file = "web/public/assets/traces_small.json"
 
 if os.path.exists(input_file):
     print(f"Reading {input_file}...")
-    df = pd.read_csv(input_file).head(1000) # Take first 1000 rows
+    df = pd.read_csv(input_file) # Process all rows
     
     # Selecting columns to match expected JSON structure
     # model, category, persona, prompt (prompt_text), response (response_text), verdict

@@ -1,14 +1,14 @@
 from unittest.mock import MagicMock, patch
-from src.analyst import generate_weekly_report
+from src.analysis.analyst import generate_weekly_report
 from src.database import AuditResult
 
 def test_generate_report_no_data(db_session, caplog):
     """Verify that empty DB results in a warning log."""
-    with patch("src.analyst.get_session", return_value=db_session):
+    with patch("src.analysis.analyst.get_session", return_value=db_session):
         generate_weekly_report(output_dir="/tmp")
     assert "No audit log found" in caplog.text
 
-@patch("src.analyst.OpenAI")
+@patch("src.analysis.analyst.OpenAI")
 def test_generate_report_success(mock_openai_class, db_session):
     """Verify report generation with mocked OpenAI."""
     # 1. Setup Mock
@@ -30,7 +30,7 @@ def test_generate_report_success(mock_openai_class, db_session):
 
     # 3. Run
     # We patch get_session to return our test db_session
-    with patch("src.analyst.get_session", return_value=db_session):
+    with patch("src.analysis.analyst.get_session", return_value=db_session):
         generate_weekly_report(output_dir="/tmp", report_file="test_report.md")
     
     # 4. Verify

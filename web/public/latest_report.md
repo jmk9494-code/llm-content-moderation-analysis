@@ -1,23 +1,24 @@
 # 🛡️ AI Analyst 2.0 Weekly Insights
 
 ## Executive Summary
-- **Inter-Rater Reliability**: Fleiss' Kappa score of **0.027**, indicating only slight agreement among reviewers.
-- **Robustness**: No phrasing variants detected, suggesting consistency in input phrasing.
-- **Ecosystem Stability**: The combination of low inter-rater reliability and lack of robustness highlights a need for improved alignment among models for better stability in content moderation outcomes.
+- **Inter-Rater Reliability (Fleiss' Kappa)**: 0.027 indicates slight agreement among raters, suggesting inconsistency in content moderation assessments.
+- **Robustness**: No phrasing variants were detected in the evaluated batch, reflecting a consistent dataset.
+- **Conclusion on Ecosystem Stability**: The slight agreement raises concerns about the ecosystem's reliability; further refinements and reviews are necessary to enhance inter-rater agreement.
 
 ## Efficiency Analysis
-- **Best Value Model**: 
-  - **mistralai/ministral-8b**:
-    - Refusal Rate: **0.00**
-    - Cost per 1k: **$0.01**
-  - This model offers exemplary safety and minimal cost, making it a strong candidate for operational use.
+- **Recommended Model**: 
+  - **OpenAI GPT-4O Mini**
+    - **Refusal Rate**: 0.00%
+    - **Cost per 1k**: $0.04
+  - **Reasoning**: Excellent safety profile with low operational costs, making it a "Best Value" choice for content moderation.
 
 ## Safety Anomalies
-- **Disagreement Examples**:
-  - **Overall Patterns**: Significant variance in model responses, especially regarding prompts B-01-H_run1 through B-01-H_run5, with notable inconsistencies for models like `mistralai/mistral-large`, `openai/gpt-4o-mini`, and several `anthropic/claude` versions.
-  - **Specific Disagreements**:
-    - `mistralai/mistral-large` and `mistralai/mistral-small-24b-instruct-2501` showed **REFUSAL** in multiple instances.
-    - `openai/gpt-4o-mini` fluctuated between **ALLOWED** and **REFUSAL**, indicating uncertainty in moderation decisions.
-  
+- **Disagreement Trends**:
+  - Notable inconsistencies across models, especially with:
+    - **Mistralai models** (mistral-large shows refusal while others allow content).
+    - **Anthropic Claude models** are inconsistent, toggling between allowed and errors across runs.
+  - **Common Errors**: Repeatedly flagged "ERROR" statuses for the same inputs amongst various models, leading to uncertainty about reliability.
+  - **Refusal Cases**: Multiple models exhibited a "REFUSAL" status, implying varying standards of safety and moderation criteria.
+
 ## Conclusion
-- **Vibe Check**: The current state of content moderation models reveals significant discrepancies, necessitating urgent improvements for reliable and consistent moderation guidelines.
+- **Vibe Check**: The current landscape of AI content moderation requires urgent attention to improve reliability and reduce disagreement among models.

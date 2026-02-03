@@ -2,11 +2,11 @@
 import os
 import unittest
 from unittest.mock import patch, MagicMock
-from loaders.standard_benchmarks import download_xstest, load_xstest, CACHE_FILE
+from src.loaders.standard_benchmarks import download_xstest, load_xstest, CACHE_FILE
 
 class TestStandardBenchmarks(unittest.TestCase):
     
-    @patch('loaders.standard_benchmarks.requests.get')
+    @patch('src.loaders.standard_benchmarks.requests.get')
     def test_download_xstest(self, mock_get):
         # Mock response
         mock_response = MagicMock()
