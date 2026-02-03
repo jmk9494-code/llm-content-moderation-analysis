@@ -13,7 +13,7 @@ concurrency:
 jobs:
   run-analysis:
     runs-on: ubuntu-latest
-    timeout-minutes: 60 
+    timeout-minutes: 360 
     permissions:
       contents: write 
 
@@ -62,7 +62,7 @@ jobs:
           while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
             echo "=== Attempt $ATTEMPT of $MAX_ATTEMPTS ==="
             
-            if python src/audit_runner.py --preset low --resolve-latest; then
+            if python src/audit_runner.py --preset low --resolve-latest --consistency 1; then
               echo "✅ Model collection completed successfully"
               exit 0
             else
