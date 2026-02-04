@@ -87,7 +87,6 @@ function AnalysisLayoutContent({ children }: { children: React.ReactNode }) {
                     <NavTab href="/analysis/drift" active={isActive('/drift')} icon={<TrendingUp className="w-4 h-4" />}>Model Stability</NavTab>
                     <NavTab href="/analysis/reliability" active={isActive('/reliability')} icon={<ShieldCheck className="w-4 h-4" />}>Reliability</NavTab>
                     <NavTab href="/analysis/longitudinal" active={isActive('/longitudinal')} icon={<TrendingUp className="w-4 h-4" />}>Longitudinal</NavTab>
-                    <NavTab href="/analysis/evidence" active={isActive('/evidence')} icon={<Search className="w-4 h-4" />}>Evidence</NavTab>
                 </div>
 
                 {/* Page Content */}

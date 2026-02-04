@@ -221,3 +221,7 @@ web/public/audit_log.csv
 data/prompts_full_db.csv
 *.db-journal
 web/public/assets/traces.json
+web/public/assets/traces_small.json
+web/public/assets/history/traces_*.json
+web/public/audit_log.csv.bak
+data/raw_traces/
