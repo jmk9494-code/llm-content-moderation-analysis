@@ -92,10 +92,11 @@ jobs:
           git pull --rebase origin main
           git stash pop || echo "Warning: Stash pop reported conflicts."
           
-          # Add compressed, ignore raw
-          git add web/public/audit_log.csv.gz audit.db
-          # Ensure raw file is untracked 
+          # Add compressed data only (audit.db is too large for GitHub)
+          git add web/public/audit_log.csv.gz
+          # Ensure raw file and large db are untracked 
           git rm --cached web/public/audit_log.csv || true
+          git rm --cached audit.db 2>/dev/null || true
           
           # Add everything else
           git add .
