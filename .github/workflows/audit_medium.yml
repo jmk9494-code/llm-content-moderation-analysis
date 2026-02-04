@@ -72,6 +72,9 @@ jobs:
           done
           exit 1
 
+      - name: Compress Data
+        run: python scripts/compress_data.py
+
       - name: Generate All Reports & Visuals
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -85,9 +88,18 @@ jobs:
           git stash push -m "New analysis data" --include-untracked
           git pull --rebase origin main
           git stash pop || echo "Warning: Stash pop reported conflicts."
+          
+          # Add compressed data only (audit.db is too large for GitHub)
+          git add web/public/audit_log.csv.gz
+          # Ensure raw file and large db are untracked 
+          git rm --cached web/public/audit_log.csv || true
+          git rm --cached audit.db 2>/dev/null || true
+          
+          # Add everything else
           git add .
+          
           if ! git diff --cached --quiet; then
-            git commit -m "Auto-update: Mid Tier Audit for $(date +%Y-%m-%d)"
+            git commit -m "Auto-update: Mid Tier Audit for $(date +%Y-%m-%d) [compressed]"
             git push origin main
           else
             echo "No changes to commit"
@@ -100,9 +112,31 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           mkdir -p web/public/data
-          cp audit_log.csv web/public/
-          cp audit.db web/audit.db
+          # Copy compressed or uncompressed audit log (whichever exists)
+          if [ -f "web/public/audit_log.csv.gz" ]; then
+            echo "Using compressed audit_log.csv.gz"
+          elif [ -f "audit_log.csv" ]; then
+            cp audit_log.csv web/public/
+          elif [ -f "web/public/audit_log.csv" ]; then
+            echo "audit_log.csv already in place"
+          else
+            echo "Warning: No audit_log.csv found, skipping"
+          fi
+          # Copy audit.db if it exists
+          if [ -f "audit.db" ]; then
+            cp audit.db web/audit.db
+          else
+            echo "Warning: audit.db not found, skipping"
+          fi
           if [ -f "data/latest_report.md" ]; then
             cp data/latest_report.md web/public/
           fi
           npx vercel deploy --prod --token=$VERCEL_TOKEN --yes
+
+      - name: Sync to Hugging Face Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub datasets pandas
+          python scripts/sync_to_huggingface.py
+
