@@ -267,11 +267,16 @@ export default function DashboardPage() {
       .sort((a, b) => b.value - a.value);
 
     // Tier freshness - based on model names/providers
-    const lowTierModels = ['gpt-4o-mini', 'haiku', 'flash-lite', '7b', 'ministral'];
-    const highTierModels = ['gpt-4o', 'claude-3.5-sonnet', 'mistral-large', 'deepseek', '72b'];
+    // IMPORTANT: These keywords should NOT overlap between tiers
+    // Efficiency Tier: Small/cheap models (Low Tier workflow)
+    const lowTierModels = ['gpt-4o-mini', 'gpt-audio-mini', 'flash-lite', 'ministral-14b', 'ministral-8b', 'coder-7b', 'qwen2.5-coder', 'haiku-4.5', 'gemini-2.5-flash-lite'];
+    // Medium Tier: Mid-range models  
+    const midTierModels = ['gemini-2.0-flash', 'mistral-small', 'mistral-medium', 'qwen-plus', 'claude-3-haiku'];
+    // Expensive Tier: Large/premium models (High Tier workflow)
+    const highTierModels = ['gpt-4o', 'claude-3.5-sonnet', 'mistral-large', 'deepseek-chat', '72b', 'gemini-2.5-pro'];
 
     const getTierData = (keywords: string[]) => {
-      const tierRows = data.filter(d => keywords.some(k => d.model.toLowerCase().includes(k)));
+      const tierRows = data.filter(d => keywords.some(k => d.model.toLowerCase().includes(k.toLowerCase())));
       if (tierRows.length === 0) return { lastUpdate: null, daysSince: 999 };
       const dates = tierRows.map(d => new Date(d.timestamp)).sort((a, b) => b.getTime() - a.getTime());
       const lastUpdate = dates[0];
@@ -280,7 +285,7 @@ export default function DashboardPage() {
     };
 
     const efficiencyTier = getTierData(lowTierModels);
-    const mediumTier = getTierData(['flash', 'haiku', 'small', 'medium', 'plus']);
+    const mediumTier = getTierData(midTierModels);
     const expensiveTier = getTierData(highTierModels);
 
     return {
