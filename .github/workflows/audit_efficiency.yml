@@ -115,8 +115,22 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           mkdir -p web/public/data
-          cp audit_log.csv web/public/
-          cp audit.db web/audit.db
+          # Copy compressed or uncompressed audit log (whichever exists)
+          if [ -f "web/public/audit_log.csv.gz" ]; then
+            echo "Using compressed audit_log.csv.gz"
+          elif [ -f "audit_log.csv" ]; then
+            cp audit_log.csv web/public/
+          elif [ -f "web/public/audit_log.csv" ]; then
+            echo "audit_log.csv already in place"
+          else
+            echo "Warning: No audit_log.csv found, skipping"
+          fi
+          # Copy audit.db if it exists
+          if [ -f "audit.db" ]; then
+            cp audit.db web/audit.db
+          else
+            echo "Warning: audit.db not found, skipping"
+          fi
           if [ -f "data/latest_report.md" ]; then
             cp data/latest_report.md web/public/
           fi
