@@ -21,7 +21,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          cd web
+          # Don't cd into web - Vercel project settings already point to web/ as root
           npx vercel deploy --prod --token=$VERCEL_TOKEN --yes
 
       - name: Sync to Hugging Face Hub
