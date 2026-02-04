@@ -1,110 +1,38 @@
 [
   {
-    "model":"01-ai\/yi-34b-chat",
+    "model":"anthropic\/claude-haiku-4.5",
+    "persona":"Default",
+    "is_refusal":0.6135216953,
+    "refusal_rate":61.3521695257
+  },
+  {
+    "model":"google\/gemini-2.5-flash-lite-preview-09-2025",
+    "persona":"Default",
+    "is_refusal":0.6715438951,
+    "refusal_rate":67.1543895055
+  },
+  {
+    "model":"mistralai\/ministral-14b-2512",
+    "persona":"Default",
+    "is_refusal":0.8148335015,
+    "refusal_rate":81.4833501514
+  },
+  {
+    "model":"openai\/gpt-audio-mini",
     "persona":"Default",
     "is_refusal":0.0,
     "refusal_rate":0.0
   },
   {
-    "model":"anthropic\/claude-3-haiku",
+    "model":"qwen\/qwen2.5-coder-7b-instruct",
     "persona":"Default",
-    "is_refusal":0.1765991826,
-    "refusal_rate":17.6599182587
-  },
-  {
-    "model":"anthropic\/claude-3.5-haiku",
-    "persona":"Default",
-    "is_refusal":0.0,
-    "refusal_rate":0.0
-  },
-  {
-    "model":"anthropic\/claude-3.5-sonnet",
-    "persona":"Default",
-    "is_refusal":0.2045432944,
-    "refusal_rate":20.4543294364
-  },
-  {
-    "model":"deepseek\/deepseek-chat",
-    "persona":"Default",
-    "is_refusal":0.1974146944,
-    "refusal_rate":19.7414694421
-  },
-  {
-    "model":"google\/gemini-2.0-flash-001",
-    "persona":"Default",
-    "is_refusal":0.1941830624,
-    "refusal_rate":19.4183062447
-  },
-  {
-    "model":"google\/gemini-2.0-flash-lite-001",
-    "persona":"Default",
-    "is_refusal":0.1111111111,
-    "refusal_rate":11.1111111111
-  },
-  {
-    "model":"google\/gemini-2.5-pro",
-    "persona":"Default",
-    "is_refusal":0.0370687197,
-    "refusal_rate":3.7068719703
-  },
-  {
-    "model":"mistralai\/ministral-8b",
-    "persona":"Default",
-    "is_refusal":0.2319856244,
-    "refusal_rate":23.1985624438
-  },
-  {
-    "model":"mistralai\/mistral-large",
-    "persona":"Default",
-    "is_refusal":0.1787852866,
-    "refusal_rate":17.878528657
-  },
-  {
-    "model":"mistralai\/mistral-medium",
-    "persona":"Default",
-    "is_refusal":0.0,
-    "refusal_rate":0.0
-  },
-  {
-    "model":"mistralai\/mistral-small-24b-instruct-2501",
-    "persona":"Default",
-    "is_refusal":0.00047524,
-    "refusal_rate":0.0475239996
-  },
-  {
-    "model":"openai\/gpt-4o",
-    "persona":"Default",
-    "is_refusal":0.2397110541,
-    "refusal_rate":23.9711054082
-  },
-  {
-    "model":"openai\/gpt-4o-mini",
-    "persona":"Default",
-    "is_refusal":0.2161391503,
-    "refusal_rate":21.6139150271
-  },
-  {
-    "model":"qwen\/qwen-2.5-72b-instruct",
-    "persona":"Default",
-    "is_refusal":0.1910464785,
-    "refusal_rate":19.1046478472
-  },
-  {
-    "model":"qwen\/qwen-2.5-7b-instruct",
-    "persona":"Default",
-    "is_refusal":0.2572949339,
-    "refusal_rate":25.7294933942
-  },
-  {
-    "model":"qwen\/qwen-plus",
-    "persona":"Default",
-    "is_refusal":0.2037997864,
-    "refusal_rate":20.3799786357
+    "is_refusal":0.6448032291,
+    "refusal_rate":64.4803229062
   },
   {
     "model":"x-ai\/grok-3-mini",
     "persona":"Default",
-    "is_refusal":0.1589991929,
-    "refusal_rate":15.8999192897
+    "is_refusal":0.790110999,
+    "refusal_rate":79.0110998991
   }
 ]
