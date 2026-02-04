@@ -111,16 +111,30 @@ def run_drift_analysis():
     if not os.path.exists(csv_path):
         csv_path = 'audit_log.csv'
         if not os.path.exists(csv_path):
-            print("❌ No audit_log.csv found.")
-            return
+            # Try uncompressed
+            csv_path = 'web/public/audit_log.csv'
+            if not os.path.exists(csv_path):
+                print("❌ No audit_log.csv found.")
+                return
 
     print("📈 Analyzing Longitudinal Drift...")
     try:
-        df = pd.read_csv(csv_path, on_bad_lines='skip')
+        # Modern pandas (>1.3): use on_bad_lines='skip'
+        df = pd.read_csv(csv_path, on_bad_lines='skip', engine='python')
+    except TypeError:
+        # Older pandas: use error_bad_lines=False
+        try:
+            df = pd.read_csv(csv_path, error_bad_lines=False)
+        except Exception as e:
+            print(f"❌ Failed to read CSV: {e}")
+            return
     except Exception as e:
-        # Fallback for older pandas versions
-        print(f"⚠️ CSV Read Warning: {e}. Trying error_bad_lines=False")
-        df = pd.read_csv(csv_path, error_bad_lines=False)
+        print(f"⚠️ CSV Read Warning: {e}. Trying with python engine...")
+        try:
+            df = pd.read_csv(csv_path, engine='python', on_bad_lines='skip')
+        except:
+            print("❌ Could not parse CSV even with fallback.")
+            return
     
     analysis_results = calculate_drift_stats(df)
     print(f"✅ Drift Analysis Complete. Found {len(analysis_results)} models with history.")
