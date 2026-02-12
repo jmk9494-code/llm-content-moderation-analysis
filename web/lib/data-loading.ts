@@ -66,7 +66,20 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                             colMap.set(norm, h);
                         });
 
-                        const data = results.data.map((row: any) => {
+                        const counts = new Map<string, number>();
+                        const data: AuditRow[] = [];
+
+                        // First pass: count models
+                        results.data.forEach((row: any) => {
+                            const m = String(row.model || row.model_id || '');
+                            if (m) counts.set(m, (counts.get(m) || 0) + 1);
+                        });
+
+                        // Second pass: map and filter
+                        results.data.forEach((row: any) => {
+                            const modelName = String(row.model || row.model_id || '');
+                            if (!modelName || (counts.get(modelName) || 0) < 50) return; // Filter noise
+
                             // Helper to get value ignoring quotes in key
                             const getValue = (key: string) => {
                                 const exact = row[key];
@@ -78,9 +91,9 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                                 return undefined;
                             };
 
-                            return {
+                            data.push({
                                 timestamp: String(row.timestamp || row.test_date || row.date || ''),
-                                model: String(row.model || row.model_id || getValue('model') || ''),
+                                model: modelName,
                                 case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
                                 category: String(row.category || ''),
                                 verdict: String(row.verdict || getValue('verdict') || ''),
@@ -90,9 +103,9 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                                 tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
                                 latency_ms: parseInt(row.latency_ms) || 0,
                                 prompt_id: String(row.prompt_id || row.case_id || ''),
-                            };
-                        }) //.filter((row: any) => row.model);
-                        console.log(`Loaded ${data.length} rows from CSV`);
+                            });
+                        });
+                        console.log(`Loaded ${data.length} rows from CSV (filtered noise)`);
                         resolve(data);
                     },
                     error: (err: any) => reject(err)
