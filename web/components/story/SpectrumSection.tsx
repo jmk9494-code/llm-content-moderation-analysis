@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
+import { getLogoUrl, getProviderName } from '@/lib/provider-logos';
 
 interface ModelData {
     name: string;
@@ -13,47 +14,7 @@ interface SpectrumSectionProps {
     modelData: ModelData[];
 }
 
-const LOGO_TOKEN = 'pk_Ja1WjMWYTkCwFS1VjADPcA';
-
-// Map model name to a Logo.dev brand search term
-function getBrandName(modelName: string): string {
-    const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'openai';
-    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic';
-    if (name.includes('gemini') || name.includes('google')) return 'google';
-    if (name.includes('mistral') || name.includes('ministral')) return 'mistral';
-    if (name.includes('qwen')) return 'alibaba%20cloud';
-    if (name.includes('deepseek')) return 'deepseek';
-    if (name.includes('grok') || name.includes('x-ai')) return 'xai';
-    if (name.includes('yi') || name.includes('01-ai')) return '01ai';
-    if (name.includes('llama') || name.includes('meta')) return 'meta';
-    if (name.includes('phi') || name.includes('microsoft')) return 'microsoft';
-    if (name.includes('command') || name.includes('cohere')) return 'cohere';
-    return 'ai'; // generic fallback
-}
-
-function getLogoUrl(modelName: string): string {
-    const brand = getBrandName(modelName);
-    return `https://img.logo.dev/${brand}.com?token=${LOGO_TOKEN}&size=64&format=png`;
-}
-
-function getProviderName(modelName: string): string {
-    const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'OpenAI';
-    if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
-    if (name.includes('gemini') || name.includes('google')) return 'Google';
-    if (name.includes('mistral') || name.includes('ministral')) return 'Mistral AI';
-    if (name.includes('qwen')) return 'Alibaba / Qwen';
-    if (name.includes('deepseek')) return 'DeepSeek';
-    if (name.includes('grok') || name.includes('x-ai')) return 'xAI';
-    if (name.includes('yi') || name.includes('01-ai')) return '01.AI';
-    if (name.includes('llama') || name.includes('meta')) return 'Meta';
-    if (name.includes('phi') || name.includes('microsoft')) return 'Microsoft';
-    if (name.includes('command') || name.includes('cohere')) return 'Cohere';
-    return 'Unknown';
-}
-
-// Color based on refusal rate
+// Color based on rate
 function getRateColor(rate: number): string {
     if (rate < 10) return '#10b981';  // emerald
     if (rate < 30) return '#f59e0b';  // amber
@@ -62,13 +23,7 @@ function getRateColor(rate: number): string {
 }
 
 /**
- * SpectrumSection - Shows models on the restrictiveness spectrum
- * 
- * Features:
- * - Scroll-animated gradient bar that reveals left to right
- * - Models appear sequentially as user scrolls
- * - Provider logos via Logo.dev API
- * - Clean percentage display on the right
+ * SpectrumSection - Dashboard story component showing the restrictiveness spectrum
  */
 export function SpectrumSection({ modelData }: SpectrumSectionProps) {
     const ref = useRef(null);
@@ -77,16 +32,12 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
         offset: ["start end", "end start"]
     });
 
-    // Animate the gradient bar reveal
     const scaleX = useTransform(scrollYProgress, [0.1, 0.4], [0, 1]);
-
-    // Sort models by refusal rate
     const sortedModels = [...modelData].sort((a, b) => a.rate - b.rate);
 
     return (
         <section ref={ref} className="min-h-screen bg-white py-20 md:py-32">
             <div className="max-w-6xl mx-auto px-6 md:px-8">
-                {/* Section header */}
                 <motion.div
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -110,8 +61,6 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                             style={{ scaleX: useTransform(scaleX, [0, 1], [1, 0]) }}
                         />
                     </div>
-
-                    {/* Labels */}
                     <div className="flex justify-between mt-3 text-sm font-medium">
                         <span className="text-emerald-700">← Most Permissive</span>
                         <span className="text-red-700">Most Restrictive →</span>
@@ -136,13 +85,6 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                                     alt={getProviderName(model.name)}
                                     className="w-8 h-8 object-contain"
                                     loading="lazy"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        if (target.parentElement) {
-                                            target.parentElement.innerHTML = `<span class="text-lg font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
-                                        }
-                                    }}
                                 />
                             </div>
 
@@ -156,7 +98,7 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                                 </p>
                             </div>
 
-                            {/* Percentage on the right */}
+                            {/* Percentage */}
                             <div className="flex-shrink-0 text-right">
                                 <span
                                     className="text-3xl font-black"

@@ -1,6 +1,6 @@
 'use client';
 
-const LOGO_TOKEN = 'pk_Ja1WjMWYTkCwFS1VjADPcA';
+import { getLogoUrl, getProviderName } from '@/lib/provider-logos';
 
 interface ModelData {
     name: string;
@@ -14,45 +14,6 @@ interface RestrictivenessScaleProps {
     onModelClick?: (model: ModelData) => void;
 }
 
-// Map model name to a Logo.dev brand domain
-function getBrandDomain(modelName: string): string {
-    const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'openai.com';
-    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic.com';
-    if (name.includes('gemini') || name.includes('google')) return 'google.com';
-    if (name.includes('mistral') || name.includes('ministral')) return 'mistral.ai';
-    if (name.includes('qwen')) return 'alibaba.com';
-    if (name.includes('deepseek')) return 'deepseek.com';
-    if (name.includes('grok') || name.includes('x-ai')) return 'x.ai';
-    if (name.includes('yi') || name.includes('01-ai')) return '01.ai';
-    if (name.includes('llama') || name.includes('meta')) return 'meta.com';
-    if (name.includes('phi') || name.includes('microsoft')) return 'microsoft.com';
-    if (name.includes('command') || name.includes('cohere')) return 'cohere.com';
-    return 'openai.com'; // fallback
-}
-
-function getLogoUrl(modelName: string): string {
-    const domain = getBrandDomain(modelName);
-    return `https://img.logo.dev/${domain}?token=${LOGO_TOKEN}&size=64&format=png`;
-}
-
-function getProviderName(modelName: string): string {
-    const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'OpenAI';
-    if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
-    if (name.includes('gemini') || name.includes('google')) return 'Google';
-    if (name.includes('mistral') || name.includes('ministral')) return 'Mistral AI';
-    if (name.includes('qwen')) return 'Alibaba / Qwen';
-    if (name.includes('deepseek')) return 'DeepSeek';
-    if (name.includes('grok') || name.includes('x-ai')) return 'xAI';
-    if (name.includes('yi') || name.includes('01-ai')) return '01.AI';
-    if (name.includes('llama') || name.includes('meta')) return 'Meta';
-    if (name.includes('phi') || name.includes('microsoft')) return 'Microsoft';
-    if (name.includes('command') || name.includes('cohere')) return 'Cohere';
-    return 'Unknown';
-}
-
-// Color based on refusal rate (0-1 scale)
 function getRateColor(rate: number): string {
     if (rate < 0.1) return '#10b981';
     if (rate < 0.3) return '#f59e0b';
@@ -61,7 +22,6 @@ function getRateColor(rate: number): string {
 }
 
 export default function RestrictivenessScale({ models, onModelClick }: RestrictivenessScaleProps) {
-    // Sort models by refusal rate (least to most restrictive)
     const sortedModels = [...models].sort((a, b) => a.refusalRate - b.refusalRate);
 
     return (
@@ -103,13 +63,6 @@ export default function RestrictivenessScale({ models, onModelClick }: Restricti
                                     alt={getProviderName(model.name)}
                                     className="w-7 h-7 object-contain"
                                     loading="lazy"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        if (target.parentElement) {
-                                            target.parentElement.innerHTML = `<span class="text-sm font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
-                                        }
-                                    }}
                                 />
                             </div>
 
@@ -123,7 +76,7 @@ export default function RestrictivenessScale({ models, onModelClick }: Restricti
                                 </p>
                             </div>
 
-                            {/* Refusal bar (fills left to right proportionally) */}
+                            {/* Refusal bar */}
                             <div className="hidden sm:block w-32">
                                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div

@@ -6,26 +6,9 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import Papa from 'papaparse';
 
 import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
+import { getLogoUrl, getProviderName } from '@/lib/provider-logos';
 
-// Provider Logo Helper using Logo.dev API
-const LOGO_TOKEN = 'pk_Ja1WjMWYTkCwFS1VjADPcA';
-const getProviderLogo = (model: string): string => {
-    const provider = model.split('/')[0]?.toLowerCase() || '';
-    const logoMap: Record<string, string> = {
-        'openai': 'openai.com',
-        'anthropic': 'anthropic.com',
-        'google': 'google.com',
-        'mistralai': 'mistral.ai',
-        'deepseek': 'deepseek.com',
-        'qwen': 'alibaba.com',
-        '01-ai': '01.ai',
-        'meta': 'meta.com',
-        'microsoft': 'microsoft.com',
-        'cohere': 'cohere.com',
-    };
-    const domain = logoMap[provider] || `${provider}.com`;
-    return `https://img.logo.dev/${domain}?token=${LOGO_TOKEN}&size=64&format=png`;
-};
+const getProviderLogo = (model: string): string => getLogoUrl(model);
 
 export default function ComparePage() {
     const [data, setData] = useState<AuditRow[]>([]);
@@ -293,6 +276,45 @@ export default function ComparePage() {
                     <div className="p-12 text-center text-slate-500">Loading audit data...</div>
                 ) : (
                     <>
+                        {/* Pairwise Significance for Selected Pair */}
+                        {(() => {
+                            const pairResult = pValues.find((row: any) =>
+                                (row['Model A'] === modelA && row['Model B'] === modelB) ||
+                                (row['Model A'] === modelB && row['Model B'] === modelA)
+                            );
+                            return (
+                                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        📊 Statistical Significance
+                                    </h3>
+                                    {pairResult ? (
+                                        <div className="flex items-center gap-6">
+                                            <div>
+                                                <span className="text-xs text-slate-500">P-Value</span>
+                                                <div className="text-2xl font-black font-mono text-slate-800">
+                                                    {parseFloat(pairResult['P-Value']).toExponential(2)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="text-xs text-slate-500">Result</span>
+                                                <div className="mt-1">
+                                                    {pairResult['Significant'] === 'YES'
+                                                        ? <span className="text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-bold">✓ Statistically Significant</span>
+                                                        : <span className="text-sm bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full">Not Significant</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div className="ml-auto text-xs text-slate-400 max-w-xs">
+                                                McNemar&#39;s test: P &lt; 0.05 means the difference in refusal behavior is real, not random chance.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-400">No significance data for this pair. Run the audit pipeline to generate p-values.</p>
+                                    )}
+                                </div>
+                            );
+                        })()}
+
                         {/* Comparison Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Card A */}
@@ -493,42 +515,6 @@ export default function ComparePage() {
                                         No disagreements found between selected models.
                                     </div>
                                 )}
-                            </div>
-                        </div>
-
-                        {/* Pairwise Significance Results */}
-                        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                            <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">📊 Pairwise Significance Results</h3>
-                            <p className="text-sm text-slate-500 mb-4">
-                                McNemar's test determines if the difference between two models' refusal behavior is statistically significant (P &lt; 0.05).
-                            </p>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-slate-200 text-slate-500 font-semibold">
-                                            <th className="text-left py-2">Model A</th>
-                                            <th className="text-left py-2">Model B</th>
-                                            <th className="text-right py-2">P-Value</th>
-                                            <th className="text-right py-2">Significant?</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pValues.length === 0 ? (
-                                            <tr><td colSpan={4} className="py-4 text-center text-slate-400">No significance data available. Run the audit pipeline to generate p-values.</td></tr>
-                                        ) : (
-                                            pValues.map((row: any, i: number) => (
-                                                <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                                                    <td className="py-2 text-slate-700">{row['Model A']}</td>
-                                                    <td className="py-2 text-slate-700">{row['Model B']}</td>
-                                                    <td className="py-2 text-right font-mono text-slate-600">{parseFloat(row['P-Value']).toExponential(2)}</td>
-                                                    <td className="py-2 text-right">
-                                                        {row['Significant'] === 'YES' ? <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Yes</span> : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">No</span>}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </>
