@@ -7,7 +7,7 @@ export PYTHONPATH="."
 if [ -f "./.venv/bin/python" ]; then
     PYTHON_CMD="./.venv/bin/python"
 else
-    PYTHON_CMD="python"
+    PYTHON_CMD="python3"
 fi
 
 echo "🚀 Starting Full Analysis Pipeline..."
