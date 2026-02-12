@@ -26,14 +26,13 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
             let csvText = '';
             try {
                 if (file.endsWith('.gz')) {
-                    // Try to decompress manually
+                    // Load full buffer first to avoid stream truncation
+                    const buffer = await response.arrayBuffer();
                     const ds = new DecompressionStream('gzip');
-                    const decompressedStream = response.body?.pipeThrough(ds);
-                    if (decompressedStream) {
-                        csvText = await new Response(decompressedStream).text();
-                    } else {
-                        csvText = await response.text();
-                    }
+                    const writer = ds.writable.getWriter();
+                    writer.write(buffer);
+                    writer.close();
+                    csvText = await new Response(ds.readable).text();
                 } else {
                     csvText = await response.text();
                 }
