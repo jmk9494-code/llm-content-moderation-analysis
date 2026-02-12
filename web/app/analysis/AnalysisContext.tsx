@@ -144,7 +144,14 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
     // Filtered static datasets — respond to model filter
     const filteredPoliticalData = useMemo(() => filterByModels(politicalData, selectedModels), [politicalData, selectedModels]);
-    const filteredPaternalismData = useMemo(() => filterByModels(paternalismData, selectedModels), [paternalismData, selectedModels]);
+    const filteredPaternalismData = useMemo(() => {
+        const filtered = filterByModels(paternalismData, selectedModels);
+        // Remove entries with 0 refusal rate (empty bars)
+        return filtered.filter(d => {
+            const rate = parseFloat(d.is_refusal ?? d.refusal_rate ?? 0);
+            return rate > 0;
+        });
+    }, [paternalismData, selectedModels]);
     const filteredDriftData = useMemo(() => filterByModels(driftData, selectedModels), [driftData, selectedModels]);
     const filteredConsensusData = useMemo(() => filterByModels(consensusData, selectedModels), [consensusData, selectedModels]);
 
