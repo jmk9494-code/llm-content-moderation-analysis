@@ -31,16 +31,27 @@ export function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
                     </div>
                 </div>
                 <div className="col-span-2 space-y-4">
-                    {clusters.map((c, idx) => (
-                        <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex gap-4">
-                            <div className="w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                            <div>
-                                <h3 className="font-bold">Cluster {idx + 1} ({c.size} cases)</h3>
-                                <p className="text-xs text-slate-500 mb-2">{c.keywords.join(', ')}</p>
-                                <p className="text-sm italic text-slate-600 bg-slate-50 p-2 rounded">"{c.exemplar}"</p>
+                    {clusters.map((c, idx) => {
+                        // Handle RetryError gracefully
+                        const isError = c.exemplar && c.exemplar.includes('RetryError');
+                        const displayExemplar = isError
+                            ? `Example: ${c.keywords[0]} related content`
+                            : c.exemplar;
+
+                        return (
+                            <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex gap-4">
+                                <div className="w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                                <div>
+                                    <h3 className="font-bold">Cluster {idx + 1} ({c.size} cases)</h3>
+                                    <p className="text-xs text-slate-500 mb-2">{c.keywords.slice(0, 5).join(', ')}</p>
+                                    <p className="text-sm italic text-slate-600 bg-slate-50 p-2 rounded">
+                                        "{displayExemplar}"
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
+
                 </div>
             </div>
         </div>

@@ -18,7 +18,7 @@ export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
     // Priority 1: audit_log.csv.gz (Compressed & Fast ~8MB)
     // We prioritize the compressed CSV because traces.json is huge (~140MB) and causes client-side hangs.
     try {
-        const file = useRecent ? '/audit_recent.csv' : '/audit_log.csv.gz';
+        const file = useRecent ? `/audit_recent.csv?t=${Date.now()}` : `/audit_log.csv.gz?t=${Date.now()}`;
         let response = await fetch(file);
 
         // If compressed file exists, use it

@@ -1,20 +1,28 @@
 'use client';
 
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
-import { LoadingState } from '../summary/page';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function SignificancePage() {
     const { pValues, loading } = useAnalysis();
 
-    if (loading) return <LoadingState />;
+    if (loading) return <SkeletonLoader />;
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <strong>Statistical Significance (McNemar's Test).</strong> We use McNemar's Test to determine if the difference in refusal rates between two models is statistically significant (P-Value &lt; 0.05) or likely due to random chance.
-            </div>
+            <AnalysisOverview
+                title="Statistical Significance: Separating Signal from Noise"
+                description="Not all differences in refusal rates are meaningful—some may be due to random chance. We use McNemar's Test, a statistical method designed for paired categorical data, to determine if observed differences between two models are statistically significant (P-value < 0.05) or likely due to sampling variability. This helps us identify which model comparisons represent genuine policy differences versus statistical noise."
+                importance="Statistical rigor is essential for internet openness advocacy because unsubstantiated claims about AI bias undermine credibility. By applying McNemar's Test, we ensure that when we report a model as 'more restrictive' than another, that difference is real and reproducible—not an artifact of random variation. This scientific approach strengthens accountability: AI companies can't dismiss our findings as statistical flukes, and users can trust that documented differences in censorship behavior are genuine and significant."
+                metrics={[
+                    "P-Value: Probability that observed difference is due to chance (< 0.05 = statistically significant)",
+                    "McNemar's Test Statistic: Measures discordance between paired model verdicts on the same prompts",
+                    "Significance Threshold: P < 0.05 indicates 95% confidence the difference is real, not random"
+                ]}
+            />
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">📊 Pairwise Significance Results</h3>
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">📊 Pairwise Significance Results</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>

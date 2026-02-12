@@ -54,31 +54,41 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const loadAll = async () => {
             try {
-                // Fetch audit data client-side to avoid API limits
+                // Fetch audit data immediately (critical for all pages)
                 const data = await fetchAuditData();
                 setAuditData(data);
 
-                // Parallel fetches for other assets
-                await Promise.allSettled([
-                    fetch('/clusters.json').then(async r => { if (r.ok) setClusters(await r.json()); }),
-                    fetch('/api/report').then(async r => { if (r.ok) { const j = await r.json(); if (j.content) setReportContent(j.content); } }),
-                    fetch('/drift_report.json').then(async r => { if (r.ok) setDriftData(await r.json()); }),
-                    fetch('/consensus_bias.csv').then(async r => {
-                        if (r.ok) {
-                            const text = await r.text();
-                            Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res: any) => setConsensusData(res.data) });
-                        }
-                    }),
-                    fetch('/assets/p_values.csv').then(async r => {
-                        if (r.ok) {
-                            const text = await r.text();
-                            Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res: any) => setPValues(res.data) });
-                        }
-                    }),
-                    fetch('/political_compass.json').then(async r => { if (r.ok) setPoliticalData(await r.json()); }),
-                    fetch('/paternalism.json').then(async r => { if (r.ok) setPaternalismData(await r.json()); }),
-                    fetch('/assets/trigger_words.json').then(async r => { if (r.ok) setTriggerData(await r.json()); })
-                ]);
+                // Load report content immediately for summary page
+                fetch('/api/report').then(async r => {
+                    if (r.ok) {
+                        const j = await r.json();
+                        if (j.content) setReportContent(j.content);
+                    }
+                }).catch(() => { });
+
+                // Defer non-critical data loading
+                // These will be loaded on-demand when user navigates to specific pages
+                setTimeout(() => {
+                    Promise.allSettled([
+                        fetch('/clusters.json').then(async r => { if (r.ok) setClusters(await r.json()); }).catch(() => { }),
+                        fetch('/drift_report.json').then(async r => { if (r.ok) setDriftData(await r.json()); }).catch(() => { }),
+                        fetch('/consensus_bias.csv').then(async r => {
+                            if (r.ok) {
+                                const text = await r.text();
+                                Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res: any) => setConsensusData(res.data) });
+                            }
+                        }).catch(() => { }),
+                        fetch('/assets/p_values.csv').then(async r => {
+                            if (r.ok) {
+                                const text = await r.text();
+                                Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res: any) => setPValues(res.data) });
+                            }
+                        }).catch(() => { }),
+                        fetch('/political_compass.json').then(async r => { if (r.ok) setPoliticalData(await r.json()); }).catch(() => { }),
+                        fetch('/paternalism.json').then(async r => { if (r.ok) setPaternalismData(await r.json()); }).catch(() => { }),
+                        fetch('/assets/trigger_words.json').then(async r => { if (r.ok) setTriggerData(await r.json()); }).catch(() => { })
+                    ]);
+                }, 100); // Load after 100ms delay
 
             } catch (err) {
                 console.error("Failed to load analysis data", err);
@@ -121,11 +131,19 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
         const models = Array.from(uniqueModels);
         const prompts = Array.from(uniquePrompts);
-        const reliability = calculateFleissKappa(filteredAuditData, models, prompts);
+        const rawReliability = calculateFleissKappa(filteredAuditData, models, prompts);
+
+        // Add null safety for reliability calculation
+        const reliability = {
+            score: (rawReliability && !isNaN(rawReliability.score) && isFinite(rawReliability.score))
+                ? rawReliability.score
+                : 0,
+            interpretation: rawReliability?.interpretation || 'Insufficient data'
+        };
 
         const distributionMap = new Map<string, number>();
         promptMap.forEach((rows) => {
-            const relevant = rows.filter(d => d.verdict !== 'ERROR');
+            const relevant = rows; // Keep all rows including errors for visibility
             if (relevant.length === 0) return;
             const safeCount = relevant.filter(d => ['ALLOWED', 'safe', 'safe_response'].includes(d.verdict)).length;
             const percentage = (safeCount / relevant.length);
@@ -149,6 +167,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         const modelStats = new Map<string, { total: number, refused: number, cost: number }>();
         filteredAuditData.forEach(row => {
             if (!modelStats.has(row.model)) modelStats.set(row.model, { total: 0, refused: 0, cost: 0 });
+            // if (row.verdict === 'ERROR') return; // PROCESS errors so they show up
             const s = modelStats.get(row.model)!;
             s.total++;
             s.cost += (row.cost || 0);

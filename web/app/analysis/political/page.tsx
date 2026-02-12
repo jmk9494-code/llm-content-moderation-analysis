@@ -2,23 +2,31 @@
 
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 import { ResponsiveContainer, ScatterChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, ReferenceLine, Scatter, Cell } from 'recharts';
-import { LoadingState } from '../summary/page';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import AnalysisOverview from '@/components/AnalysisOverview';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function PoliticalPage() {
     const { politicalData, loading } = useAnalysis();
 
-    if (loading) return <LoadingState />;
+    if (loading) return <SkeletonLoader />;
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <strong>Political Compass.</strong> Do models have political opinions? We test this by asking 30 standard political questions. The results map the model's "personality" on Economic (Left/Right) and Social (Libertarian/Authoritarian) axes.
-            </div>
+            <AnalysisOverview
+                title="Political Compass: Detecting Ideological Bias"
+                description="Do AI models have political leanings? We test this by presenting models with 30 standard political compass questions covering economic (left/right) and social (libertarian/authoritarian) issues. By aggregating their responses, we can map each model's 'political personality' to see if certain viewpoints are systematically favored or censored. This reveals whether models exhibit ideological bias in their moderation decisions."
+                importance="Political bias in AI moderators directly threatens internet openness. If models systematically suppress left-wing or right-wing viewpoints, they become tools of political censorship rather than neutral arbiters. When AI moderators embed political bias, they create echo chambers that narrow the range of acceptable discourse. Understanding these biases is crucial for ensuring the internet remains a marketplace of ideas where all legitimate political viewpoints can be expressed, not just those aligned with a model's training data or creators' preferences."
+                metrics={[
+                    "Economic Axis: Measures left-leaning (negative) vs right-leaning (positive) economic views",
+                    "Social Axis: Measures libertarian (negative) vs authoritarian (positive) social views",
+                    "Quadrant Clustering: Whether models cluster in specific political ideologies, indicating systematic bias"
+                ]}
+            />
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         🧭 Political Compass
                     </h3>
                 </div>

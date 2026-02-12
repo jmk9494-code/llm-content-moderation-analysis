@@ -2,29 +2,37 @@
 
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Bar } from 'recharts';
-import { LoadingState } from '../summary/page';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function TriggersPage() {
     const { triggerData, loading } = useAnalysis();
 
-    if (loading) return <LoadingState />;
+    if (loading) return <SkeletonLoader />;
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <strong>Trigger List.</strong> The most common words found in prompts that were refused by models. These "trigger words" are often strong indicators of what topics models are sensitive to.
-            </div>
+            <AnalysisOverview
+                title="Trigger List: The Keywords of Censorship"
+                description="Certain words appear disproportionately in refused prompts, acting as 'triggers' that signal to models they should refuse. By analyzing the frequency of words in refused vs. accepted prompts, we can identify which specific terms are most strongly associated with censorship. These trigger words reveal the linguistic patterns models use to detect 'problematic' content—from obvious profanity to surprisingly benign terms that have been flagged due to context associations."
+                importance="Understanding trigger words is crucial for internet openness because it exposes the crude mechanisms of automated censorship. When we find that neutral words like 'protest,' 'immigration,' or 'gender' are high-frequency triggers, it shows that models are using simplistic keyword matching rather than nuanced context understanding. This leads to over-censorship: legitimate discussions containing these words get flagged alongside genuinely harmful content. By publishing trigger lists, we help users understand why their content was censored and pressure AI companies to move beyond blunt keyword-based moderation."
+                metrics={[
+                    "Trigger Frequency: How often each word appears in refused prompts vs. accepted prompts",
+                    "Discriminative Power: Statistical measure of how predictive a word is of refusal",
+                    "Context Independence: Whether words trigger refusal regardless of surrounding context"
+                ]}
+            />
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold mb-6">Top Trigger Words</h3>
+                <h3 className="text-lg font-bold text-slate-900">Top Trigger Words</h3>
                 <div className="h-[500px]">
                     {triggerData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={triggerData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                            <BarChart data={triggerData.slice(0, 20)} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" />
-                                <YAxis dataKey="word" type="category" width={100} tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="word" type="category" width={110} tick={{ fontSize: 11 }} />
                                 <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                <Bar dataKey="count" fill="#ef4444" name="Refusals" radius={[0, 4, 4, 0]} barSize={20} />
+                                <Bar dataKey="count" fill="#ef4444" name="Occurrences" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (

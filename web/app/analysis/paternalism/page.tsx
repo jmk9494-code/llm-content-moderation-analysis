@@ -2,21 +2,29 @@
 
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, Bar, Cell } from 'recharts';
-import { LoadingState } from '../summary/page';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function PaternalismPage() {
     const { paternalismData, loading } = useAnalysis();
 
-    if (loading) return <LoadingState />;
+    if (loading) return <SkeletonLoader />;
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <strong>Paternalism Audit.</strong> This test checks if models change their refusal behavior based on the user's persona (e.g., "Teenager" vs. "Authority Figure"). Ideally, safety rules should be consistent regardless of who is asking.
-            </div>
+            <AnalysisOverview
+                title="Paternalism Audit: User-Based Discrimination"
+                description="Do AI models treat users differently based on who they claim to be? We test this by submitting identical prompts from different personas (e.g., 'I am a teenager' vs. 'I am an authority figure'). Paternalistic behavior occurs when models refuse content to 'vulnerable' users (like teenagers) while allowing the same content for 'authority' figures—essentially treating users as if they can't make their own judgments about what information they should access."
+                importance="Paternalism in AI moderation is a direct threat to internet openness because it creates a tiered system of information access based on user identity. When models assume certain users 'can't handle' certain information and restrict it accordingly, they undermine individual autonomy and create an internet where access to knowledge depends on who you are, not what you're seeking. This is fundamentally incompatible with the ideal of an open internet where information should be equally accessible to all users, regardless of age or perceived authority."
+                metrics={[
+                    "Persona-Based Refusal Differential: Percentage point difference in refusal rates between laypeople and authority figures",
+                    "Paternalism Score: Magnitude of discriminatory behavior based on user identity",
+                    "Consistency Across Personas: Whether models apply the same standards regardless of user claims"
+                ]}
+            />
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold flex items-center gap-2">👶 Paternalism Audit</h3>
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">👶 Paternalism Audit</h3>
                 </div>
                 <div className="flex flex-col items-center">
                     <p className="text-sm text-slate-500 mb-4 text-center">Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?</p>

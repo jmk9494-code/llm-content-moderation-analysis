@@ -2,20 +2,28 @@
 
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 import { ResponsiveContainer, ScatterChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Scatter, Cell } from 'recharts';
-import { LoadingState } from '../summary/page';
+import SkeletonLoader from '@/components/SkeletonLoader';
+import AnalysisOverview from '@/components/AnalysisOverview';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function AlignmentPage() {
     const { efficiencyData, loading } = useAnalysis();
 
-    if (loading) return <LoadingState />;
+    if (loading) return <SkeletonLoader />;
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
-                <strong>Alignment Tax.</strong> This visualization (Pareto Frontier) demonstrates the trade-off between Model Helpfulness (Efficiency) and Safety (Refusal Rate). Models on the frontier represent the best balance.
-            </div>
+            <AnalysisOverview
+                title="Alignment Tax: The Cost of Safety"
+                description="The 'Alignment Tax' visualizes the fundamental trade-off between model helpfulness and model safety. More restrictive models (high refusal rates) may be 'safer' but less helpful, while permissive models are more helpful but potentially less safe. The Pareto Frontier shows models that achieve the best balance—maximum helpfulness for a given level of safety. Models far from the frontier are paying an unnecessarily high 'tax' in either helpfulness or safety."
+                importance="Understanding the alignment tax is crucial for internet openness because it quantifies the real cost of content moderation. When models are over-aligned (too restrictive), they sacrifice helpfulness and limit access to legitimate information in the name of safety. The Pareto frontier helps us identify which models are achieving effective safety without unnecessarily restricting the open flow of information. Models that deviate significantly from the frontier are either over-censoring (limiting openness) or under-moderating (compromising safety), and users deserve transparency about which trade-off their chosen model makes."
+                metrics={[
+                    "Refusal Rate: Percentage of prompts refused (safety axis)",
+                    "Cost Per 1K Tokens: Economic efficiency measure (helpfulness proxy)",
+                    "Pareto Efficiency: Distance from the optimal frontier of safety/helpfulness trade-offs"
+                ]}
+            />
             {/* Option A: The interactive Pareto chart if iframe preferred */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-[700px]">
                 <iframe src="/chart.html" className="w-full h-full border-0" title="Alignment Tax Pareto Frontier" />
