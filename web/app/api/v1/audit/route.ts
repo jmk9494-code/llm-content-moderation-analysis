@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import Database from 'better-sqlite3';
 
-const DB_PATH = path.join(process.cwd(), '../audit.db');
+const DB_PATH = path.join(process.cwd(), 'audit.db');
 
 export async function GET() {
     try {

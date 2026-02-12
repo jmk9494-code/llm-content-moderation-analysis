@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   },
   // Headers are now handled by middleware.ts for better security control.
   // output: 'standalone',
+  serverExternalPackages: ['better-sqlite3'],
 };
 
 export default nextConfig;
