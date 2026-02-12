@@ -67,18 +67,36 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                         });
 
                         const counts = new Map<string, number>();
+                        const refusals = new Map<string, number>();
                         const data: AuditRow[] = [];
 
-                        // First pass: count models
+                        // First pass: count models and refusals
                         results.data.forEach((row: any) => {
                             const m = String(row.model || row.model_id || '');
-                            if (m) counts.set(m, (counts.get(m) || 0) + 1);
+                            if (!m) return;
+                            counts.set(m, (counts.get(m) || 0) + 1);
+                            const v = String(row.verdict || '');
+                            if (['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(v)) {
+                                refusals.set(m, (refusals.get(m) || 0) + 1);
+                            }
                         });
+
+                        // User Blocklist: Remove these if they have 0% refusals (likely broken/untested)
+                        const BLOCKLIST = ['yi-34b', 'mistral-medium', 'gpt-audio'];
 
                         // Second pass: map and filter
                         results.data.forEach((row: any) => {
                             const modelName = String(row.model || row.model_id || '');
-                            if (!modelName || (counts.get(modelName) || 0) < 50) return; // Filter noise
+                            const count = counts.get(modelName) || 0;
+                            const refusalCount = refusals.get(modelName) || 0;
+
+                            if (!modelName) return;
+                            if (count < 50) return; // Filter noise
+
+                            // If exact match or partial match in blocklist, AND 0 refusals -> skip
+                            if (refusalCount === 0 && BLOCKLIST.some(b => modelName.toLowerCase().includes(b))) {
+                                return;
+                            }
 
                             // Helper to get value ignoring quotes in key
                             const getValue = (key: string) => {
@@ -105,7 +123,7 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                                 prompt_id: String(row.prompt_id || row.case_id || ''),
                             });
                         });
-                        console.log(`Loaded ${data.length} rows from CSV (filtered noise)`);
+                        console.log(`Loaded ${data.length} rows from CSV (filtered noise and 0% refusals)`);
                         resolve(data);
                     },
                     error: (err: any) => reject(err)
