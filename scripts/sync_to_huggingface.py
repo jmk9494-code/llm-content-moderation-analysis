@@ -1,10 +1,9 @@
 
 import os
 import sys
-import json
 import logging
 import pandas as pd
-from huggingface_hub import HfApi, login
+from huggingface_hub import login
 from datasets import Dataset
 
 # Setup Logging
@@ -12,20 +11,20 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Constants
-TRACES_PATH = "web/public/assets/traces.json"
-REPO_ID = os.getenv("HF_REPO_ID", "jkandel/moderation-bias-benchmark")  # Default or Env Var
+CSV_PATH = "web/public/audit_log.csv"
+REPO_ID = os.getenv("HF_REPO_ID", "jkandel/moderation-bias-benchmark") 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 def sync_to_huggingface():
     """
-    Syncs the local traces.json to Hugging Face Hub as a Dataset.
+    Syncs the main audit log to Hugging Face Hub as a consolidated Dataset (Parquet).
     """
     if not HF_TOKEN:
         logger.error("❌ HF_TOKEN environment variable is not set. Skipping sync.")
         sys.exit(1)
         
-    if not os.path.exists(TRACES_PATH):
-        logger.error(f"❌ Traces file not found at {TRACES_PATH}")
+    if not os.path.exists(CSV_PATH):
+        logger.error(f"❌ Audit Log not found at {CSV_PATH}")
         sys.exit(1)
 
     logger.info("🔐 Logging in to Hugging Face...")
@@ -35,26 +34,25 @@ def sync_to_huggingface():
         logger.error(f"❌ Login failed: {e}")
         sys.exit(1)
 
-    logger.info(f"📂 Loading data from {TRACES_PATH}...")
+    logger.info(f"📂 Loading data from {CSV_PATH}...")
     try:
-        # Load JSON
-        with open(TRACES_PATH, 'r') as f:
-            data = json.load(f)
-        
-        # Convert to specific format if needed, or direct to DataFrame
-        # Assuming data is a list of dicts. If it's the full audit log structure, it works directly.
-        df = pd.DataFrame(data)
+        # Load CSV
+        # Use low_memory=False to avoid mixed type warnings on large files
+        df = pd.read_csv(CSV_PATH, low_memory=False)
+        logger.info(f"Loaded {len(df)} rows.")
         
         # Create HF Dataset
+        # This converts to Arrow/Parquet under the hood which compresses efficiently
         dataset = Dataset.from_pandas(df)
         
-        logger.info(f"🚀 Pushing dataset to {REPO_ID}...")
-        dataset.push_to_hub(REPO_ID)
+        logger.info(f"🚀 Pushing dataset to {REPO_ID} (Parquet)...")
+        # private=False creates public dataset if not exists
+        dataset.push_to_hub(REPO_ID, private=False)
         
-        logger.info("✅ formatted and pushed successfully!")
+        logger.info("✅ Dataset synced successfully!")
         
     except Exception as e:
-        logger.error(f"❌ Failed to process or push dataset: {e}")
+        logger.error(f"❌ Failed to push dataset: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
