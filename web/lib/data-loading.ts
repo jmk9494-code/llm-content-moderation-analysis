@@ -14,7 +14,7 @@ export type AuditRow = {
     prompt_id?: string; // Analysis page legacy compatibility
 };
 
-export async function fetchAuditData(useRecent = true): Promise<AuditRow[]> {
+export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
     // Priority 1: audit_log.csv.gz (Compressed & Fast ~8MB)
     // We prioritize the compressed CSV because traces.json is huge (~140MB) and causes client-side hangs.
     try {
