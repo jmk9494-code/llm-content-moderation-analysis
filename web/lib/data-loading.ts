@@ -15,10 +15,11 @@ export type AuditRow = {
 };
 
 export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
-    // Priority 1: audit_log.csv.gz (Compressed & Fast ~8MB)
-    // We prioritize the compressed CSV because traces.json is huge (~140MB) and causes client-side hangs.
+    // Priority 1: audit_log.csv (Uncompressed 48MB - Robust)
+    // We use uncompressed to avoid browser-side decompression issues (truncation).
+    console.log("Fetching Audit Data (v4 - Uncompressed)...");
     try {
-        const file = useRecent ? `/audit_recent.csv?t=${Date.now()}` : `/audit_log.csv.gz?t=${Date.now()}`;
+        const file = useRecent ? `/audit_recent.csv?t=${Date.now()}` : `/audit_log.csv?t=${Date.now()}`;
         let response = await fetch(file);
 
         // If compressed file exists, use it
@@ -52,7 +53,6 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                 Papa.parse(csvText, {
                     header: true,
                     skipEmptyLines: true,
-                    dynamicTyping: true,
                     complete: (results: any) => {
                         if (!results.data) { resolve([]); return; }
                         // Map CSV data
