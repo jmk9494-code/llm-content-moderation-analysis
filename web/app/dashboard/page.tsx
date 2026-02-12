@@ -9,6 +9,7 @@ import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skel
 import { HeroSection } from '@/components/story/HeroSection';
 import { SpectrumSection } from '@/components/story/SpectrumSection';
 import { CategorySection } from '@/components/story/CategorySection';
+import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
 
 interface AuditData {
   model: string;
