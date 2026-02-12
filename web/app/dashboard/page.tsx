@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Brain, BarChart3, ArrowRight, ArrowRightLeft
+  Brain, BarChart3, ArrowRight, ArrowRightLeft, ChevronRight
 } from 'lucide-react';
 import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { HeroSection } from '@/components/story/HeroSection';
@@ -24,23 +24,24 @@ interface AuditData {
 export default function DashboardPage() {
   const [data, setData] = useState<AuditData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [driftData, setDriftData] = useState<any[]>([]);
+  const [politicalData, setPoliticalData] = useState<any[]>([]);
+  const [paternalismData, setPaternalismData] = useState<any[]>([]);
+  const [clustersData, setClustersData] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
         const rows = await fetchAuditData();
-
-        // Map AuditRow to AuditData interface
         const mappedRows = rows.map(r => ({
           model: r.model,
           category: r.category,
-          region: '', // Region is not currently tracked in core audit schema but required by UI
+          region: '',
           verdict: r.verdict,
           timestamp: r.timestamp,
           prompt: r.prompt,
           response: r.response
         }));
-
         setData(mappedRows);
       } catch (error) {
         console.error('Failed to load audit data:', error);
@@ -50,7 +51,24 @@ export default function DashboardPage() {
       }
     }
 
+    // Load supplementary data for highlights
+    async function loadExtras() {
+      try {
+        const [drift, political, paternalism, clusters] = await Promise.all([
+          fetch('/drift_report.json').then(r => r.ok ? r.json() : []).catch(() => []),
+          fetch('/political_compass.json').then(r => r.ok ? r.json() : []).catch(() => []),
+          fetch('/paternalism.json').then(r => r.ok ? r.json() : []).catch(() => []),
+          fetch('/clusters.json').then(r => r.ok ? r.json() : []).catch(() => []),
+        ]);
+        setDriftData(drift);
+        setPoliticalData(political);
+        setPaternalismData(paternalism);
+        setClustersData(clusters);
+      } catch { /* ignore */ }
+    }
+
     loadData();
+    loadExtras();
   }, []);
 
   // Filter out system errors for cleaner stats -> DISABLED to show all data (user request)
@@ -161,6 +179,15 @@ export default function DashboardPage() {
             topCategories={stats.topCategories}
           />
 
+          {/* Deep Dive Highlights */}
+          <HighlightsSection
+            data={validData}
+            driftData={driftData}
+            politicalData={politicalData}
+            paternalismData={paternalismData}
+            clustersData={clustersData}
+          />
+
           {/* FINAL CTA: Direct users to Deep Dive for interactive exploration */}
           <section className="bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white py-32 relative overflow-hidden">
             {/* Background decorations */}
@@ -210,5 +237,168 @@ export default function DashboardPage() {
         </>
       )}
     </main>
+  );
+}
+
+// === Deep Dive Highlights Section ===
+function HighlightsSection({
+  data,
+  driftData,
+  politicalData,
+  paternalismData,
+  clustersData,
+}: {
+  data: AuditData[];
+  driftData: any[];
+  politicalData: any[];
+  paternalismData: any[];
+  clustersData: any[];
+}) {
+  const isUnsafe = (v: string) => ['REFUSAL', 'REMOVED', 'BLOCKED', 'unsafe', 'Hard Refusal'].includes(v);
+
+  // Compute Fleiss' Kappa (simplified)
+  const kappaStats = useMemo(() => {
+    if (data.length === 0) return null;
+    const models = Array.from(new Set(data.map(d => d.model)));
+    const promptMap = new Map<string, Map<string, boolean>>();
+    data.forEach(row => {
+      const pId = row.prompt || row.category;
+      if (!pId) return;
+      if (!promptMap.has(pId)) promptMap.set(pId, new Map());
+      promptMap.get(pId)!.set(row.model, isUnsafe(row.verdict));
+    });
+    // Only prompts with 2+ model responses
+    const multi = Array.from(promptMap.entries()).filter(([, m]) => m.size >= 2);
+    if (multi.length === 0) return null;
+
+    // Simple agreement metric
+    let totalAgree = 0;
+    multi.forEach(([, modelVerdicts]) => {
+      const verdicts = Array.from(modelVerdicts.values());
+      const unsafeCount = verdicts.filter(v => v).length;
+      const majority = unsafeCount > verdicts.length / 2;
+      const agreeCount = verdicts.filter(v => v === majority).length;
+      totalAgree += agreeCount / verdicts.length;
+    });
+    const avgAgreement = totalAgree / multi.length;
+
+    return { kappa: avgAgreement, prompts: multi.length, models: models.length };
+  }, [data]);
+
+  // Drift
+  const drift = useMemo(() => {
+    if (!driftData.length) return null;
+    const drifted = driftData.filter(d => d.drift_detected === true || d.drift_detected === 'true').length;
+    return { total: driftData.length, drifted, stable: driftData.length - drifted };
+  }, [driftData]);
+
+  // Political
+  const political = useMemo(() => {
+    if (!politicalData.length) return null;
+    const avgEcon = politicalData.reduce((s: number, d: any) => s + (d.economic || 0), 0) / politicalData.length;
+    const avgSocial = politicalData.reduce((s: number, d: any) => s + (d.social || 0), 0) / politicalData.length;
+    return { total: politicalData.length, avgEcon, avgSocial };
+  }, [politicalData]);
+
+  // Paternalism
+  const paternalism = useMemo(() => {
+    const filtered = paternalismData.filter(d => parseFloat(d.is_refusal ?? d.refusal_rate ?? 0) > 0);
+    if (!filtered.length) return null;
+    const rates = filtered.map(d => parseFloat(d.is_refusal ?? d.refusal_rate ?? 0));
+    const avg = rates.reduce((s, r) => s + r, 0) / rates.length;
+    const maxIdx = rates.indexOf(Math.max(...rates));
+    return { avg, maxModel: filtered[maxIdx]?.model?.split('/').pop() || '?', maxRate: rates[maxIdx] };
+  }, [paternalismData]);
+
+  // Clusters
+  const clusters = useMemo(() => {
+    if (!clustersData.length) return null;
+    const totalSize = clustersData.reduce((s: number, c: any) => s + (c.size || 0), 0);
+    const top = clustersData.reduce((max: any, c: any) => (c.size > (max?.size || 0) ? c : max), clustersData[0]);
+    return { count: clustersData.length, totalSize, topKeywords: top?.keywords?.slice(0, 3)?.join(', ') || '—' };
+  }, [clustersData]);
+
+  // Significance
+  const significance = useMemo(() => {
+    const models = Array.from(new Set(data.map(d => d.model)));
+    return { models: models.length, pairs: Math.floor((models.length * (models.length - 1)) / 2) };
+  }, [data]);
+
+  const cards = [
+    kappaStats && {
+      emoji: '📐', title: "Fleiss' Kappa", href: '/analysis/reliability',
+      value: kappaStats.kappa.toFixed(3),
+      subtitle: kappaStats.kappa >= 0.8 ? 'Strong agreement' : kappaStats.kappa >= 0.6 ? 'Substantial agreement' : kappaStats.kappa >= 0.4 ? 'Moderate agreement' : 'Fair agreement',
+      detail: `${kappaStats.models} models × ${kappaStats.prompts.toLocaleString()} prompts`,
+      gradient: 'from-indigo-500/20 to-indigo-600/5', accent: 'text-indigo-300',
+    },
+    drift && {
+      emoji: '📉', title: 'Model Stability', href: '/analysis/drift',
+      value: `${drift.drifted}/${drift.total}`,
+      subtitle: drift.drifted > 0 ? 'Policy changes detected' : 'All models consistent',
+      detail: `${drift.stable} stable models`,
+      gradient: 'from-amber-500/20 to-amber-600/5', accent: 'text-amber-300',
+    },
+    political && {
+      emoji: '🧭', title: 'Political Compass', href: '/analysis/political',
+      value: `${political.avgEcon.toFixed(1)} / ${political.avgSocial.toFixed(1)}`,
+      subtitle: `${political.avgEcon < 0 ? 'Left' : 'Right'}-${political.avgSocial > 0 ? 'Authoritarian' : 'Libertarian'} avg`,
+      detail: `${political.total} models plotted`,
+      gradient: 'from-purple-500/20 to-purple-600/5', accent: 'text-purple-300',
+    },
+    paternalism && {
+      emoji: '🛡️', title: 'Paternalism', href: '/analysis/paternalism',
+      value: `${(paternalism.avg * 100).toFixed(0)}%`,
+      subtitle: 'avg refusal across personas',
+      detail: `Most restrictive: ${paternalism.maxModel} (${(paternalism.maxRate * 100).toFixed(0)}%)`,
+      gradient: 'from-rose-500/20 to-rose-600/5', accent: 'text-rose-300',
+    },
+    clusters && {
+      emoji: '🧠', title: 'Semantic Clusters', href: '/analysis/clusters',
+      value: String(clusters.count),
+      subtitle: `${clusters.totalSize.toLocaleString()} items clustered`,
+      detail: `Top: ${clusters.topKeywords}`,
+      gradient: 'from-teal-500/20 to-teal-600/5', accent: 'text-teal-300',
+    },
+    significance.pairs > 0 && {
+      emoji: '📊', title: 'Significance Testing', href: '/analysis/significance',
+      value: String(significance.pairs),
+      subtitle: "pairwise comparisons (McNemar's)",
+      detail: `${significance.models} models compared`,
+      gradient: 'from-emerald-500/20 to-emerald-600/5', accent: 'text-emerald-300',
+    },
+  ].filter(Boolean) as any[];
+
+  if (cards.length === 0) return null;
+
+  return (
+    <section className="bg-slate-900 py-24 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
+      <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 text-center">
+          🔬 Key Findings at a Glance
+        </h2>
+        <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+          Summary metrics from our deep dive analyses — click any card to explore the full analysis
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {cards.map((card, i) => (
+            <Link key={i} href={card.href} className="group">
+              <div className={`bg-gradient-to-br ${card.gradient} backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/25 hover:scale-[1.02] transition-all duration-300 h-full`}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl">{card.emoji}</span>
+                  <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors" />
+                </div>
+                <h3 className="text-sm font-semibold text-white/80 mb-2">{card.title}</h3>
+                <p className={`text-3xl font-black ${card.accent} mb-1`}>{card.value}</p>
+                <p className="text-sm text-white/60 mb-2">{card.subtitle}</p>
+                <p className="text-xs text-white/40">{card.detail}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

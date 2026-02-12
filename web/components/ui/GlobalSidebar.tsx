@@ -21,7 +21,7 @@ const analysisCategories = [
         title: 'Summary',
         emoji: '📄',
         items: [
-            { name: 'Overview', href: '/analysis/summary', icon: FileText },
+            { name: 'Summary', href: '/analysis/summary', icon: FileText },
             { name: 'Longitudinal', href: '/analysis/longitudinal', icon: TrendingUp },
         ]
     },
