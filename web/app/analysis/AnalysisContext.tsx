@@ -27,6 +27,9 @@ interface AnalysisContextType {
     loading: boolean;
     dateRange: { start: string; end: string };
     setDateRange: React.Dispatch<React.SetStateAction<{ start: string; end: string }>>;
+    selectedModels: string[];
+    setSelectedModels: React.Dispatch<React.SetStateAction<string[]>>;
+    allModels: string[];
     filteredAuditData: AuditRow[];
     timelineDates: string[];
     stats: any;
@@ -50,6 +53,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
     // Global Filters
     const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+    const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -67,7 +71,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
                 }).catch(() => { });
 
                 // Defer non-critical data loading
-                // These will be loaded on-demand when user navigates to specific pages
                 setTimeout(() => {
                     Promise.allSettled([
                         fetch('/clusters.json').then(async r => { if (r.ok) setClusters(await r.json()); }).catch(() => { }),
@@ -88,7 +91,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
                         fetch('/paternalism.json').then(async r => { if (r.ok) setPaternalismData(await r.json()); }).catch(() => { }),
                         fetch('/assets/trigger_words.json').then(async r => { if (r.ok) setTriggerData(await r.json()); }).catch(() => { })
                     ]);
-                }, 100); // Load after 100ms delay
+                }, 100);
 
             } catch (err) {
                 console.error("Failed to load analysis data", err);
@@ -99,6 +102,12 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         loadAll();
     }, []);
 
+    // All available models (from raw data, before any filtering)
+    const allModels = useMemo(() => {
+        if (auditData.length === 0) return [];
+        return Array.from(new Set(auditData.map(d => d.model))).filter(m => m).sort();
+    }, [auditData]);
+
     // Derived State
     const timelineDates = useMemo(() => {
         if (auditData.length === 0) return [];
@@ -106,14 +115,25 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     }, [auditData]);
 
     const filteredAuditData = useMemo(() => {
-        if (!dateRange.start && !dateRange.end) return auditData;
-        return auditData.filter((d: AuditRow) => {
-            const date = d.timestamp?.split('T')[0] || '';
-            if (dateRange.start && date < dateRange.start) return false;
-            if (dateRange.end && date > dateRange.end) return false;
-            return true;
-        });
-    }, [auditData, dateRange]);
+        let data = auditData;
+
+        // Filter by date range
+        if (dateRange.start || dateRange.end) {
+            data = data.filter((d: AuditRow) => {
+                const date = d.timestamp?.split('T')[0] || '';
+                if (dateRange.start && date < dateRange.start) return false;
+                if (dateRange.end && date > dateRange.end) return false;
+                return true;
+            });
+        }
+
+        // Filter by selected models (empty = all models)
+        if (selectedModels.length > 0) {
+            data = data.filter(d => selectedModels.includes(d.model));
+        }
+
+        return data;
+    }, [auditData, dateRange, selectedModels]);
 
     const stats = useMemo(() => {
         if (filteredAuditData.length === 0) return null;
@@ -143,7 +163,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
         const distributionMap = new Map<string, number>();
         promptMap.forEach((rows) => {
-            const relevant = rows; // Keep all rows including errors for visibility
+            const relevant = rows;
             if (relevant.length === 0) return;
             const safeCount = relevant.filter(d => ['ALLOWED', 'safe', 'safe_response'].includes(d.verdict)).length;
             const percentage = (safeCount / relevant.length);
@@ -167,7 +187,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         const modelStats = new Map<string, { total: number, refused: number, cost: number }>();
         filteredAuditData.forEach(row => {
             if (!modelStats.has(row.model)) modelStats.set(row.model, { total: 0, refused: 0, cost: 0 });
-            // if (row.verdict === 'ERROR') return; // PROCESS errors so they show up
             const s = modelStats.get(row.model)!;
             s.total++;
             s.cost += (row.cost || 0);
@@ -186,7 +205,8 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     return (
         <AnalysisContext.Provider value={{
             auditData, clusters, driftData, consensusData, pValues, politicalData, paternalismData, triggerData,
-            reportContent, loading, dateRange, setDateRange, filteredAuditData, timelineDates, stats, efficiencyData
+            reportContent, loading, dateRange, setDateRange, selectedModels, setSelectedModels, allModels,
+            filteredAuditData, timelineDates, stats, efficiencyData
         }}>
             {children}
         </AnalysisContext.Provider>
