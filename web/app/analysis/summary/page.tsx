@@ -16,7 +16,7 @@ export default function SummaryPage() {
     // Calculate metrics
     const totalCases = stats?.prompts.length || 0;
     const modelsCount = stats?.models.length || 0;
-    const consistencyScore = stats?.reliability || 0.905;
+    const consistencyScore = stats?.reliability?.score ?? 0;
     const dateRange = timelineDates.length > 0
         ? `${timelineDates[0]} to ${timelineDates[timelineDates.length - 1]}`
         : 'All Time';
