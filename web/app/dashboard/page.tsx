@@ -53,9 +53,9 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  // Filter out system errors for cleaner stats
+  // Filter out system errors for cleaner stats -> DISABLED to show all data (user request)
   const validData = useMemo(() => {
-    return data.filter(d => d.verdict && !['ERROR', 'TIMEOUT'].includes(d.verdict));
+    return data; // .filter(d => d.verdict && !['ERROR', 'TIMEOUT'].includes(d.verdict));
   }, [data]);
 
   // Calculate stats for story sections
