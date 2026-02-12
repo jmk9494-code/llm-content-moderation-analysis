@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Info } from 'lucide-react';
+const LOGO_TOKEN = 'pk_Ja1WjMWYTkCwFS1VjADPcA';
 
 interface ModelData {
     name: string;
@@ -15,31 +14,55 @@ interface RestrictivenessScaleProps {
     onModelClick?: (model: ModelData) => void;
 }
 
+// Map model name to a Logo.dev brand domain
+function getBrandDomain(modelName: string): string {
+    const name = modelName.toLowerCase();
+    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'openai.com';
+    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic.com';
+    if (name.includes('gemini') || name.includes('google')) return 'google.com';
+    if (name.includes('mistral') || name.includes('ministral')) return 'mistral.ai';
+    if (name.includes('qwen')) return 'alibaba.com';
+    if (name.includes('deepseek')) return 'deepseek.com';
+    if (name.includes('grok') || name.includes('x-ai')) return 'x.ai';
+    if (name.includes('yi') || name.includes('01-ai')) return '01.ai';
+    if (name.includes('llama') || name.includes('meta')) return 'meta.com';
+    if (name.includes('phi') || name.includes('microsoft')) return 'microsoft.com';
+    if (name.includes('command') || name.includes('cohere')) return 'cohere.com';
+    return 'openai.com'; // fallback
+}
+
+function getLogoUrl(modelName: string): string {
+    const domain = getBrandDomain(modelName);
+    return `https://img.logo.dev/${domain}?token=${LOGO_TOKEN}&size=64&format=png`;
+}
+
+function getProviderName(modelName: string): string {
+    const name = modelName.toLowerCase();
+    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'OpenAI';
+    if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
+    if (name.includes('gemini') || name.includes('google')) return 'Google';
+    if (name.includes('mistral') || name.includes('ministral')) return 'Mistral AI';
+    if (name.includes('qwen')) return 'Alibaba / Qwen';
+    if (name.includes('deepseek')) return 'DeepSeek';
+    if (name.includes('grok') || name.includes('x-ai')) return 'xAI';
+    if (name.includes('yi') || name.includes('01-ai')) return '01.AI';
+    if (name.includes('llama') || name.includes('meta')) return 'Meta';
+    if (name.includes('phi') || name.includes('microsoft')) return 'Microsoft';
+    if (name.includes('command') || name.includes('cohere')) return 'Cohere';
+    return 'Unknown';
+}
+
+// Color based on refusal rate (0-1 scale)
+function getRateColor(rate: number): string {
+    if (rate < 0.1) return '#10b981';
+    if (rate < 0.3) return '#f59e0b';
+    if (rate < 0.6) return '#f97316';
+    return '#ef4444';
+}
+
 export default function RestrictivenessScale({ models, onModelClick }: RestrictivenessScaleProps) {
-    const [hoveredModel, setHoveredModel] = useState<string | null>(null);
-    const [selectedModel, setSelectedModel] = useState<string | null>(null);
-
-    // Sort models by refusal rate (restrictiveness)
+    // Sort models by refusal rate (least to most restrictive)
     const sortedModels = [...models].sort((a, b) => a.refusalRate - b.refusalRate);
-
-    const handleModelClick = (model: ModelData) => {
-        setSelectedModel(model.name);
-        onModelClick?.(model);
-    };
-
-    // Color gradient from green (permissive) to red (restrictive)
-    const getColor = (refusalRate: number) => {
-        if (refusalRate < 0.1) return 'bg-green-500';
-        if (refusalRate < 0.3) return 'bg-yellow-500';
-        if (refusalRate < 0.6) return 'bg-orange-500';
-        return 'bg-red-500';
-    };
-
-    const getBorder = (modelName: string) => {
-        if (selectedModel === modelName) return 'ring-4 ring-indigo-600 ring-offset-2';
-        if (hoveredModel === modelName) return 'ring-2 ring-slate-400';
-        return '';
-    };
 
     return (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-8">
@@ -49,101 +72,102 @@ export default function RestrictivenessScale({ models, onModelClick }: Restricti
                         🎚️ Restrictiveness Spectrum
                     </h2>
                     <p className="text-sm text-slate-500 mt-1">
-                        Models positioned by their refusal rate (click to highlight)
+                        Models ranked by refusal rate — least to most restrictive
                     </p>
                 </div>
-                <button
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors group relative"
-                    title="How to read this"
-                >
-                    <Info className="w-4 h-4 text-slate-400" />
-                    <div className="absolute right-0 top-10 w-64 bg-slate-900 text-white text-xs p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        Bubble size represents refusal rate. Left = least restrictive (permissive), Right = most restrictive (conservative).
-                    </div>
-                </button>
             </div>
 
-            {/* Spectrum Bar */}
-            <div className="relative">
-                {/* Gradient background */}
-                <div className="h-2 rounded-full bg-gradient-to-r from-green-200 via-yellow-200 via-orange-200 to-red-200 mb-4" />
-
-                {/* Labels */}
-                <div className="flex justify-between text-xs text-slate-500 mb-8">
+            {/* Gradient bar */}
+            <div className="mb-6">
+                <div className="h-2 rounded-full bg-gradient-to-r from-green-200 via-yellow-200 via-orange-200 to-red-200" />
+                <div className="flex justify-between text-xs text-slate-500 mt-2">
                     <span className="font-semibold">← Least Restrictive</span>
                     <span className="font-semibold">Most Restrictive →</span>
                 </div>
+            </div>
 
-                {/* Model bubbles */}
-                <div className="relative h-32">
-                    {sortedModels.map((model, index) => {
-                        const position = (model.refusalRate * 100); // 0-100%
-                        const size = 40 + (model.refusalRate * 40); // 40-80px
-
-                        return (
-                            <div
-                                key={model.name}
-                                className="absolute transition-all duration-300 cursor-pointer"
-                                style={{
-                                    left: `${position}%`,
-                                    bottom: `${(index % 3) * 35}px`,
-                                    transform: 'translateX(-50%)',
-                                }}
-                                onMouseEnter={() => setHoveredModel(model.name)}
-                                onMouseLeave={() => setHoveredModel(null)}
-                                onClick={() => handleModelClick(model)}
-                            >
-                                <div
-                                    className={`
-                                        ${getColor(model.refusalRate)}
-                                        ${getBorder(model.name)}
-                                        rounded-full flex items-center justify-center
-                                        hover:scale-110 transition-all shadow-md
-                                        opacity-${hoveredModel === model.name || selectedModel === model.name ? '100' : '80'}
-                                    `}
-                                    style={{
-                                        width: `${size}px`,
-                                        height: `${size}px`,
+            {/* Model list */}
+            <div className="space-y-3">
+                {sortedModels.map((model) => {
+                    const pct = (model.refusalRate * 100).toFixed(0);
+                    return (
+                        <div
+                            key={model.name}
+                            className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
+                            onClick={() => onModelClick?.(model)}
+                        >
+                            {/* Provider Logo */}
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                                <img
+                                    src={getLogoUrl(model.name)}
+                                    alt={getProviderName(model.name)}
+                                    className="w-7 h-7 object-contain"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        if (target.parentElement) {
+                                            target.parentElement.innerHTML = `<span class="text-sm font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
+                                        }
                                     }}
-                                >
-                                    <span className="text-white font-bold text-xs text-center px-1">
-                                        {(model.refusalRate * 100).toFixed(0)}%
-                                    </span>
-                                </div>
-
-                                {/* Model name tooltip */}
-                                {(hoveredModel === model.name || selectedModel === model.name) && (
-                                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap z-20 shadow-lg">
-                                        <div className="font-semibold">{model.displayName || model.name}</div>
-                                        <div className="text-slate-300 mt-1">
-                                            Refusal: {(model.refusalRate * 100).toFixed(1)}% | Cost: ${model.cost}/1k
-                                        </div>
-                                    </div>
-                                )}
+                                />
                             </div>
-                        );
-                    })}
-                </div>
+
+                            {/* Model info */}
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-sm text-slate-900 truncate">
+                                    {model.displayName || model.name}
+                                </h3>
+                                <p className="text-xs text-slate-400">
+                                    {getProviderName(model.name)}
+                                </p>
+                            </div>
+
+                            {/* Refusal bar (fills left to right proportionally) */}
+                            <div className="hidden sm:block w-32">
+                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{
+                                            width: `${model.refusalRate * 100}%`,
+                                            backgroundColor: getRateColor(model.refusalRate)
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Percentage */}
+                            <div className="flex-shrink-0 w-14 text-right">
+                                <span
+                                    className="text-xl font-black"
+                                    style={{ color: getRateColor(model.refusalRate) }}
+                                >
+                                    {pct}%
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Legend */}
-            <div className="mt-8 pt-4 border-t border-slate-200">
+            <div className="mt-6 pt-4 border-t border-slate-200">
                 <div className="flex flex-wrap gap-4 text-xs">
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500" />
-                        <span className="text-slate-600">Permissive (\u003c10%)</span>
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                        <span className="text-slate-600">Permissive (&lt;10%)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-yellow-500" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
                         <span className="text-slate-600">Moderate (10-30%)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-orange-500" />
+                        <div className="w-3 h-3 rounded-full bg-orange-500" />
                         <span className="text-slate-600">Restrictive (30-60%)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-red-500" />
-                        <span className="text-slate-600">Very Restrictive (\u003e60%)</span>
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <span className="text-slate-600">Very Restrictive (&gt;60%)</span>
                     </div>
                 </div>
             </div>

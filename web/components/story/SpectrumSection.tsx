@@ -13,29 +13,33 @@ interface SpectrumSectionProps {
     modelData: ModelData[];
 }
 
-// Map model name prefixes to their provider's domain for Logo.dev
-function getProviderDomain(modelName: string): string {
+const LOGO_TOKEN = 'pk_Ja1WjMWYTkCwFS1VjADPcA';
+
+// Map model name to a Logo.dev brand search term
+function getBrandName(modelName: string): string {
     const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai')) return 'openai.com';
-    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic.com';
-    if (name.includes('gemini') || name.includes('google')) return 'google.com';
-    if (name.includes('mistral') || name.includes('ministral')) return 'mistral.ai';
-    if (name.includes('qwen')) return 'alibaba.com';
-    if (name.includes('deepseek')) return 'deepseek.com';
-    if (name.includes('grok') || name.includes('x-ai')) return 'x.ai';
-    if (name.includes('yi') || name.includes('01-ai')) return '01.ai';
-    if (name.includes('llama') || name.includes('meta')) return 'meta.com';
-    return 'openai.com'; // fallback
+    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'openai';
+    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic';
+    if (name.includes('gemini') || name.includes('google')) return 'google';
+    if (name.includes('mistral') || name.includes('ministral')) return 'mistral';
+    if (name.includes('qwen')) return 'alibaba%20cloud';
+    if (name.includes('deepseek')) return 'deepseek';
+    if (name.includes('grok') || name.includes('x-ai')) return 'xai';
+    if (name.includes('yi') || name.includes('01-ai')) return '01ai';
+    if (name.includes('llama') || name.includes('meta')) return 'meta';
+    if (name.includes('phi') || name.includes('microsoft')) return 'microsoft';
+    if (name.includes('command') || name.includes('cohere')) return 'cohere';
+    return 'ai'; // generic fallback
 }
 
 function getLogoUrl(modelName: string): string {
-    const domain = getProviderDomain(modelName);
-    return `https://img.logo.dev/${domain}?token=pk_Ja1WjMWYTkCwFS1VjADPcA&size=64&format=png`;
+    const brand = getBrandName(modelName);
+    return `https://img.logo.dev/${brand}.com?token=${LOGO_TOKEN}&size=64&format=png`;
 }
 
 function getProviderName(modelName: string): string {
     const name = modelName.toLowerCase();
-    if (name.includes('gpt') || name.includes('openai')) return 'OpenAI';
+    if (name.includes('gpt') || name.includes('openai') || name.includes('o1-') || name.includes('o3-') || name.includes('o4-')) return 'OpenAI';
     if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
     if (name.includes('gemini') || name.includes('google')) return 'Google';
     if (name.includes('mistral') || name.includes('ministral')) return 'Mistral AI';
@@ -44,7 +48,17 @@ function getProviderName(modelName: string): string {
     if (name.includes('grok') || name.includes('x-ai')) return 'xAI';
     if (name.includes('yi') || name.includes('01-ai')) return '01.AI';
     if (name.includes('llama') || name.includes('meta')) return 'Meta';
+    if (name.includes('phi') || name.includes('microsoft')) return 'Microsoft';
+    if (name.includes('command') || name.includes('cohere')) return 'Cohere';
     return 'Unknown';
+}
+
+// Color based on refusal rate
+function getRateColor(rate: number): string {
+    if (rate < 10) return '#10b981';  // emerald
+    if (rate < 30) return '#f59e0b';  // amber
+    if (rate < 60) return '#f97316';  // orange
+    return '#ef4444';                  // red
 }
 
 /**
@@ -68,14 +82,6 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
 
     // Sort models by refusal rate
     const sortedModels = [...modelData].sort((a, b) => a.rate - b.rate);
-
-    // Color based on rate
-    const getRateColor = (rate: number) => {
-        if (rate < 10) return '#10b981';  // emerald
-        if (rate < 30) return '#f59e0b';  // amber
-        if (rate < 60) return '#f97316';  // orange
-        return '#ef4444';                  // red
-    };
 
     return (
         <section ref={ref} className="min-h-screen bg-white py-20 md:py-32">
@@ -129,11 +135,13 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                                     src={getLogoUrl(model.name)}
                                     alt={getProviderName(model.name)}
                                     className="w-8 h-8 object-contain"
+                                    loading="lazy"
                                     onError={(e) => {
-                                        // Fallback to a simple text icon
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
-                                        target.parentElement!.innerHTML = `<span class="text-lg font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
+                                        if (target.parentElement) {
+                                            target.parentElement.innerHTML = `<span class="text-lg font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
+                                        }
                                     }}
                                 />
                             </div>
