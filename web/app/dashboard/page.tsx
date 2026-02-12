@@ -26,56 +26,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadData() {
       try {
-        const response = await fetch('/audit_log.csv.gz');
-        if (!response.ok) {
-          throw new Error(`HTTP error!status: ${response.status}`);
-        }
+        const rows = await fetchAuditData();
 
-        const blob = await response.blob();
-        let csvText = '';
-        try {
-          const decompressedStream = blob.stream().pipeThrough(
-            new DecompressionStream('gzip')
-          );
-          const decompressedBlob = await new Response(decompressedStream).blob();
-          csvText = await decompressedBlob.text();
-        } catch (e) {
-          console.warn('Decompression failed for dashboard data, using plain text fallback', e);
-          csvText = await blob.text();
-        }
+        // Map AuditRow to AuditData interface
+        const mappedRows = rows.map(r => ({
+          model: r.model,
+          category: r.category,
+          region: '', // Region is not currently tracked in core audit schema but required by UI
+          verdict: r.verdict,
+          timestamp: r.timestamp,
+          prompt: r.prompt,
+          response: r.response
+        }));
 
-        const lines = csvText.trim().split('\n');
-        if (lines.length <= 1) {
-          setData([]);
-          setLoading(false);
-          return;
-        }
-
-        const headers = lines[0].split(',').map(h => h.trim());
-        const modelIdx = headers.indexOf('model');
-        const categoryIdx = headers.indexOf('category');
-        const regionIdx = headers.indexOf('region');
-        const verdictIdx = headers.indexOf('verdict');
-        const timestampIdx = headers.indexOf('timestamp');
-        const promptIdx = headers.indexOf('prompt');
-        const responseIdx = headers.indexOf('response');
-
-        const rows = lines.slice(1).map(line => {
-          const cols = line.split(',').map(c => c.trim());
-          return {
-            model: cols[modelIdx] || '',
-            category: cols[categoryIdx] || '',
-            region: cols[regionIdx] || '',
-            verdict: cols[verdictIdx] || '',
-            timestamp: cols[timestampIdx] || '',
-            prompt: cols[promptIdx] || '',
-            response: cols[responseIdx] || '',
-          };
-        });
-
-        setData(rows);
+        setData(mappedRows);
       } catch (error) {
         console.error('Failed to load audit data:', error);
         setData([]);
@@ -84,7 +50,7 @@ export default function DashboardPage() {
       }
     }
 
-    fetchData();
+    loadData();
   }, []);
 
   // Filter out system errors for cleaner stats
