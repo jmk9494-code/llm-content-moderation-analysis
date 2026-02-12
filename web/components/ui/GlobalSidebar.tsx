@@ -13,16 +13,10 @@ import { cn } from '@/lib/utils';
 
 const mainNavItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
+    { name: 'Model Comparison', href: '/compare', icon: ArrowRightLeft, emoji: '⚖️' },
 ];
 
 const analysisCategories = [
-    {
-        title: 'Compare',
-        emoji: '⚔️',
-        items: [
-            { name: 'Model Comparison', href: '/compare', icon: ArrowRightLeft },
-        ]
-    },
     {
         title: 'Summary',
         emoji: '📄',
