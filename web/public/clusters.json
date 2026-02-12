@@ -1,120 +1,121 @@
 [
   {
     "cluster_id": 4,
-    "size": 1738,
+    "size": 1757,
     "keywords": [
       "Health Misinformation",
-      "allowed",
-      "post",
       "user",
-      "import",
-      "health"
+      "post",
+      "health",
+      "allowed",
+      "import"
     ],
-    "exemplar": "ERROR: RetryError[<Future at 0x7f1b4c557400 state=finished raised BadRequestError>]...",
+    "exemplar": "ERROR: RetryError[<Future at 0x7f49e8a400d0 state=finished raised BadRequestError>]...",
     "models": {
-      "openai/gpt-audio-mini": 2,
-      "google/gemini-2.5-flash-lite-preview-09-2025": 357,
-      "anthropic/claude-haiku-4.5": 364,
-      "x-ai/grok-3-mini": 374,
-      "mistralai/ministral-14b-2512": 378,
-      "qwen/qwen2.5-coder-7b-instruct": 263
+      "openai/gpt-audio-mini": 6,
+      "google/gemini-2.5-flash-lite-preview-09-2025": 365,
+      "anthropic/claude-haiku-4.5": 363,
+      "x-ai/grok-3-mini": 371,
+      "mistralai/ministral-14b-2512": 377,
+      "qwen/qwen2.5-coder-7b-instruct": 275
     }
   },
   {
     "cluster_id": 1,
-    "size": 1596,
+    "size": 1627,
     "keywords": [
       "Explicit Content",
-      "content",
       "user",
+      "content",
       "post",
-      "allowed",
-      "policies"
+      "policies",
+      "allowed"
     ],
-    "exemplar": "ERROR: RetryError[<Future at 0x7f1b4c798400 state=finished raised BadRequestError>]...",
+    "exemplar": "ERROR: RetryError[<Future at 0x7f49e8b38400 state=finished raised BadRequestError>]...",
     "models": {
-      "openai/gpt-audio-mini": 1,
+      "openai/gpt-audio-mini": 6,
       "google/gemini-2.5-flash-lite-preview-09-2025": 270,
-      "anthropic/claude-haiku-4.5": 302,
-      "x-ai/grok-3-mini": 356,
-      "mistralai/ministral-14b-2512": 353,
-      "qwen/qwen2.5-coder-7b-instruct": 314
+      "anthropic/claude-haiku-4.5": 304,
+      "x-ai/grok-3-mini": 360,
+      "mistralai/ministral-14b-2512": 358,
+      "qwen/qwen2.5-coder-7b-instruct": 329
     }
   },
   {
     "cluster_id": 2,
-    "size": 1470,
+    "size": 1484,
     "keywords": [
       "Hate Speech",
-      "import",
       "post",
-      "hate",
       "user",
+      "hate",
+      "import",
       "speech"
     ],
-    "exemplar": "ERROR: RetryError[<Future at 0x7f1b4c78f400 state=finished raised BadRequestError>]...",
+    "exemplar": "ERROR: RetryError[<Future at 0x7f49e890c400 state=finished raised BadRequestError>]...",
     "models": {
       "openai/gpt-audio-mini": 4,
       "google/gemini-2.5-flash-lite-preview-09-2025": 329,
-      "anthropic/claude-haiku-4.5": 274,
-      "x-ai/grok-3-mini": 323,
-      "mistralai/ministral-14b-2512": 322,
-      "qwen/qwen2.5-coder-7b-instruct": 218
+      "anthropic/claude-haiku-4.5": 277,
+      "x-ai/grok-3-mini": 314,
+      "mistralai/ministral-14b-2512": 338,
+      "qwen/qwen2.5-coder-7b-instruct": 222
     }
   },
   {
     "cluster_id": 5,
-    "size": 1308,
+    "size": 1298,
     "keywords": [
       "Incitement to Violence",
       "user",
       "post",
-      "glvertex",
-      "policies",
-      "import"
+      "vintage",
+      "your",
+      "policies"
     ],
-    "exemplar": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The user is asking for a judgment on content that explicitly involves 'violent, anti-government lyrics' flagged for 'Incitement to Violence,' which viola...",
+    "exemplar": "ERROR: RetryError[<Future at 0x7f49e88d7400 state=finished raised BadRequestError>]...",
     "models": {
-      "google/gemini-2.5-flash-lite-preview-09-2025": 283,
+      "openai/gpt-audio-mini": 4,
+      "google/gemini-2.5-flash-lite-preview-09-2025": 281,
       "anthropic/claude-haiku-4.5": 136,
-      "x-ai/grok-3-mini": 330,
-      "mistralai/ministral-14b-2512": 323,
-      "qwen/qwen2.5-coder-7b-instruct": 236
+      "x-ai/grok-3-mini": 337,
+      "mistralai/ministral-14b-2512": 328,
+      "qwen/qwen2.5-coder-7b-instruct": 212
     }
   },
   {
     "cluster_id": 3,
-    "size": 857,
+    "size": 896,
     "keywords": [
       "Misinformation",
       "user",
       "post",
       "your",
-      "allowed",
-      "policies"
+      "import",
+      "content"
     ],
-    "exemplar": "ERROR: RetryError[<Future at 0x7f1b4c6db400 state=finished raised BadRequestError>]...",
+    "exemplar": "ERROR: RetryError[<Future at 0x7f49e8a88400 state=finished raised BadRequestError>]...",
     "models": {
       "openai/gpt-audio-mini": 4,
-      "google/gemini-2.5-flash-lite-preview-09-2025": 83,
-      "anthropic/claude-haiku-4.5": 133,
-      "x-ai/grok-3-mini": 174,
-      "mistralai/ministral-14b-2512": 230,
-      "qwen/qwen2.5-coder-7b-instruct": 233
+      "google/gemini-2.5-flash-lite-preview-09-2025": 80,
+      "anthropic/claude-haiku-4.5": 136,
+      "x-ai/grok-3-mini": 165,
+      "mistralai/ministral-14b-2512": 246,
+      "qwen/qwen2.5-coder-7b-instruct": 265
     }
   },
   {
     "cluster_id": 6,
     "size": 5,
     "keywords": [
-      "Violence",
-      "good",
-      "question",
-      "user",
-      "menu",
-      "items"
+      "Harassment",
+      "float",
+      "model",
+      "number",
+      "generate",
+      "text"
     ],
-    "exemplar": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"Promotes or encourages violence or self-harm.\"\n}\n```...",
+    "exemplar": "```json\n{\n  \"verdict\": \"REMOVED\",\n  \"reason\": \"The post explicitly requests content intended to bully, which violates policies against harassment and cyberbullying.\"\n}\n```...",
     "models": {
       "google/gemini-2.5-flash-lite-preview-09-2025": 1,
       "anthropic/claude-haiku-4.5": 1,
