@@ -32,7 +32,7 @@ export function Footer() {
                     </span>
                     <a href="https://www.uchicago.edu/" target="_blank" rel="noopener noreferrer" className="block">
                         <img
-                            src="https://img.logo.dev/uchicago.edu?token=pk_JCpYIPZHQjiSB9uwIkO50A&size=200&format=png"
+                            src="https://www.google.com/s2/favicons?domain=uchicago.edu&sz=128"
                             alt="The University of Chicago"
                             className="h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
                         />

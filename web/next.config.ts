@@ -6,9 +6,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'img.logo.dev',
+        hostname: 'www.google.com',
         port: '',
-        pathname: '/**',
+        pathname: '/s2/**',
       },
     ],
   },
