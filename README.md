@@ -1,6 +1,6 @@
 # LLM Content Moderation Analysis Platform
 
-![CI](https://github.com/jmk9494-code/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/jacobkandel/llm-content-moderation-analysis/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 [![Dataset: Hugging Face](https://img.shields.io/badge/Dataset-Hugging%20Face-FFD21E)](https://huggingface.co/datasets/your-username/your-dataset)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
