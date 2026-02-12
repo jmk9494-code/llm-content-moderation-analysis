@@ -63,8 +63,8 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                             tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
                             latency_ms: parseInt(row.latency_ms) || 0,
                             prompt_id: String(row.prompt_id || row.case_id || ''),
-                        })).filter((row: any) => row.model);
-                        console.log("Loaded data from optimized CSV");
+                        })) //.filter((row: any) => row.model); // DISABLED FILTER: Show even if model is missing to debug "0 test cases"
+                        console.log(`Loaded ${data.length} rows from CSV`);
                         resolve(data);
                     },
                     error: (err: any) => reject(err)
