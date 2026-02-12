@@ -56,8 +56,9 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                             case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
                             category: String(row.category || ''),
                             verdict: String(row.verdict || ''),
-                            prompt: String(row.prompt || row.prompt_text || row.text || ''),
-                            response: String(row.response || row.response_text || ''),
+                            prompt: String(row.prompt || row.prompt_text || row.text || row['prompt_text,response_text'] || ''),
+                            response: String(row.response || row.response_text || ''), // If prompt and response merged, response is likely in prompt/merged field.
+                            // We treat the merged field as prompt for now.
                             cost: parseFloat(row.cost || row.run_cost) || 0,
                             tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
                             latency_ms: parseInt(row.latency_ms) || 0,
