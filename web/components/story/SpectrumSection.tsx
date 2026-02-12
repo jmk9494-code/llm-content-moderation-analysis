@@ -13,13 +13,48 @@ interface SpectrumSectionProps {
     modelData: ModelData[];
 }
 
+// Map model name prefixes to their provider's domain for Logo.dev
+function getProviderDomain(modelName: string): string {
+    const name = modelName.toLowerCase();
+    if (name.includes('gpt') || name.includes('openai')) return 'openai.com';
+    if (name.includes('claude') || name.includes('anthropic')) return 'anthropic.com';
+    if (name.includes('gemini') || name.includes('google')) return 'google.com';
+    if (name.includes('mistral') || name.includes('ministral')) return 'mistral.ai';
+    if (name.includes('qwen')) return 'alibaba.com';
+    if (name.includes('deepseek')) return 'deepseek.com';
+    if (name.includes('grok') || name.includes('x-ai')) return 'x.ai';
+    if (name.includes('yi') || name.includes('01-ai')) return '01.ai';
+    if (name.includes('llama') || name.includes('meta')) return 'meta.com';
+    return 'openai.com'; // fallback
+}
+
+function getLogoUrl(modelName: string): string {
+    const domain = getProviderDomain(modelName);
+    return `https://img.logo.dev/${domain}?token=pk_Ja1WjMWYTkCwFS1VjADPcA&size=64&format=png`;
+}
+
+function getProviderName(modelName: string): string {
+    const name = modelName.toLowerCase();
+    if (name.includes('gpt') || name.includes('openai')) return 'OpenAI';
+    if (name.includes('claude') || name.includes('anthropic')) return 'Anthropic';
+    if (name.includes('gemini') || name.includes('google')) return 'Google';
+    if (name.includes('mistral') || name.includes('ministral')) return 'Mistral AI';
+    if (name.includes('qwen')) return 'Alibaba / Qwen';
+    if (name.includes('deepseek')) return 'DeepSeek';
+    if (name.includes('grok') || name.includes('x-ai')) return 'xAI';
+    if (name.includes('yi') || name.includes('01-ai')) return '01.AI';
+    if (name.includes('llama') || name.includes('meta')) return 'Meta';
+    return 'Unknown';
+}
+
 /**
  * SpectrumSection - Shows models on the restrictiveness spectrum
  * 
  * Features:
  * - Scroll-animated gradient bar that reveals left to right
  * - Models appear sequentially as user scrolls
- * - Color-coded by restrictiveness level
+ * - Provider logos via Logo.dev API
+ * - Clean percentage display on the right
  */
 export function SpectrumSection({ modelData }: SpectrumSectionProps) {
     const ref = useRef(null);
@@ -33,6 +68,14 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
 
     // Sort models by refusal rate
     const sortedModels = [...modelData].sort((a, b) => a.rate - b.rate);
+
+    // Color based on rate
+    const getRateColor = (rate: number) => {
+        if (rate < 10) return '#10b981';  // emerald
+        if (rate < 30) return '#f59e0b';  // amber
+        if (rate < 60) return '#f97316';  // orange
+        return '#ef4444';                  // red
+    };
 
     return (
         <section ref={ref} className="min-h-screen bg-white py-20 md:py-32">
@@ -58,7 +101,7 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                     <div className="relative h-3 bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 rounded-full overflow-hidden shadow-lg">
                         <motion.div
                             className="absolute inset-0 bg-slate-100 origin-right"
-                            style={{ scaleX: useTransform(scaleX, [0, 1], [1, 0]) }} // Reverse the mask
+                            style={{ scaleX: useTransform(scaleX, [0, 1], [1, 0]) }}
                         />
                     </div>
 
@@ -69,57 +112,51 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                     </div>
                 </div>
 
-                {/* Model cards appearing on scroll */}
-                <div className="space-y-6">
+                {/* Model cards */}
+                <div className="space-y-4">
                     {sortedModels.map((model, idx) => (
                         <motion.div
                             key={model.name}
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true, amount: 0.5 }}
-                            transition={{ duration: 0.5, delay: idx * 0.08 }}
-                            className="flex items-center gap-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                            transition={{ duration: 0.5, delay: idx * 0.06 }}
+                            className="flex items-center gap-5 bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all hover:border-slate-300"
                         >
-                            {/* Colored badge with percentage */}
-                            <div
-                                className="flex-shrink-0 w-20 h-20 rounded-2xl flex flex-col items-center justify-center text-white font-bold shadow-lg"
-                                style={{
-                                    background: model.rate < 10
-                                        ? 'linear-gradient(135deg, #10b981, #059669)'
-                                        : model.rate < 30
-                                            ? 'linear-gradient(135deg, #f59e0b, #d97706)'
-                                            : 'linear-gradient(135deg, #ef4444, #dc2626)'
-                                }}
-                            >
-                                <span className="text-2xl">{model.rate}%</span>
-                                <span className="text-xs opacity-90">refusal</span>
+                            {/* Provider Logo */}
+                            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                                <img
+                                    src={getLogoUrl(model.name)}
+                                    alt={getProviderName(model.name)}
+                                    className="w-8 h-8 object-contain"
+                                    onError={(e) => {
+                                        // Fallback to a simple text icon
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        target.parentElement!.innerHTML = `<span class="text-lg font-bold text-slate-400">${getProviderName(model.name).charAt(0)}</span>`;
+                                    }}
+                                />
                             </div>
 
                             {/* Model info */}
-                            <div className="flex-1">
-                                <h3 className="font-bold text-xl text-slate-900 mb-1">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-lg text-slate-900 truncate">
                                     {model.displayName}
                                 </h3>
-                                <p className="text-slate-600">
-                                    Refuses <span className="font-semibold">{model.rate}%</span> of content across all test categories
+                                <p className="text-sm text-slate-500">
+                                    {getProviderName(model.name)}
                                 </p>
                             </div>
 
-                            {/* Visual indicator bar */}
-                            <div className="hidden md:block w-32">
-                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full transition-all duration-1000"
-                                        style={{
-                                            width: `${model.rate}%`,
-                                            background: model.rate < 10
-                                                ? '#10b981'
-                                                : model.rate < 30
-                                                    ? '#f59e0b'
-                                                    : '#ef4444'
-                                        }}
-                                    />
-                                </div>
+                            {/* Percentage on the right */}
+                            <div className="flex-shrink-0 text-right">
+                                <span
+                                    className="text-3xl font-black"
+                                    style={{ color: getRateColor(model.rate) }}
+                                >
+                                    {model.rate}%
+                                </span>
+                                <p className="text-xs text-slate-400 mt-0.5">refusal</p>
                             </div>
                         </motion.div>
                     ))}
