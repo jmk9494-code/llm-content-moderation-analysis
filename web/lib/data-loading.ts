@@ -50,20 +50,42 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                     complete: (results: any) => {
                         if (!results.data) { resolve([]); return; }
                         // Map CSV data
-                        const data = results.data.map((row: any) => ({
-                            timestamp: String(row.timestamp || row.test_date || row.date || ''),
-                            model: String(row.model || row.model_id || ''),
-                            case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
-                            category: String(row.category || ''),
-                            verdict: String(row.verdict || ''),
-                            prompt: String(row.prompt || row.prompt_text || row.text || row['prompt_text,response_text'] || ''),
-                            response: String(row.response || row.response_text || ''), // If prompt and response merged, response is likely in prompt/merged field.
-                            // We treat the merged field as prompt for now.
-                            cost: parseFloat(row.cost || row.run_cost) || 0,
-                            tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
-                            latency_ms: parseInt(row.latency_ms) || 0,
-                            prompt_id: String(row.prompt_id || row.case_id || ''),
-                        })) //.filter((row: any) => row.model); // DISABLED FILTER: Show even if model is missing to debug "0 test cases"
+                        // Dynamically find indices based on actual header names (handling potential quotes)
+                        const headers = results.meta.fields || [];
+                        const colMap = new Map<string, string>();
+
+                        // Create normalized map
+                        headers.forEach((h: string) => {
+                            const norm = h.replace(/^["']|["']$/g, '').trim();
+                            colMap.set(norm, h);
+                        });
+
+                        const data = results.data.map((row: any) => {
+                            // Helper to get value ignoring quotes in key
+                            const getValue = (key: string) => {
+                                const exact = row[key];
+                                if (exact !== undefined) return exact;
+                                // Try finding mapped key
+                                const mapped = colMap.get(key);
+                                if (mapped) return row[mapped];
+                                // scan keys?
+                                return undefined;
+                            };
+
+                            return {
+                                timestamp: String(row.timestamp || row.test_date || row.date || ''),
+                                model: String(row.model || row.model_id || getValue('model') || ''),
+                                case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
+                                category: String(row.category || ''),
+                                verdict: String(row.verdict || getValue('verdict') || ''),
+                                prompt: String(row.prompt || row.prompt_text || row.text || row['prompt_text,response_text'] || getValue('prompt_text,response_text') || ''),
+                                response: String(row.response || row.response_text || ''),
+                                cost: parseFloat(row.cost || row.run_cost) || 0,
+                                tokens_used: parseInt(row.tokens_used) || parseInt(row.total_tokens) || 0,
+                                latency_ms: parseInt(row.latency_ms) || 0,
+                                prompt_id: String(row.prompt_id || row.case_id || ''),
+                            };
+                        }) //.filter((row: any) => row.model);
                         console.log(`Loaded ${data.length} rows from CSV`);
                         resolve(data);
                     },
