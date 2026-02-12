@@ -330,70 +330,69 @@ function HighlightsSection({
       value: kappaStats.kappa.toFixed(3),
       subtitle: kappaStats.kappa >= 0.8 ? 'Strong agreement' : kappaStats.kappa >= 0.6 ? 'Substantial agreement' : kappaStats.kappa >= 0.4 ? 'Moderate agreement' : 'Fair agreement',
       detail: `${kappaStats.models} models × ${kappaStats.prompts.toLocaleString()} prompts`,
-      gradient: 'from-indigo-500/20 to-indigo-600/5', accent: 'text-indigo-300',
+      gradient: 'from-indigo-50 to-white', accent: 'text-indigo-600',
     },
     drift && {
       emoji: '📉', title: 'Model Stability', href: '/analysis/drift',
       value: `${drift.drifted}/${drift.total}`,
       subtitle: drift.drifted > 0 ? 'Policy changes detected' : 'All models consistent',
       detail: `${drift.stable} stable models`,
-      gradient: 'from-amber-500/20 to-amber-600/5', accent: 'text-amber-300',
+      gradient: 'from-amber-50 to-white', accent: 'text-amber-600',
     },
     political && {
       emoji: '🧭', title: 'Political Compass', href: '/analysis/political',
       value: `${political.avgEcon.toFixed(1)} / ${political.avgSocial.toFixed(1)}`,
       subtitle: `${political.avgEcon < 0 ? 'Left' : 'Right'}-${political.avgSocial > 0 ? 'Authoritarian' : 'Libertarian'} avg`,
       detail: `${political.total} models plotted`,
-      gradient: 'from-purple-500/20 to-purple-600/5', accent: 'text-purple-300',
+      gradient: 'from-purple-50 to-white', accent: 'text-purple-600',
     },
     paternalism && {
       emoji: '🛡️', title: 'Paternalism', href: '/analysis/paternalism',
       value: `${(paternalism.avg * 100).toFixed(0)}%`,
       subtitle: 'avg refusal across personas',
       detail: `Most restrictive: ${paternalism.maxModel} (${(paternalism.maxRate * 100).toFixed(0)}%)`,
-      gradient: 'from-rose-500/20 to-rose-600/5', accent: 'text-rose-300',
+      gradient: 'from-rose-50 to-white', accent: 'text-rose-600',
     },
     clusters && {
       emoji: '🧠', title: 'Semantic Clusters', href: '/analysis/clusters',
       value: String(clusters.count),
       subtitle: `${clusters.totalSize.toLocaleString()} items clustered`,
       detail: `Top: ${clusters.topKeywords}`,
-      gradient: 'from-teal-500/20 to-teal-600/5', accent: 'text-teal-300',
+      gradient: 'from-teal-50 to-white', accent: 'text-teal-600',
     },
     significance.pairs > 0 && {
       emoji: '📊', title: 'Significance Testing', href: '/analysis/significance',
       value: String(significance.pairs),
       subtitle: "pairwise comparisons (McNemar's)",
       detail: `${significance.models} models compared`,
-      gradient: 'from-emerald-500/20 to-emerald-600/5', accent: 'text-emerald-300',
+      gradient: 'from-emerald-50 to-white', accent: 'text-emerald-600',
     },
   ].filter(Boolean) as any[];
 
   if (cards.length === 0) return null;
 
   return (
-    <section className="bg-slate-900 py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
-      <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 text-center">
+    <section className="min-h-[60vh] bg-gradient-to-b from-slate-50 to-white py-20 md:py-32">
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
+        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3 text-center">
           🔬 Key Findings at a Glance
         </h2>
-        <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+        <p className="text-lg text-slate-500 text-center mb-12 max-w-2xl mx-auto">
           Summary metrics from our deep dive analyses — click any card to explore the full analysis
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map((card, i) => (
             <Link key={i} href={card.href} className="group">
-              <div className={`bg-gradient-to-br ${card.gradient} backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-white/25 hover:scale-[1.02] transition-all duration-300 h-full`}>
+              <div className={`bg-gradient-to-br ${card.gradient} border border-slate-200 rounded-2xl p-6 hover:border-slate-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full`}>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-2xl">{card.emoji}</span>
-                  <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/70 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                 </div>
-                <h3 className="text-sm font-semibold text-white/80 mb-2">{card.title}</h3>
+                <h3 className="text-sm font-semibold text-slate-600 mb-2">{card.title}</h3>
                 <p className={`text-3xl font-black ${card.accent} mb-1`}>{card.value}</p>
-                <p className="text-sm text-white/60 mb-2">{card.subtitle}</p>
-                <p className="text-xs text-white/40">{card.detail}</p>
+                <p className="text-sm text-slate-500 mb-2">{card.subtitle}</p>
+                <p className="text-xs text-slate-400">{card.detail}</p>
               </div>
             </Link>
           ))}
