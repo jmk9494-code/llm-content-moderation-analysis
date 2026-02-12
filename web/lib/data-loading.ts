@@ -24,15 +24,21 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
         // If compressed file exists, use it
         if (response.ok) {
             let csvText = '';
-            if (file.endsWith('.gz')) {
-                const ds = new DecompressionStream('gzip');
-                const decompressedStream = response.body?.pipeThrough(ds);
-                if (decompressedStream) {
-                    csvText = await new Response(decompressedStream).text();
+            try {
+                if (file.endsWith('.gz')) {
+                    // Try to decompress manually
+                    const ds = new DecompressionStream('gzip');
+                    const decompressedStream = response.body?.pipeThrough(ds);
+                    if (decompressedStream) {
+                        csvText = await new Response(decompressedStream).text();
+                    } else {
+                        csvText = await response.text();
+                    }
                 } else {
                     csvText = await response.text();
                 }
-            } else {
+            } catch (e) {
+                console.warn("Decompression failed (likely already decompressed by browser), fallback to text", e);
                 csvText = await response.text();
             }
 
