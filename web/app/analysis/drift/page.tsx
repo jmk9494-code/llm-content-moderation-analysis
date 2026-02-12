@@ -6,7 +6,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function DriftPage() {
-    const { driftData, loading } = useAnalysis();
+    const { filteredDriftData: driftData, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 

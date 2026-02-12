@@ -5,7 +5,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function SignificancePage() {
-    const { pValues, loading } = useAnalysis();
+    const { filteredPValues: pValues, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 

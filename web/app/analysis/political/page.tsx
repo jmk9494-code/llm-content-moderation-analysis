@@ -8,7 +8,7 @@ import AnalysisOverview from '@/components/AnalysisOverview';
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
 
 export default function PoliticalPage() {
-    const { politicalData, loading } = useAnalysis();
+    const { filteredPoliticalData: politicalData, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 

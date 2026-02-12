@@ -31,12 +31,27 @@ interface AnalysisContextType {
     setSelectedModels: React.Dispatch<React.SetStateAction<string[]>>;
     allModels: string[];
     filteredAuditData: AuditRow[];
+    filteredPoliticalData: any[];
+    filteredPaternalismData: any[];
+    filteredDriftData: any[];
+    filteredConsensusData: any[];
+    filteredPValues: any[];
+    filteredClusters: Cluster[];
     timelineDates: string[];
     stats: any;
     efficiencyData: any[];
 }
 
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
+
+// Helper: filter any array with a model field by selectedModels
+function filterByModels<T extends { model?: string }>(data: T[], selectedModels: string[]): T[] {
+    if (selectedModels.length === 0) return data;
+    return data.filter(d => {
+        if (!d.model) return true; // Keep items without a model field
+        return selectedModels.some(m => d.model!.includes(m) || m.includes(d.model!));
+    });
+}
 
 export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     // Data Loading
@@ -58,11 +73,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const loadAll = async () => {
             try {
-                // Fetch audit data immediately (critical for all pages)
                 const data = await fetchAuditData();
                 setAuditData(data);
 
-                // Load report content immediately for summary page
                 fetch('/api/report').then(async r => {
                     if (r.ok) {
                         const j = await r.json();
@@ -70,7 +83,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
                     }
                 }).catch(() => { });
 
-                // Defer non-critical data loading
                 setTimeout(() => {
                     Promise.allSettled([
                         fetch('/clusters.json').then(async r => { if (r.ok) setClusters(await r.json()); }).catch(() => { }),
@@ -116,8 +128,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
     const filteredAuditData = useMemo(() => {
         let data = auditData;
-
-        // Filter by date range
         if (dateRange.start || dateRange.end) {
             data = data.filter((d: AuditRow) => {
                 const date = d.timestamp?.split('T')[0] || '';
@@ -126,14 +136,44 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
                 return true;
             });
         }
-
-        // Filter by selected models (empty = all models)
         if (selectedModels.length > 0) {
             data = data.filter(d => selectedModels.includes(d.model));
         }
-
         return data;
     }, [auditData, dateRange, selectedModels]);
+
+    // Filtered static datasets — respond to model filter
+    const filteredPoliticalData = useMemo(() => filterByModels(politicalData, selectedModels), [politicalData, selectedModels]);
+    const filteredPaternalismData = useMemo(() => filterByModels(paternalismData, selectedModels), [paternalismData, selectedModels]);
+    const filteredDriftData = useMemo(() => filterByModels(driftData, selectedModels), [driftData, selectedModels]);
+    const filteredConsensusData = useMemo(() => filterByModels(consensusData, selectedModels), [consensusData, selectedModels]);
+
+    // P-values: filter rows where BOTH Model A and Model B match selected models
+    const filteredPValues = useMemo(() => {
+        if (selectedModels.length === 0) return pValues;
+        return pValues.filter(row => {
+            const a = row['Model A'] || row.model_a || '';
+            const b = row['Model B'] || row.model_b || '';
+            return selectedModels.some(m => a.includes(m) || m.includes(a)) &&
+                selectedModels.some(m => b.includes(m) || m.includes(b));
+        });
+    }, [pValues, selectedModels]);
+
+    // Clusters: filter the nested models object inside each cluster
+    const filteredClusters = useMemo(() => {
+        if (selectedModels.length === 0) return clusters;
+        return clusters.map(c => {
+            const filteredModels: Record<string, number> = {};
+            let filteredSize = 0;
+            Object.entries(c.models || {}).forEach(([model, count]) => {
+                if (selectedModels.some(m => model.includes(m) || m.includes(model))) {
+                    filteredModels[model] = count;
+                    filteredSize += count;
+                }
+            });
+            return { ...c, models: filteredModels, size: filteredSize };
+        }).filter(c => c.size > 0);
+    }, [clusters, selectedModels]);
 
     const stats = useMemo(() => {
         if (filteredAuditData.length === 0) return null;
@@ -153,7 +193,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         const prompts = Array.from(uniquePrompts);
         const rawReliability = calculateFleissKappa(filteredAuditData, models, prompts);
 
-        // Add null safety for reliability calculation
         const reliability = {
             score: (rawReliability && !isNaN(rawReliability.score) && isFinite(rawReliability.score))
                 ? rawReliability.score
@@ -206,7 +245,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         <AnalysisContext.Provider value={{
             auditData, clusters, driftData, consensusData, pValues, politicalData, paternalismData, triggerData,
             reportContent, loading, dateRange, setDateRange, selectedModels, setSelectedModels, allModels,
-            filteredAuditData, timelineDates, stats, efficiencyData
+            filteredAuditData, filteredPoliticalData, filteredPaternalismData, filteredDriftData,
+            filteredConsensusData, filteredPValues, filteredClusters,
+            timelineDates, stats, efficiencyData
         }}>
             {children}
         </AnalysisContext.Provider>

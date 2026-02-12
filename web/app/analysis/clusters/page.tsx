@@ -6,7 +6,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function ClustersPage() {
-    const { clusters, loading } = useAnalysis();
+    const { filteredClusters: clusters, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 

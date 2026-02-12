@@ -6,7 +6,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function PaternalismPage() {
-    const { paternalismData, loading } = useAnalysis();
+    const { filteredPaternalismData: paternalismData, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 

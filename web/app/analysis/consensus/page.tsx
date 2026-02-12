@@ -6,7 +6,7 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import AnalysisOverview from '@/components/AnalysisOverview';
 
 export default function ConsensusPage() {
-    const { consensusData, loading } = useAnalysis();
+    const { filteredConsensusData: consensusData, loading } = useAnalysis();
 
     if (loading) return <SkeletonLoader />;
 
