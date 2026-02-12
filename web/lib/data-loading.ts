@@ -28,17 +28,24 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                 if (file.endsWith('.gz')) {
                     // Load full buffer first to avoid stream truncation
                     const buffer = await response.arrayBuffer();
-                    const ds = new DecompressionStream('gzip');
-                    const writer = ds.writable.getWriter();
-                    writer.write(buffer);
-                    writer.close();
-                    csvText = await new Response(ds.readable).text();
+                    try {
+                        const ds = new DecompressionStream('gzip');
+                        const writer = ds.writable.getWriter();
+                        writer.write(buffer);
+                        writer.close();
+                        csvText = await new Response(ds.readable).text();
+                    } catch (e) {
+                        // Fallback: The browser might have already decompressed it transparently
+                        // or it was plain text to begin with.
+                        console.warn("Manual decompression failed, trying plain text decode", e);
+                        csvText = new TextDecoder().decode(buffer);
+                    }
                 } else {
                     csvText = await response.text();
                 }
             } catch (e) {
-                console.warn("Decompression failed (likely already decompressed by browser), fallback to text", e);
-                csvText = await response.text();
+                console.warn("CSV data loading failed", e);
+                // csvText remains ''
             }
 
             return new Promise((resolve, reject) => {
