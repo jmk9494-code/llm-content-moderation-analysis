@@ -117,11 +117,13 @@ export default function DashboardPage() {
       .map(([name, stats]) => ({
         name,
         rate: stats.total > 0 ? Math.round((stats.refusals / stats.total) * 100) : 0,
-        count: stats.refusals
+        value: stats.total > 0 ? Math.round((stats.refusals / stats.total) * 100) : 0,
+        count: stats.refusals,
+        total: stats.total
       }))
       .filter(c => c.rate > 0)
       .sort((a, b) => b.rate - a.rate)
-      .slice(0, 10);
+      .slice(0, 5);
 
     return {
       totalAudits,
