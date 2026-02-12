@@ -14,6 +14,13 @@ export type AuditRow = {
     prompt_id?: string; // Analysis page legacy compatibility
 };
 
+/** Normalize category names so Sexual and Explicit Content are always merged */
+function normalizeCategory(cat: string): string {
+    if (cat === 'Sexual' || cat === 'Explicit Content') return 'Explicit/Sexual';
+    return cat;
+}
+
+
 export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
     // Priority 1: audit_log.csv (Uncompressed 48MB - Robust)
     // We use uncompressed to avoid browser-side decompression issues (truncation).
@@ -113,7 +120,7 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                                 timestamp: String(row.timestamp || row.test_date || row.date || ''),
                                 model: modelName,
                                 case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
-                                category: String(row.category || ''),
+                                category: normalizeCategory(String(row.category || '')),
                                 verdict: String(row.verdict || getValue('verdict') || ''),
                                 prompt: String(row.prompt || row.prompt_text || row.text || row['prompt_text,response_text'] || getValue('prompt_text,response_text') || ''),
                                 response: String(row.response || row.response_text || ''),
@@ -145,7 +152,7 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                     timestamp: row.timestamp || row.test_date || row.date || new Date().toISOString(),
                     model: row.model || row.model_id || 'Unknown',
                     case_id: row.case_id || row.prompt_id || row.run_id || row.prompt || row.prompt_text || Math.random().toString(36).substring(7),
-                    category: row.category || 'Uncategorized',
+                    category: normalizeCategory(row.category || 'Uncategorized'),
                     verdict: row.verdict || 'UNKNOWN',
                     prompt: row.prompt || row.prompt_text || row.text || '',
                     response: row.response || row.response_text || '',
