@@ -13,16 +13,18 @@ A comprehensive research platform for auditing and analyzing how Large Language 
 ## Features
 
 ### Dashboard
-- **Overview** - Real-time stats, heatmaps, interactive model filtering, and audit logs
-- **Compare** - Side-by-side model comparison with statistical significance tests
-- **Analysis** - **Council Consensus**, **Model Stability**, Longitudinal Study (Multi-model support), and **Weekly AI Analyst** reports
-- **Efficiency** - Cost vs. Refusal Rate trade-offs
-- **Export** - Download comparison data as CSV
+- **Overview** - Real-time stats, **Key Findings** (Fleiss' Kappa, Drift, etc.), interactive model filtering, and audit logs.
+- **Compare** - Side-by-side model comparison with statistical significance tests.
+- **Analysis** - **Refusal Heatmap**, **Council Consensus**, **Model Stability**, Longitudinal Study, and Weekly AI Analyst reports.
+- **Efficiency** - Cost vs. Refusal Rate trade-offs.
+- **Mobile Optimized** - Fully responsive design for on-the-go monitoring.
 
-- **Political Compass** - Models mapped on Economic/Social axes (Authority vs Liberty).
-- **Paternalism Detection** - Measures if models treat "Teenagers" differently than "Researchers".
+### Deep Dive Analysis
+- **Political Compass** - Models mapped on Economic/Social axes.
+- **Paternalism Detection** - Measures bias against "Teenagers" vs "Researchers".
 - **Evidence Locker** - Full transparency explorer for raw audit traces.
 - **Automated Benchmarks** - Self-updating weekly audits via GitHub Actions.
+- **High Performance** - Optimized data loading (GZIP ~5.8MB) for fast global access.
 
 ## Methodology
 

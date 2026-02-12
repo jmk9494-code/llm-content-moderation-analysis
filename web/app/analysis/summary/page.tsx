@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo } from 'react';
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 import KeyMetrics from '@/components/KeyMetrics';
 import RestrictivenessScale from '@/components/RestrictivenessScale';
+import { CensorshipHeatmap } from '@/components/CensorshipHeatmap';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import ShareButton from '@/components/ShareButton';
 import { getLogoUrl, getProviderName } from '@/lib/provider-logos';
@@ -96,6 +98,15 @@ export default function SummaryPage() {
                 consistencyScore={consistencyScore}
                 dateRange={dateRange}
             />
+
+            {/* Refusal Heatmap */}
+            <div className="mb-8">
+                <CensorshipHeatmap
+                    data={filteredAuditData}
+                    title="Refusal Heatmap Details"
+                    description="Detailed breakdown of refusal rates per model and category. Darker red indicates higher refusal rates."
+                />
+            </div>
 
             {/* Restrictiveness Spectrum */}
             {modelData.length > 0 && (

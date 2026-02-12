@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils';
 
 const mainNavItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
-    { name: 'Model Comparison', href: '/compare', icon: ArrowRightLeft, emoji: '⚖️' },
 ];
 
 const analysisCategories = [
@@ -176,6 +175,23 @@ export function GlobalSidebar() {
                                 );
                             })}
                         </div>
+                    </div>
+
+                    {/* Model Comparison - Moved to bottom */}
+                    <div className="pt-4 mt-2 border-t border-slate-200">
+                        <Link
+                            href="/compare"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                                pathname === '/compare'
+                                    ? 'bg-indigo-50 text-indigo-700'
+                                    : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                        >
+                            <ArrowRightLeft className={cn('h-4 w-4 flex-shrink-0', pathname === '/compare' ? 'text-indigo-600' : 'text-slate-400')} />
+                            <span>Model Comparison</span>
+                        </Link>
                     </div>
                 </div>
             </aside>

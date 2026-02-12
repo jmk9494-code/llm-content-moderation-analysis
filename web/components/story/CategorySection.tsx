@@ -27,7 +27,7 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
 
     return (
         <section className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-20 md:py-32">
-            <div className="max-w-7xl mx-auto px-6 md:px-8">
+            <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
                 <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
 
                     {/* Sticky narrative text */}
