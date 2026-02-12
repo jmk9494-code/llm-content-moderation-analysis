@@ -5,10 +5,7 @@ import Link from 'next/link';
 import {
   Brain, BarChart3, ArrowRight, ArrowRightLeft
 } from 'lucide-react';
-import SkeletonLoader from '@/components/SkeletonLoader';
-const SkeletonCard = SkeletonLoader;
-const SkeletonChart = SkeletonLoader;
-const SkeletonTable = SkeletonLoader;
+import { SkeletonCard, SkeletonChart, SkeletonTable } from '@/components/ui/Skeleton';
 import { HeroSection } from '@/components/story/HeroSection';
 import { SpectrumSection } from '@/components/story/SpectrumSection';
 import { CategorySection } from '@/components/story/CategorySection';
