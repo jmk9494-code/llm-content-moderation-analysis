@@ -112,7 +112,7 @@ export function CouncilConsensus({ data = [] }: CouncilConsensusProps) {
                                 outerRadius={130}
                                 paddingAngle={3}
                                 dataKey="value"
-                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                             >
                                 {agreementDistribution.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={['#10b981', '#f59e0b', '#ef4444'][index] || COLORS[index]} />
