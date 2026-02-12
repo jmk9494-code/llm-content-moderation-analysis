@@ -82,7 +82,7 @@ export function CouncilConsensus({ data = [] }: CouncilConsensusProps) {
                             <YAxis allowDecimals={false} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                formatter={(value: any, name: string) => {
+                                formatter={(value: any, name: string | undefined) => {
                                     if (name === 'count') return [value, 'Prompts'];
                                     return [value, name];
                                 }}
