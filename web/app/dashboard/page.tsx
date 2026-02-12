@@ -33,11 +33,17 @@ export default function DashboardPage() {
         }
 
         const blob = await response.blob();
-        const decompressedStream = blob.stream().pipeThrough(
-          new DecompressionStream('gzip')
-        );
-        const decompressedBlob = await new Response(decompressedStream).blob();
-        const csvText = await decompressedBlob.text();
+        let csvText = '';
+        try {
+          const decompressedStream = blob.stream().pipeThrough(
+            new DecompressionStream('gzip')
+          );
+          const decompressedBlob = await new Response(decompressedStream).blob();
+          csvText = await decompressedBlob.text();
+        } catch (e) {
+          console.warn('Decompression failed for dashboard data, using plain text fallback', e);
+          csvText = await blob.text();
+        }
 
         const lines = csvText.trim().split('\n');
         if (lines.length <= 1) {
