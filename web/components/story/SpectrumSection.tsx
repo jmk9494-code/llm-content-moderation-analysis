@@ -57,7 +57,7 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                 <div className="mb-20">
                     <div className="relative h-3 bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 rounded-full overflow-hidden shadow-lg">
                         <motion.div
-                            className="absolute inset-0 bg-slate-100 origin-left"
+                            className="absolute inset-0 bg-slate-100 origin-right"
                             style={{ scaleX: useTransform(scaleX, [0, 1], [1, 0]) }} // Reverse the mask
                         />
                     </div>
