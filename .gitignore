@@ -226,3 +226,4 @@ web/public/assets/history/traces_*.json
 web/public/audit_log.csv.bak
 data/raw_traces/
 web/audit.db
+web/public/audit_log.csv.gz

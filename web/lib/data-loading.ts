@@ -14,6 +14,7 @@ export type AuditRow = {
     prompt_id?: string; // Analysis page legacy compatibility
 };
 
+
 /** Normalize category names so Sexual and Explicit Content are always merged */
 function normalizeCategory(cat: string): string {
     if (cat === 'Sexual' || cat === 'Explicit Content') return 'Explicit/Sexual';
@@ -29,19 +30,51 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
     const fileBase = useRecent ? '/audit_recent' : '/audit_log';
     const timestamp = Date.now();
 
+    // Vercel Blob URL for the main audit log
+    const BLOB_URL = 'https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/audit_log.csv.gz';
+
     // Try compressed first
-    const gzFile = `${fileBase}.csv.gz?t=${timestamp}`;
-    const csvFile = `${fileBase}.csv?t=${timestamp}`;
+    // If not using recent data, use the Blob URL (with cache busting)
+    const gzFile = useRecent
+        ? `/audit_recent.csv.gz?t=${timestamp}`
+        : `${BLOB_URL}?t=${timestamp}`; // Blob URL
+
+    // Fallback for uncompressed (only for local/recent or if blob fails and we want to try local csv?)
+    // For simplicity, if Blob fails, we might not have a local fallback if we delete the file.
+    // But let's keep the logic consistent.
+    const csvFile = useRecent ? `/audit_recent.csv?t=${timestamp}` : `/audit_log.csv?t=${timestamp}`;
 
     let csvText = '';
+    let blocklist = ['yi-34b', 'mistral-medium', 'gpt-audio']; // Default fallback
 
     try {
         console.log(`Attempting to fetch ${gzFile}...`);
-        const response = await fetch(gzFile);
 
-        if (response.ok) {
+        // Fetch data and blocklist in parallel
+        const [dataResponse, blocklistResponse] = await Promise.all([
+            fetch(gzFile),
+            fetch('/api/blocklist').catch(e => {
+                console.warn("Failed to fetch blocklist, using default", e);
+                return null;
+            })
+        ]);
+
+        // Process Blocklist
+        if (blocklistResponse && blocklistResponse.ok) {
+            try {
+                const dynamicBlocklist = await blocklistResponse.json();
+                if (Array.isArray(dynamicBlocklist)) {
+                    blocklist = dynamicBlocklist;
+                    console.log("Loaded dynamic blocklist:", blocklist);
+                }
+            } catch (e) {
+                console.warn("Failed to parse blocklist JSON", e);
+            }
+        }
+
+        if (dataResponse.ok) {
             // Load full buffer first to avoid stream truncation issues
-            const buffer = await response.arrayBuffer();
+            const buffer = await dataResponse.arrayBuffer();
             try {
                 // Decompress using the browser's native DecompressionStream
                 const ds = new DecompressionStream('gzip');
@@ -57,7 +90,7 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                 csvText = new TextDecoder().decode(buffer);
             }
         } else {
-            throw new Error(`GZIP fetch failed: ${response.status}`);
+            throw new Error(`GZIP fetch failed: ${dataResponse.status}`);
         }
     } catch (e) {
         console.warn("Compressed data loading failed, falling back to uncompressed", e);
@@ -108,8 +141,9 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                     }
                 });
 
-                // User Blocklist: Remove these if they have 0% refusals (likely broken/untested)
-                const BLOCKLIST = ['yi-34b', 'mistral-medium', 'gpt-audio'];
+                // User Blocklist: Use the dynamic blocklist fetched earlier
+                const BLOCKLIST = blocklist;
+
 
                 // Second pass: map and filter
                 results.data.forEach((row: any) => {

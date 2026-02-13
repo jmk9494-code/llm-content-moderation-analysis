@@ -81,6 +81,15 @@ jobs:
           PYTHONPATH: .
         run: bash scripts/generate_all_reports.sh
 
+      - name: Upload Data to Vercel Blob
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          cd web
+          npm install @vercel/blob
+          node scripts/upload-blob.js
+          cd ..
+
       - name: Commit and Push Results
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -89,17 +98,21 @@ jobs:
           git pull --rebase origin main
           git stash pop || echo "Warning: Stash pop reported conflicts."
           
-          # Add compressed data only (audit.db is too large for GitHub)
-          git add web/public/audit_log.csv.gz
-          # Ensure raw file and large db are untracked 
-          git rm --cached web/public/audit_log.csv || true
+          # tracked files
+          git add web/public/models.json
+          git add data/trends.csv
+          git add docs/
+          
+          # explicit removal of large files from git tracking (they are in blob now)
+          git rm --cached web/public/audit_log.csv.gz 2>/dev/null || true
+          git rm --cached web/public/audit_log.csv 2>/dev/null || true
           git rm --cached audit.db 2>/dev/null || true
           
-          # Add everything else
+          # Add everything else (excluding ignored files)
           git add .
           
           if ! git diff --cached --quiet; then
-            git commit -m "Auto-update: High Tier Audit for $(date +%Y-%m-%d) [compressed]"
+            git commit -m "Auto-update: High Tier Audit for $(date +%Y-%m-%d) [blob-data]"
             git push origin main
           else
             echo "No changes to commit"
