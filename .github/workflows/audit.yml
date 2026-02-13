@@ -1,0 +1,182 @@
+name: Audit Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Audit Tier (low, mid, high, efficiency)'
+        required: true
+        default: 'efficiency'
+        type: choice
+        options:
+        - efficiency
+        - low
+        - mid
+        - high
+  schedule:
+    - cron: '0 4 * * 0' # Run every Sunday at 4am UTC (Efficiency/Low Tier)
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120 
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        env:
+          OPENROUTER_API_KEY: "mock_key_for_ci"
+          PYTHONPATH: .
+        run: |
+          python -m pytest -W ignore::DeprecationWarning
+
+      - name: Run Model Collection
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
+        run: |
+          # Determine Tier
+          TIER="${{ inputs.tier }}"
+          if [ -z "$TIER" ]; then
+            TIER="efficiency" # Default for schedule
+          fi
+          
+          echo "🚀 Running Audit Tier: $TIER"
+          
+          # Map Tier to Args
+          if [ "$TIER" == "efficiency" ]; then
+            ARGS="--preset low --resolve-latest --consistency 1"
+          elif [ "$TIER" == "low" ]; then
+            ARGS="--preset low --resolve-latest"
+          elif [ "$TIER" == "mid" ]; then
+            ARGS="--preset mid --resolve-latest"
+          elif [ "$TIER" == "high" ]; then
+            ARGS="--preset high"
+          else
+            echo "❌ Unknown tier: $TIER"
+            exit 1
+          fi
+          
+          # Retry Logic
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          DELAY=30
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "=== Attempt $ATTEMPT of $MAX_ATTEMPTS ==="
+            
+            if python src/audit_runner.py $ARGS; then
+              echo "✅ Model collection completed successfully"
+              exit 0
+            else
+              echo "❌ Attempt $ATTEMPT failed"
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                sleep $DELAY
+                DELAY=$((DELAY * 2))
+              fi
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+          exit 1
+          
+      - name: Compress Data
+        run: python scripts/compress_data.py
+
+      - name: Generate All Reports & Visuals
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
+        run: bash scripts/generate_all_reports.sh
+
+      - name: Upload Data to Vercel Blob
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          cd web
+          npm install @vercel/blob
+          node scripts/upload-blob.js
+          cd ..
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git stash push -m "New analysis data" --include-untracked
+          git pull --rebase origin main
+          git stash pop || echo "Warning: Stash pop reported conflicts."
+          
+          # tracked files
+          git add web/public/models.json
+          git add data/trends.csv
+          git add docs/
+          
+          # explicit removal of large files from git tracking (they are in blob now)
+          git rm --cached web/public/audit_log.csv.gz 2>/dev/null || true
+          git rm --cached web/public/audit_log.csv 2>/dev/null || true
+          git rm --cached audit.db 2>/dev/null || true
+          
+          # Add everything else (excluding ignored files)
+          git add .
+          
+          if ! git diff --cached --quiet; then
+            TIER="${{ inputs.tier }}"
+            [ -z "$TIER" ] && TIER="efficiency"
+            git commit -m "Auto-update: $TIER Tier Audit for $(date +%Y-%m-%d) [blob-data]"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p web/public/data
+          # Copy compressed audit log
+          if [ -f "web/public/audit_log.csv.gz" ]; then
+            cp web/public/audit_log.csv.gz web/public/data/
+          elif [ -f "audit_log.csv" ]; then
+            cp audit_log.csv web/public/data/
+          fi
+          
+          # Copy latest report
+          if [ -f "data/latest_report.md" ]; then
+            cp data/latest_report.md web/public/
+          fi
+          
+          npx vercel deploy --prod --token=$VERCEL_TOKEN --yes
+
+      - name: Sync to Hugging Face Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub datasets pandas pyarrow
+          python scripts/sync_to_huggingface.py

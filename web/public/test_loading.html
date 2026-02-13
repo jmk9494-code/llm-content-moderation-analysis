@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Loading Diagnostic</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <h1>Data Loading Diagnostic</h1>
+    <button onclick="runTest()">Run Test</button>
+    <div id="logs" style="font-family: monospace; white-space: pre-wrap; margin-top: 20px; border: 1px solid #ccc; padding: 10px;"></div>
+
+    <script>
+        function log(msg) {
+            const el = document.getElementById('logs');
+            el.innerHTML += msg + '\n';
+            console.log(msg);
+        }
+
+        async function runTest() {
+            log("Starting test...");
+            const url = "/audit_log.csv.gz?t=" + Date.now();
+            log("Fetching " + url);
+            
+            try {
+                const response = await fetch(url);
+                log("Response status: " + response.status);
+                if (!response.ok) {
+                    log("Failed to fetch.");
+                    return;
+                }
+                
+                const buffer = await response.arrayBuffer();
+                log("Buffer size: " + buffer.byteLength + " bytes");
+                
+                let csvText = "";
+                
+                // Try decompression
+                try {
+                    log("Attempting DecompressionStream...");
+                    const ds = new DecompressionStream('gzip');
+                    const writer = ds.writable.getWriter();
+                    writer.write(buffer);
+                    writer.close();
+                    csvText = await new Response(ds.readable).text();
+                    log("Decompression success. Text length: " + csvText.length);
+                } catch (e) {
+                    log("DecompressionStream failed: " + e);
+                    log("Falling back to TextDecoder...");
+                    csvText = new TextDecoder().decode(buffer);
+                    log("TextDecoder length: " + csvText.length);
+                }
+                
+                log("Parsing CSV with PapaParse...");
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        log("Parse complete.");
+                        log("Row count: " + results.data.length);
+                        log("Errors: " + results.errors.length);
+                        if (results.errors.length > 0) {
+                            log("First error: " + JSON.stringify(results.errors[0]));
+                        }
+                        if (results.data.length > 0) {
+                            log("First row keys: " + JSON.stringify(Object.keys(results.data[0])));
+                            log("First row model: " + results.data[0].model);
+                        }
+                        
+                        // Check exact count
+                        log("Is count 82908? " + (results.data.length === 82908 ? "YES" : "NO"));
+                        
+                        // Check models
+                        const models = new Set(results.data.map(d => d.model || d.model_id));
+                        log("Unique models count: " + models.size);
+                        log("Models: " + Array.from(models).slice(0, 5).join(", "));
+                    }
+                });
+                
+            } catch (e) {
+                log("Fatal error: " + e);
+            }
+        }
+    </script>
+</body>
+</html>

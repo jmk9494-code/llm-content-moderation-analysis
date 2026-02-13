@@ -3,25 +3,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { ChevronDown, BarChart2, AlertCircle, CheckCircle, Zap, Shield, ArrowRightLeft, Search, Filter, Calendar, X } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import Papa from 'papaparse';
 
 import { fetchAuditData, type AuditRow } from '@/lib/data-loading';
+import { getLogoUrl, getProviderName } from '@/lib/provider-logos';
 
-// Provider Logo Helper using LogoKit API
-const LOGOKIT_API_KEY = 'pk_fra468443f1ecbf16b1c64';
-const getProviderLogo = (model: string): string => {
-    const provider = model.split('/')[0]?.toLowerCase() || '';
-    const logoMap: Record<string, string> = {
-        'openai': 'openai.com',
-        'anthropic': 'anthropic.com',
-        'google': 'google.com',
-        'mistralai': 'mistral.ai',
-        'deepseek': 'deepseek.com',
-        'qwen': 'alibaba.com',
-        '01-ai': '01.ai',
-    };
-    const domain = logoMap[provider] || `${provider}.com`;
-    return `https://img.logokit.com/${domain}?token=${LOGOKIT_API_KEY}`;
-};
+const getProviderLogo = (model: string): string => getLogoUrl(model);
 
 export default function ComparePage() {
     const [data, setData] = useState<AuditRow[]>([]);
@@ -29,6 +16,7 @@ export default function ComparePage() {
     const [modelA, setModelA] = useState<string>('');
     const [modelB, setModelB] = useState<string>('');
     const [isClient, setIsClient] = useState(false);
+    const [pValues, setPValues] = useState<any[]>([]);
 
     // Filters
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -55,6 +43,14 @@ export default function ComparePage() {
                 console.error(err);
                 setLoading(false);
             });
+
+        // Load pairwise significance data
+        fetch('/assets/p_values.csv').then(async r => {
+            if (r.ok) {
+                const text = await r.text();
+                Papa.parse(text, { header: true, skipEmptyLines: true, complete: (res: any) => setPValues(res.data) });
+            }
+        }).catch(() => { });
     }, []);
 
     // Filter Options
@@ -280,6 +276,45 @@ export default function ComparePage() {
                     <div className="p-12 text-center text-slate-500">Loading audit data...</div>
                 ) : (
                     <>
+                        {/* Pairwise Significance for Selected Pair */}
+                        {(() => {
+                            const pairResult = pValues.find((row: any) =>
+                                (row['Model A'] === modelA && row['Model B'] === modelB) ||
+                                (row['Model A'] === modelB && row['Model B'] === modelA)
+                            );
+                            return (
+                                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        📊 Statistical Significance
+                                    </h3>
+                                    {pairResult ? (
+                                        <div className="flex items-center gap-6">
+                                            <div>
+                                                <span className="text-xs text-slate-500">P-Value</span>
+                                                <div className="text-2xl font-black font-mono text-slate-800">
+                                                    {parseFloat(pairResult['P-Value']).toExponential(2)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="text-xs text-slate-500">Result</span>
+                                                <div className="mt-1">
+                                                    {pairResult['Significant'] === 'YES'
+                                                        ? <span className="text-sm bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-bold">✓ Statistically Significant</span>
+                                                        : <span className="text-sm bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full">Not Significant</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div className="ml-auto text-xs text-slate-400 max-w-xs">
+                                                McNemar&#39;s test: P &lt; 0.05 means the difference in refusal behavior is real, not random chance.
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-slate-400">No significance data for this pair. Run the audit pipeline to generate p-values.</p>
+                                    )}
+                                </div>
+                            );
+                        })()}
+
                         {/* Comparison Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Card A */}

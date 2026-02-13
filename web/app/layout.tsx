@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { NavBar } from "@/components/ui/NavBar";
+import { GlobalSidebar } from "@/components/ui/GlobalSidebar";
 import { Footer } from "@/components/ui/Footer";
 import SkipLink from "@/components/SkipLink";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -54,17 +54,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-white text-slate-900`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased flex min-h-screen bg-white text-slate-900`}
       >
         <ThemeProvider>
           <ToastProvider>
             <CommandPalette />
             <SkipLink />
-            <NavBar />
-            <main id="main-content" className="flex-1">
-              {children}
-            </main>
-            <Footer />
+            <GlobalSidebar />
+            <div className="flex flex-col flex-1 lg:ml-72">
+              <main id="main-content" className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
             <Analytics />
             <SpeedInsights />
           </ToastProvider>

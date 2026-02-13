@@ -10,9 +10,26 @@ const OUTPUT_DIR = path.dirname(OUTPUT_PATH);
 async function generateTraces() {
     console.log('🔄 Generating traces.json from audit_log.csv.gz...');
 
+    // Vercel Blob URL (Hardcoded for now, or use env var)
+    const BLOB_URL = 'https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/audit_log.csv.gz';
+
     if (!fs.existsSync(INPUT_PATH)) {
-        console.error(`❌ Error: Input file not found at ${INPUT_PATH}`);
-        process.exit(1);
+        console.log(`⚠️ Input file not found at ${INPUT_PATH}`);
+        console.log(`⬇️ Downloading from Vercel Blob: ${BLOB_URL}...`);
+
+        try {
+            const response = await fetch(BLOB_URL);
+            if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            fs.writeFileSync(INPUT_PATH, buffer);
+            console.log(`✅ Downloaded ${INPUT_PATH} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
+        } catch (error) {
+            console.error(`❌ Error downloading from Blob:`, error);
+            // Don't exit yet, maybe we can survive without it (but simpler to fail)
+            process.exit(1);
+        }
     }
 
     // Ensure output directory exists

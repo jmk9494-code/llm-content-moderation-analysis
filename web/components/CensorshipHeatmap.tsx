@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 type HeatmapProps = {
     data: any[];
@@ -30,7 +31,7 @@ const sanitizeCategory = (cat: string): string => {
     };
     // Return mapped name or truncate long names
     if (mapping[cat]) return mapping[cat];
-    if (cat.length > 15) return cat.substring(0, 12) + '...';
+    if (cat.length > 10) return cat.substring(0, 8) + '...';
     return cat;
 };
 
@@ -43,6 +44,7 @@ const normalizeCategory = (cat: string): string => {
 
 export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description, onCellClick }: HeatmapProps) {
     const [selectedCell, setSelectedCell] = useState<{ model: string; category: string } | null>(null);
+    const [expandedModel, setExpandedModel] = useState<string | null>(null); // For mobile accordion
     const [showModal, setShowModal] = useState(false);
     const [modalEntries, setModalEntries] = useState<any[]>([]);
 
@@ -104,6 +106,10 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
         if (onCellClick) onCellClick(model, category, entries);
     };
 
+    const toggleModel = (model: string) => {
+        setExpandedModel(expandedModel === model ? null : model);
+    };
+
     if (matrix.models.length === 0 || matrix.categories.length === 0) return null;
 
     return (
@@ -117,18 +123,20 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                         {description}
                     </p>
                 )}
-                <p className="text-xs text-slate-400 mt-2">Click any cell to see details</p>
+                <p className="text-xs text-slate-400 mt-2 hidden md:block">Click any cell to see details</p>
+                <p className="text-xs text-slate-400 mt-2 md:hidden">Tap a model to view details</p>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead>
                         <tr>
-                            <th className="p-3 bg-slate-50 border-b border-slate-200 min-w-[120px] sticky left-0 z-10">
+                            <th className="p-1.5 bg-slate-50 border-b border-slate-200 min-w-[100px] sticky left-0 z-10 text-xs">
                                 Model
                             </th>
                             {matrix.categories.map(c => (
-                                <th key={c} className="p-3 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[80px] text-center text-xs">
+                                <th key={c} className="p-1.5 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[60px] text-center text-[10px] leading-tight">
                                     {sanitizeCategory(c)}
                                 </th>
                             ))}
@@ -137,14 +145,14 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                     <tbody>
                         {matrix.models.map(m => (
                             <tr key={m} className="border-b border-slate-100 last:border-0">
-                                <td className="p-3 font-medium text-slate-700 sticky left-0 bg-white z-10 w-[150px] truncate" title={m}>
+                                <td className="p-1.5 font-medium text-slate-700 sticky left-0 bg-white z-10 w-[100px] truncate text-xs" title={m}>
                                     {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                 </td>
                                 {matrix.categories.map(c => {
                                     const cell = matrix.stats[m][c];
                                     if (!cell || cell.total === 0) {
                                         return (
-                                            <td key={c} className="p-3 text-center text-slate-300 bg-slate-50/20">
+                                            <td key={c} className="p-1.5 text-center text-slate-300 bg-slate-50/20 text-xs">
                                                 -
                                             </td>
                                         );
@@ -153,7 +161,7 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                                     return (
                                         <td
                                             key={c}
-                                            className={`p-3 text-center cursor-pointer transition-colors ${getColor(rate)}`}
+                                            className={`p-1.5 text-center cursor-pointer transition-colors text-xs ${getColor(rate)}`}
                                             onClick={() => handleCellClick(m, c)}
                                             title={`${cell.refusals}/${cell.total} refusals - Click for details`}
                                         >
@@ -167,6 +175,63 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                 </table>
             </div>
 
+            {/* Mobile View: Collapsible List */}
+            <div className="md:hidden space-y-3">
+                {matrix.models.map(m => {
+                    // Calculate avg refusal for summary
+                    const totalStats = matrix.categories.reduce((acc, c) => {
+                        const cell = matrix.stats[m][c];
+                        if (cell && cell.total > 0) {
+                            acc.refusals += cell.refusals;
+                            acc.total += cell.total;
+                        }
+                        return acc;
+                    }, { refusals: 0, total: 0 });
+
+                    const avgRate = totalStats.total > 0 ? totalStats.refusals / totalStats.total : 0;
+                    const isExpanded = expandedModel === m;
+
+                    return (
+                        <div key={m} className="border border-slate-200 rounded-lg overflow-hidden">
+                            <div
+                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${isExpanded ? 'bg-slate-50' : 'bg-white'}`}
+                                onClick={() => toggleModel(m)}
+                            >
+                                <div>
+                                    <p className="font-semibold text-slate-800">
+                                        {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        Avg Refusal: <span className={avgRate > 0.5 ? 'text-red-600 font-bold' : 'text-slate-700'}>{(avgRate * 100).toFixed(1)}%</span>
+                                    </p>
+                                </div>
+                                {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                            </div>
+
+                            {isExpanded && (
+                                <div className="border-t border-slate-200 bg-slate-50/50 p-2 grid grid-cols-2 gap-2 text-xs">
+                                    {matrix.categories.map(c => {
+                                        const cell = matrix.stats[m][c];
+                                        if (!cell || cell.total === 0) return null;
+                                        const rate = cell.refusals / cell.total;
+
+                                        return (
+                                            <div key={c}
+                                                className={`p-2 rounded flex justify-between items-center cursor-pointer ${getColor(rate)}`}
+                                                onClick={() => handleCellClick(m, c)}
+                                            >
+                                                <span className="truncate mr-2 font-medium">{sanitizeCategory(c)}</span>
+                                                <span>{(rate * 100).toFixed(0)}%</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
             <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 justify-end">
                 <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-100 rounded"></div> 0-20%</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-100 rounded"></div> 20-40%</div>
@@ -176,10 +241,10 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
 
             {/* Modal for cell details */}
             {showModal && selectedCell && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
+                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-bold">
+                            <h4 className="text-lg font-bold truncate pr-4">
                                 {selectedCell.model && typeof selectedCell.model === 'string'
                                     ? (selectedCell.model.split('/').pop() || selectedCell.model)
                                     : 'Unknown'} × {selectedCell.category}

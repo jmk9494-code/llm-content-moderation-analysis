@@ -6,14 +6,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'img.logo.dev',
+        hostname: 'www.google.com',
         port: '',
-        pathname: '/**',
+        pathname: '/s2/**',
       },
     ],
   },
   // Headers are now handled by middleware.ts for better security control.
   // output: 'standalone',
+  serverExternalPackages: ['better-sqlite3'],
 };
 
 export default nextConfig;

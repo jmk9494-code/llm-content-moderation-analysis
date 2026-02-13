@@ -1,0 +1,86 @@
+remote: This repository moved. Please use the new location:        
+remote:   https://github.com/jacobkandel/llm-content-moderation-analysis.git        
+remote: error: GH013: Repository rule violations found for refs/heads/main.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.        
+remote:      Visit the repository settings page, https://github.com/jacobkandel/llm-content-moderation-analysis/settings/security_analysis        
+remote:             
+remote:             
+remote:       —— OpenAI API Key ————————————————————————————————————        
+remote:        locations:        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:351247        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:351255        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:351263        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:351271        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:351279        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/jacobkandel/llm-content-moderation-analysis/security/secret-scanning/unblock-secret/39YMoKL7t8GhWJDhoa6WxroWZuW        
+remote:             
+remote:             
+remote:       —— OpenAI API Key ————————————————————————————————————        
+remote:        locations:        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:414576        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/jacobkandel/llm-content-moderation-analysis/security/secret-scanning/unblock-secret/39YMoNs1FfRO6t2OmE3SiKeZ0vL        
+remote:             
+remote:             
+remote:       —— OpenAI API Key ————————————————————————————————————        
+remote:        locations:        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:414704        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/jacobkandel/llm-content-moderation-analysis/security/secret-scanning/unblock-secret/39YMoPiAtbMQAlXrDOEqZ9IGjQ8        
+remote:             
+remote:             
+remote:       —— OpenAI API Key ————————————————————————————————————        
+remote:        locations:        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:437992        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:438049        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:438102        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:438155        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/jacobkandel/llm-content-moderation-analysis/security/secret-scanning/unblock-secret/39YMoOSXC0fTUppVmMFnb092Xt8        
+remote:             
+remote:             
+remote:       —— Tencent Cloud Secret ID ———————————————————————————        
+remote:        locations:        
+remote:          - commit: 6613858e6b9de45ce75148468e3c223a26a52ed5        
+remote:            path: web/public/audit_log.csv:505184        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/jacobkandel/llm-content-moderation-analysis/security/secret-scanning/unblock-secret/39YMoM4TDFNGPYLTwkwwu8QaLkI        
+remote:             
+remote:             
+remote:     ——[ WARNING ]—————————————————————————————————————————        
+remote:      2 more secrets detected. Remove each secret from your commit history to view more detections.        
+remote:      https://docs.github.com/code-security/secret-scanning/using-advanced-secret-scanning-and-push-protection-features/excluding-folders-and-files-from-secret-scanning        
+remote:     ——————————————————————————————————————————————————————        
+remote: 
+remote: 
+To https://github.com/jmk9494-code/llm-content-moderation-analysis.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/jmk9494-code/llm-content-moderation-analysis.git'
