@@ -40,6 +40,9 @@ interface AnalysisContextType {
     timelineDates: string[];
     stats: any;
     efficiencyData: any[];
+    isLite: boolean;
+    isLoadingFull: boolean;
+    loadFullDetails: () => Promise<void>;
 }
 
 const AnalysisContext = createContext<AnalysisContextType | undefined>(undefined);
@@ -55,7 +58,11 @@ function filterByModels<T extends { model?: string }>(data: T[], selectedModels:
 
 export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     // Data Loading
+    // Data Loading
     const [auditData, setAuditData] = useState<AuditRow[]>([]);
+    const [isLite, setIsLite] = useState(true); // Track if we are using lite data
+    const [isLoadingFull, setIsLoadingFull] = useState(false); // Track background loading
+
     const [clusters, setClusters] = useState<Cluster[]>([]);
     const [driftData, setDriftData] = useState<any[]>([]);
     const [consensusData, setConsensusData] = useState<any[]>([]);
@@ -70,11 +77,31 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
+    // Action to load full data (text columns)
+    const loadFullDetails = async () => {
+        if (!isLite || isLoadingFull) return; // Already full or loading
+
+        console.log("🚀 Triggering FULL data load...");
+        setIsLoadingFull(true);
+        try {
+            const fullData = await fetchAuditData(false, false); // lite=false
+            setAuditData(fullData);
+            setIsLite(false);
+            console.log("✅ FULL data loaded (replaced lite data)");
+        } catch (e) {
+            console.error("Failed to load full data", e);
+        } finally {
+            setIsLoadingFull(false);
+        }
+    };
+
     useEffect(() => {
         const loadAll = async () => {
             try {
-                const data = await fetchAuditData();
+                // progressive loading: fetch lite first
+                const data = await fetchAuditData(false, true); // lite=true
                 setAuditData(data);
+                setIsLite(true);
 
                 fetch('/api/report').then(async r => {
                     if (r.ok) {
@@ -254,7 +281,8 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
             reportContent, loading, dateRange, setDateRange, selectedModels, setSelectedModels, allModels,
             filteredAuditData, filteredPoliticalData, filteredPaternalismData, filteredDriftData,
             filteredConsensusData, filteredPValues, filteredClusters,
-            timelineDates, stats, efficiencyData
+            timelineDates, stats, efficiencyData,
+            isLite, isLoadingFull, loadFullDetails
         }}>
             {children}
         </AnalysisContext.Provider>

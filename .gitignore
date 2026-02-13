@@ -227,3 +227,4 @@ web/public/audit_log.csv.bak
 data/raw_traces/
 web/audit.db
 web/public/audit_log.csv.gz
+web/public/audit_log_lite.csv.gz
