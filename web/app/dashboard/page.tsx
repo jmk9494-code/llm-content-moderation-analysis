@@ -147,11 +147,12 @@ export default function DashboardPage() {
         rate: stats.total > 0 ? Math.round((stats.refusals / stats.total) * 100) : 0
       }))
       .filter(m => m.rate >= 0)
-      .sort((a, b) => a.rate - b.rate);
+      .sort((a, b) => a.rate - b.rate)
+      .slice(0, 5);
   }, [validData]);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#0B0C15]">
       {loading ? (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
           <div className="space-y-6 max-w-4xl w-full px-8">
@@ -189,7 +190,7 @@ export default function DashboardPage() {
           />
 
           {/* FINAL CTA: Direct users to Deep Dive for interactive exploration */}
-          <section className="bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white py-32 relative overflow-hidden">
+          <section className="bg-gradient-to-b from-[#0B0C15] via-indigo-950/30 to-[#0B0C15] text-white py-32 relative overflow-hidden">
             {/* Background decorations */}
             <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
             <div className="absolute top-1/4 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>

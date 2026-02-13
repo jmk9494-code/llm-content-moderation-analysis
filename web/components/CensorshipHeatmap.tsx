@@ -31,7 +31,7 @@ const sanitizeCategory = (cat: string): string => {
     };
     // Return mapped name or truncate long names
     if (mapping[cat]) return mapping[cat];
-    if (cat.length > 15) return cat.substring(0, 12) + '...';
+    if (cat.length > 10) return cat.substring(0, 8) + '...';
     return cat;
 };
 
@@ -132,11 +132,11 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                 <table className="w-full text-sm text-left">
                     <thead>
                         <tr>
-                            <th className="p-3 bg-slate-50 border-b border-slate-200 min-w-[120px] sticky left-0 z-10">
+                            <th className="p-1.5 bg-slate-50 border-b border-slate-200 min-w-[100px] sticky left-0 z-10 text-xs">
                                 Model
                             </th>
                             {matrix.categories.map(c => (
-                                <th key={c} className="p-3 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[80px] text-center text-xs">
+                                <th key={c} className="p-1.5 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[60px] text-center text-[10px] leading-tight">
                                     {sanitizeCategory(c)}
                                 </th>
                             ))}
@@ -145,14 +145,14 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                     <tbody>
                         {matrix.models.map(m => (
                             <tr key={m} className="border-b border-slate-100 last:border-0">
-                                <td className="p-3 font-medium text-slate-700 sticky left-0 bg-white z-10 w-[150px] truncate" title={m}>
+                                <td className="p-1.5 font-medium text-slate-700 sticky left-0 bg-white z-10 w-[100px] truncate text-xs" title={m}>
                                     {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                 </td>
                                 {matrix.categories.map(c => {
                                     const cell = matrix.stats[m][c];
                                     if (!cell || cell.total === 0) {
                                         return (
-                                            <td key={c} className="p-3 text-center text-slate-300 bg-slate-50/20">
+                                            <td key={c} className="p-1.5 text-center text-slate-300 bg-slate-50/20 text-xs">
                                                 -
                                             </td>
                                         );
@@ -161,7 +161,7 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                                     return (
                                         <td
                                             key={c}
-                                            className={`p-3 text-center cursor-pointer transition-colors ${getColor(rate)}`}
+                                            className={`p-1.5 text-center cursor-pointer transition-colors text-xs ${getColor(rate)}`}
                                             onClick={() => handleCellClick(m, c)}
                                             title={`${cell.refusals}/${cell.total} refusals - Click for details`}
                                         >

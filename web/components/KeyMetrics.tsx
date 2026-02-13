@@ -44,9 +44,18 @@ interface KeyMetricsProps {
     modelsCount: number;
     consistencyScore: number;
     dateRange: string;
+    totalEvaluations: number;
+    lastUpdated: string;
 }
 
-export default function KeyMetrics({ totalCases, modelsCount, consistencyScore, dateRange }: KeyMetricsProps) {
+export default function KeyMetrics({
+    totalCases,
+    modelsCount,
+    consistencyScore,
+    dateRange,
+    totalEvaluations,
+    lastUpdated
+}: KeyMetricsProps) {
     // Format numbers for display
     const formatNumber = (num: number) => {
         if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -65,12 +74,12 @@ export default function KeyMetrics({ totalCases, modelsCount, consistencyScore, 
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <MetricCard
                     label="Test Cases"
                     value={formatNumber(totalCases)}
                     icon={<BarChart3 className="w-6 h-6 text-indigo-600" />}
-                    description="Unique moderation scenarios tested"
+                    description="Unique moderation scenarios"
                     trend="neutral"
                 />
 
@@ -78,20 +87,24 @@ export default function KeyMetrics({ totalCases, modelsCount, consistencyScore, 
                     label="Models Tested"
                     value={modelsCount.toString()}
                     icon={<Users className="w-6 h-6 text-indigo-600" />}
-                    description="Different AI moderation models"
+                    description="AI moderation models"
                     trend="neutral"
                 />
 
                 <MetricCard
-                    label="Inter-Rater Reliability"
-                    value={
-                        (consistencyScore && !isNaN(consistencyScore) && isFinite(consistencyScore))
-                            ? (consistencyScore * 100).toFixed(1) + '%'
-                            : '0.0%'
-                    }
-                    icon={<TrendingUp className="w-6 h-6 text-indigo-600" />}
-                    description="Fleiss' Kappa agreement score"
-                    trend={consistencyScore >= 0.8 ? 'up' : consistencyScore >= 0.4 ? 'neutral' : 'down'}
+                    label="Total Assessments"
+                    value={formatNumber(totalEvaluations)}
+                    icon={<BarChart3 className="w-6 h-6 text-indigo-600" />}
+                    description="Total model evaluations"
+                    trend="neutral"
+                />
+
+                <MetricCard
+                    label="Last Updated"
+                    value={lastUpdated}
+                    icon={<Calendar className="w-6 h-6 text-indigo-600" />}
+                    description="Most recent data point"
+                    trend="neutral"
                 />
 
                 <MetricCard

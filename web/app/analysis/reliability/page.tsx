@@ -114,11 +114,15 @@ export default function ReliabilityPage() {
             {perModelKappa.length > 0 && (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Per-Model Agreement with Consensus</h3>
-                    <p className="text-xs text-slate-400 mb-4">How often each model agrees with the majority verdict across all prompts</p>
+                    <p className="text-xs text-slate-400 mb-6">How often each model agrees with the majority verdict across all prompts</p>
 
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {perModelKappa.map((m) => (
-                            <div key={m.model} className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors">
+                            <div
+                                key={m.model}
+                                className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors bg-white"
+                            >
+                                {/* Provider Logo */}
                                 <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
                                     <img
                                         src={getLogoUrl(m.model)}
@@ -127,28 +131,23 @@ export default function ReliabilityPage() {
                                         loading="lazy"
                                     />
                                 </div>
+
+                                {/* Model info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-800 truncate">{m.displayName}</p>
-                                    <p className="text-xs text-slate-400">{getProviderName(m.model)} · {m.total} verdicts</p>
+                                    <h3 className="font-semibold text-sm text-slate-800 truncate">
+                                        {m.displayName}
+                                    </h3>
+                                    <p className="text-xs text-slate-400">
+                                        {getProviderName(m.model)}
+                                    </p>
                                 </div>
-                                {/* Score bar */}
-                                <div className="hidden sm:block w-32">
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500"
-                                            style={{
-                                                width: `${m.score * 100}%`,
-                                                backgroundColor: m.score >= 0.85 ? '#10b981' : m.score >= 0.7 ? '#f59e0b' : '#ef4444'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-lg font-black ${getScoreColor(m.score)}`}>
+
+                                {/* Score */}
+                                <div className="flex-shrink-0 text-right">
+                                    <span
+                                        className={`text-lg font-black ${getScoreColor(m.score)}`}
+                                    >
                                         {(m.score * 100).toFixed(0)}%
-                                    </span>
-                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getBgColor(m.score)}`}>
-                                        {getScoreLabel(m.score)}
                                     </span>
                                 </div>
                             </div>

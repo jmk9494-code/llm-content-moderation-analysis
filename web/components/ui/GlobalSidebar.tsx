@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+
 const mainNavItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
 ];
@@ -191,6 +192,20 @@ export function GlobalSidebar() {
                         >
                             <ArrowRightLeft className={cn('h-4 w-4 flex-shrink-0', pathname === '/compare' ? 'text-indigo-600' : 'text-slate-400')} />
                             <span>Model Comparison</span>
+                        </Link>
+
+                        <Link
+                            href="/audit"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                                pathname === '/audit'
+                                    ? 'bg-indigo-50 text-indigo-700'
+                                    : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                        >
+                            <FileText className={cn('h-4 w-4 flex-shrink-0', pathname === '/audit' ? 'text-indigo-600' : 'text-slate-400')} />
+                            <span>Global Audit</span>
                         </Link>
                     </div>
                 </div>

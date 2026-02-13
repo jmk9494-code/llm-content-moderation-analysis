@@ -159,6 +159,12 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                         return;
                     }
 
+                    const category = normalizeCategory(String(row.category || ''));
+                    // Filter out requested categories
+                    if (['EdgeCase', 'Jailbreak', 'Multilingual', 'Roleplay'].includes(category)) {
+                        return;
+                    }
+
                     // Helper to get value ignoring quotes in key
                     const getValue = (key: string) => {
                         const exact = row[key];
@@ -174,7 +180,7 @@ export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
                         timestamp: String(row.timestamp || row.test_date || row.date || ''),
                         model: modelName,
                         case_id: String(row.case_id || row.prompt_id || row.run_id || ''),
-                        category: normalizeCategory(String(row.category || '')),
+                        category: category,
                         verdict: String(row.verdict || getValue('verdict') || ''),
                         prompt: String(row.prompt || row.prompt_text || row.text || row['prompt_text,response_text'] || getValue('prompt_text,response_text') || ''),
                         response: String(row.response || row.response_text || ''),

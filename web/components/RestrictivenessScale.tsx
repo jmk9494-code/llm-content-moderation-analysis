@@ -37,38 +37,31 @@ export default function RestrictivenessScale({ models, onModelClick }: Restricti
                 </div>
             </div>
 
-            {/* Gradient bar */}
-            <div className="mb-6">
-                <div className="h-2 rounded-full bg-gradient-to-r from-green-200 via-yellow-200 via-orange-200 to-red-200" />
-                <div className="flex justify-between text-xs text-slate-500 mt-2">
-                    <span className="font-semibold">← Least Restrictive</span>
-                    <span className="font-semibold">Most Restrictive →</span>
-                </div>
-            </div>
 
-            {/* Model list */}
-            <div className="space-y-3">
+
+            {/* Model Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {sortedModels.map((model) => {
                     const pct = (model.refusalRate * 100).toFixed(0);
                     return (
                         <div
                             key={model.name}
-                            className="flex items-center gap-4 p-4 rounded-lg border border-slate-100 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
+                            className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors cursor-pointer"
                             onClick={() => onModelClick?.(model)}
                         >
                             {/* Provider Logo */}
-                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
                                 <img
                                     src={getLogoUrl(model.name)}
                                     alt={getProviderName(model.name)}
-                                    className="w-7 h-7 object-contain"
+                                    className="w-6 h-6 object-contain"
                                     loading="lazy"
                                 />
                             </div>
 
                             {/* Model info */}
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-sm text-slate-900 truncate">
+                                <h3 className="font-semibold text-sm text-slate-800 truncate">
                                     {model.displayName || model.name}
                                 </h3>
                                 <p className="text-xs text-slate-400">
@@ -76,23 +69,10 @@ export default function RestrictivenessScale({ models, onModelClick }: Restricti
                                 </p>
                             </div>
 
-                            {/* Refusal bar */}
-                            <div className="hidden sm:block w-32">
-                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full transition-all duration-500"
-                                        style={{
-                                            width: `${model.refusalRate * 100}%`,
-                                            backgroundColor: getRateColor(model.refusalRate)
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
                             {/* Percentage */}
-                            <div className="flex-shrink-0 w-14 text-right">
+                            <div className="flex-shrink-0">
                                 <span
-                                    className="text-xl font-black"
+                                    className="text-lg font-black"
                                     style={{ color: getRateColor(model.refusalRate) }}
                                 >
                                     {pct}%

@@ -49,15 +49,15 @@ export default function FilterBar() {
     const totalRecords = filteredAuditData.length;
 
     return (
-        <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl px-4 py-3 mb-6 shadow-sm">
+        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
                 {/* Filter icon + label */}
-                <div className="flex items-center gap-1.5 text-slate-500">
+                <div className="flex items-center gap-1.5 text-slate-300">
                     <Filter className="h-4 w-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
                 </div>
 
-                <div className="h-5 w-px bg-slate-200" />
+                <div className="h-5 w-px bg-white/10" />
 
                 {/* Date Range */}
                 <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function FilterBar() {
                         min={minDate}
                         max={dateRange.end || maxDate}
                         onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition-colors"
+                        className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 text-slate-200 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-colors appearance-none"
                     />
                     <span className="text-xs text-slate-400">→</span>
                     <input
@@ -77,19 +77,19 @@ export default function FilterBar() {
                         min={dateRange.start || minDate}
                         max={maxDate}
                         onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none transition-colors"
+                        className="text-xs border border-white/10 rounded-lg px-2 py-1.5 bg-white/5 text-slate-200 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-colors appearance-none"
                     />
                 </div>
 
-                <div className="h-5 w-px bg-slate-200" />
+                <div className="h-5 w-px bg-white/10" />
 
                 {/* Model Multi-Select Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                        className={`flex items-center gap-2 text-xs border rounded-lg px-3 py-1.5 hover:border-indigo-300 transition-colors ${activeModelCount > 0
-                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                                : 'border-slate-200 bg-white text-slate-600'
+                        className={`flex items-center gap-2 text-xs border rounded-lg px-3 py-1.5 hover:border-indigo-400 transition-colors ${activeModelCount > 0
+                            ? 'border-indigo-500/50 bg-indigo-500/20 text-indigo-300'
+                            : 'border-white/10 bg-white/5 text-slate-300'
                             }`}
                     >
                         <Users className="h-3.5 w-3.5" />
@@ -101,15 +101,15 @@ export default function FilterBar() {
                     </button>
 
                     {modelDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto">
-                            <div className="sticky top-0 bg-white border-b border-slate-100 px-3 py-2 flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <div className="absolute top-full left-0 mt-1 w-80 bg-[#1A1B26] border border-white/10 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+                            <div className="sticky top-0 bg-[#1A1B26] border-b border-white/10 px-3 py-2 flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                                     Select Models ({activeModelCount}/{allModels.length})
                                 </span>
                                 {activeModelCount > 0 && (
                                     <button
                                         onClick={() => setSelectedModels([])}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                        className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
                                     >
                                         Clear all
                                     </button>
@@ -124,13 +124,13 @@ export default function FilterBar() {
                                             key={model}
                                             onClick={() => toggleModel(model)}
                                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors ${isSelected
-                                                    ? 'bg-indigo-50 text-indigo-800'
-                                                    : 'hover:bg-slate-50 text-slate-700'
+                                                ? 'bg-indigo-500/20 text-indigo-300'
+                                                : 'hover:bg-white/5 text-slate-300'
                                                 }`}
                                         >
                                             <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected
-                                                    ? 'bg-indigo-600 border-indigo-600'
-                                                    : 'border-slate-300'
+                                                ? 'bg-indigo-500 border-indigo-500'
+                                                : 'border-slate-600'
                                                 }`}>
                                                 {isSelected && (
                                                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -141,11 +141,11 @@ export default function FilterBar() {
                                             <img
                                                 src={getLogoUrl(model)}
                                                 alt=""
-                                                className="w-4 h-4 object-contain flex-shrink-0"
+                                                className="w-4 h-4 object-contain flex-shrink-0 opacity-80"
                                                 loading="lazy"
                                             />
                                             <span className="text-xs font-medium truncate">{displayName}</span>
-                                            <span className="text-[10px] text-slate-400 ml-auto flex-shrink-0">{getProviderName(model)}</span>
+                                            <span className="text-[10px] text-slate-500 ml-auto flex-shrink-0">{getProviderName(model)}</span>
                                         </button>
                                     );
                                 })}
@@ -158,9 +158,9 @@ export default function FilterBar() {
                 {selectedModels.length > 0 && selectedModels.length <= 3 && (
                     <div className="flex items-center gap-1 flex-wrap">
                         {selectedModels.map(m => (
-                            <span key={m} className="inline-flex items-center gap-1 text-[10px] bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5 font-medium">
+                            <span key={m} className="inline-flex items-center gap-1 text-[10px] bg-indigo-500/20 text-indigo-300 rounded-full px-2 py-0.5 font-medium border border-indigo-500/20">
                                 {m.split('/').pop()}
-                                <button onClick={() => toggleModel(m)} className="hover:text-indigo-900">
+                                <button onClick={() => toggleModel(m)} className="hover:text-indigo-200">
                                     <X className="h-2.5 w-2.5" />
                                 </button>
                             </span>
@@ -179,7 +179,7 @@ export default function FilterBar() {
                     {hasFilters && (
                         <button
                             onClick={clearAll}
-                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                            className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 font-medium transition-colors"
                         >
                             <X className="h-3 w-3" />
                             Clear
