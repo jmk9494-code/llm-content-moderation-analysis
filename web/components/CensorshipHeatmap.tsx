@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { useAnalysis } from '@/app/analysis/AnalysisContext';
 
 type HeatmapProps = {
     data: any[];
@@ -43,10 +44,10 @@ const normalizeCategory = (cat: string): string => {
 };
 
 export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description, onCellClick }: HeatmapProps) {
+    const { isLite, isLoadingFull, loadFullDetails } = useAnalysis();
     const [selectedCell, setSelectedCell] = useState<{ model: string; category: string } | null>(null);
     const [expandedModel, setExpandedModel] = useState<string | null>(null); // For mobile accordion
     const [showModal, setShowModal] = useState(false);
-    const [modalEntries, setModalEntries] = useState<any[]>([]);
 
     // 1. Process data to get Refusal Rate per Model per Category
     const matrix = useMemo(() => {
@@ -85,6 +86,12 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
         return { models, categories, stats };
     }, [data]);
 
+    // Reactive modal entries (so they update when full data loads)
+    const modalEntries = useMemo(() => {
+        if (!selectedCell) return [];
+        return matrix.stats[selectedCell.model]?.[selectedCell.category]?.entries || [];
+    }, [selectedCell, matrix]);
+
     // Helper for color scale
     const getColor = (rate: number) => {
         if (rate === 0) return 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100';
@@ -96,12 +103,16 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
     };
 
     const handleCellClick = (model: string, category: string) => {
+        // Trigger download of full text if needed
+        if (isLite) {
+            loadFullDetails();
+        }
+
         const cell = matrix.stats[model]?.[category];
         const entries = cell?.entries || [];
         if (entries.length === 0) return;
 
         setSelectedCell({ model, category });
-        setModalEntries(entries);
         setShowModal(true);
         if (onCellClick) onCellClick(model, category, entries);
     };
@@ -242,8 +253,8 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
             {/* Modal for cell details */}
             {showModal && selectedCell && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4 flex-shrink-0">
                             <h4 className="text-lg font-bold truncate pr-4">
                                 {selectedCell.model && typeof selectedCell.model === 'string'
                                     ? (selectedCell.model.split('/').pop() || selectedCell.model)
@@ -251,9 +262,18 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                             </h4>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
                         </div>
-                        <p className="text-sm text-slate-500 mb-4">{modalEntries.length} entries</p>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {modalEntries.slice(0, 20).map((entry, idx) => (
+
+                        <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                            <p className="text-sm text-slate-500">{modalEntries.length} entries</p>
+                            {isLoadingFull && (
+                                <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full animate-pulse">
+                                    <Loader2 className="w-3 h-3 animate-spin" /> Loading full text details...
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-3 overflow-y-auto flex-grow">
+                            {modalEntries.slice(0, 50).map((entry, idx) => (
                                 <div key={idx} className={`p-3 rounded-lg border ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                                     <div className="flex justify-between text-xs mb-2">
                                         <span className={`font-bold ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'text-green-700' : 'text-red-700'}`}>
@@ -262,19 +282,28 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                                         <span className="text-slate-500">{entry.case_id}</span>
                                     </div>
                                     <div className="space-y-2">
+                                        {/* Progressive Loading Text */}
                                         <div>
                                             <p className="text-xs font-semibold text-slate-600 mb-1">Prompt:</p>
-                                            <p className="text-sm text-slate-700 line-clamp-3 font-mono">{entry.prompt || 'No prompt'}</p>
+                                            {entry.prompt ? (
+                                                <p className="text-sm text-slate-700 line-clamp-3 font-mono">{entry.prompt}</p>
+                                            ) : (
+                                                <div className="h-10 bg-slate-200/50 rounded animate-pulse w-full"></div>
+                                            )}
                                         </div>
                                         <div>
                                             <p className="text-xs font-semibold text-slate-600 mb-1">Response:</p>
-                                            <p className="text-sm text-slate-700 line-clamp-4">{entry.response || 'No response'}</p>
+                                            {entry.response ? (
+                                                <p className="text-sm text-slate-700 line-clamp-4">{entry.response}</p>
+                                            ) : (
+                                                <div className="h-12 bg-slate-200/50 rounded animate-pulse w-full"></div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             ))}
-                            {modalEntries.length > 20 && (
-                                <p className="text-center text-slate-400 text-sm">...and {modalEntries.length - 20} more</p>
+                            {modalEntries.length > 50 && (
+                                <p className="text-center text-slate-400 text-sm">...and {modalEntries.length - 50} more</p>
                             )}
                         </div>
                     </div>

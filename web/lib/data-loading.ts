@@ -22,26 +22,32 @@ function normalizeCategory(cat: string): string {
 }
 
 
-export async function fetchAuditData(useRecent = false): Promise<AuditRow[]> {
+export async function fetchAuditData(useRecent = false, lite = false): Promise<AuditRow[]> {
     // Priority 1: audit_log.csv.gz (Compressed ~5.8MB vs 48MB)
     // We use compressed to significantly reduce data transfer.
-    console.log("Fetching Audit Data (v5 - Compressed GZIP)...");
+    // 'lite' version drops heavy text columns (~1MB vs ~6MB compressed)
+    const version = lite ? 'Lite' : 'Full';
+    console.log(`Fetching Audit Data (v5 - Compressed GZIP - ${version})...`);
 
     const fileBase = useRecent ? '/audit_recent' : '/audit_log';
     const timestamp = Date.now();
 
     // Vercel Blob URL for the main audit log
-    const BLOB_URL = 'https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/audit_log.csv.gz';
+    const blobName = lite ? 'audit_log_lite.csv.gz' : 'audit_log.csv.gz';
+    let BLOB_URL = `https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/${blobName}`;
+
+    // Use local file in development
+    if (process.env.NODE_ENV === 'development') {
+        BLOB_URL = `/${blobName}`;
+    }
 
     // Try compressed first
     // If not using recent data, use the Blob URL (with cache busting)
     const gzFile = useRecent
-        ? `/audit_recent.csv.gz?t=${timestamp}`
+        ? `/audit_recent.csv.gz?t=${timestamp}` // Local recent (unlikely lite)
         : `${BLOB_URL}?t=${timestamp}`; // Blob URL
 
-    // Fallback for uncompressed (only for local/recent or if blob fails and we want to try local csv?)
-    // For simplicity, if Blob fails, we might not have a local fallback if we delete the file.
-    // But let's keep the logic consistent.
+    // Fallback for uncompressed
     const csvFile = useRecent ? `/audit_recent.csv?t=${timestamp}` : `/audit_log.csv?t=${timestamp}`;
 
     let csvText = '';
