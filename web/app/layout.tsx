@@ -77,7 +77,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased flex min-h-screen bg-white text-slate-900`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased flex min-h-screen bg-white text-slate-900 overflow-x-hidden`}
       >
         <ThemeProvider>
           <ToastProvider>

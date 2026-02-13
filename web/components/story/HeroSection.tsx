@@ -69,11 +69,11 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                     initial={{ opacity: 0, y: 30 }}
                     animate={inView ? { opacity: 1, y: 0 } : {}}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight text-white"
+                    className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight text-white px-4 md:px-0"
                 >
                     We Tested Every Major AI Model
                     <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">for Content Moderation Bias</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 inline-block">for Content Moderation Bias</span>
                 </motion.h1>
 
                 {/* Giant animated number */}
@@ -81,9 +81,9 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={inView ? { opacity: 1, scale: 1 } : {}}
                     transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-                    className="my-16"
+                    className="my-12 md:my-16"
                 >
-                    <div className="text-8xl md:text-9xl lg:text-[12rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-2xl">
+                    <div className="text-6xl sm:text-8xl md:text-9xl lg:text-[12rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-2xl break-all sm:break-normal">
                         {count.toLocaleString()}
                     </div>
                     <p className="text-xl md:text-2xl text-indigo-200 mt-4">

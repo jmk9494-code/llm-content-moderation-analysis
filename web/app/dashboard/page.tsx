@@ -384,16 +384,18 @@ function HighlightsSection({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map((card, i) => (
-            <Link key={i} href={card.href} className="group">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:border-white/20 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl">{card.emoji}</span>
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors" />
+            <Link key={i} href={card.href} className="group block h-full">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:border-white/20 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full backdrop-blur-sm flex flex-col justify-between min-w-0">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-2xl">{card.emoji}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors shrink-0 ml-2" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2 truncate">{card.title}</h3>
+                  <p className={`text-3xl font-black ${card.accent} mb-1 truncate`}>{card.value}</p>
+                  <p className="text-sm text-slate-400 mb-2 line-clamp-2">{card.subtitle}</p>
                 </div>
-                <h3 className="text-sm font-semibold text-slate-300 mb-2">{card.title}</h3>
-                <p className={`text-3xl font-black ${card.accent} mb-1`}>{card.value}</p>
-                <p className="text-sm text-slate-400 mb-2">{card.subtitle}</p>
-                <p className="text-xs text-slate-500">{card.detail}</p>
+                <p className="text-xs text-slate-500 mt-auto pt-2 border-t border-white/5 truncate">{card.detail}</p>
               </div>
             </Link>
           ))}
