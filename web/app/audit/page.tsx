@@ -77,19 +77,19 @@ export default function AuditPage() {
     ], []);
 
     return (
-        <main className="min-h-screen bg-slate-50 p-6 md:p-8 lg:p-12">
+        <main className="min-h-screen bg-background p-6 md:p-8 lg:p-12">
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Global Audit Log</h1>
-                        <p className="text-slate-500 mt-1">Full access to all {data.length.toLocaleString()} audit records.</p>
+                        <h1 className="text-3xl font-bold text-foreground">Global Audit Log</h1>
+                        <p className="text-muted-foreground mt-1">Full access to all {data.length.toLocaleString()} audit records.</p>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                <div className="bg-card rounded-xl border border-border shadow-sm">
                     {loading ? (
-                        <div className="p-12 text-center text-slate-500 flex flex-col items-center gap-3">
-                            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                        <div className="p-12 text-center text-muted-foreground flex flex-col items-center gap-3">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <p>Loading audit data...</p>
                         </div>
                     ) : (

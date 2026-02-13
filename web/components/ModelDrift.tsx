@@ -25,10 +25,10 @@ export function ModelDrift({ data = [] }: ModelDriftProps) {
                 {data.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                            <XAxis type="number" domain={[-20, 20]} />
-                            <YAxis dataKey="model" type="category" width={100} fontSize={11} />
-                            <Tooltip />
+                            <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke="hsl(var(--border))" />
+                            <XAxis type="number" domain={[-20, 20]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                            <YAxis dataKey="model" type="category" width={100} fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--popover-foreground))' }} />
                             <Bar dataKey="rate_change" fill="#f43f5e" name="Rate Change (%)">
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} radius={(entry.rate_change > 0 ? [0, 4, 4, 0] : [4, 0, 0, 4]) as any} />

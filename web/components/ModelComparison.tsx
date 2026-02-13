@@ -128,9 +128,9 @@ export default function ModelComparison({ data, onModelSelect }: { data: AuditRo
     };
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <span>🏆</span> Model Comparison
                 </h3>
             </div>
@@ -138,37 +138,37 @@ export default function ModelComparison({ data, onModelSelect }: { data: AuditRo
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead>
-                        <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">Model</th>
-                            <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">
+                        <tr className="bg-muted/50 border-b border-border">
+                            <th className="p-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Model</th>
+                            <th className="p-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">
                                 <div className="flex items-center gap-1">
                                     Refusal Rate
                                     <span title="Percentage of prompts refused or flagged as unsafe">ⓘ</span>
                                 </div>
                             </th>
-                            <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">
+                            <th className="p-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">
                                 <div className="flex items-center gap-1">
                                     95% CI
                                     <span title="Wilson score confidence interval for the refusal rate">ⓘ</span>
                                 </div>
                             </th>
-                            <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider">Avg Response</th>
-                            <th className="p-4 font-semibold text-slate-500 uppercase text-xs tracking-wider text-right">Prompts</th>
+                            <th className="p-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider">Avg Response</th>
+                            <th className="p-4 font-semibold text-muted-foreground uppercase text-xs tracking-wider text-right">Prompts</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-border">
                         {stats.map((row: ModelStats) => (
                             <tr
                                 key={row.model}
-                                className={`hover:bg-slate-50/50 transition-colors ${onModelSelect ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                                className={`hover:bg-muted/50 transition-colors ${onModelSelect ? 'cursor-pointer hover:bg-muted/50' : ''}`}
                                 onClick={() => onModelSelect?.(row.model)}
                             >
-                                <td className="p-4 font-medium text-slate-900">
+                                <td className="p-4 font-medium text-foreground">
                                     {row.model.split('/')[1] || row.model}
                                 </td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex-1 h-2 bg-slate-100 rounded-full max-w-[100px] overflow-hidden">
+                                        <div className="flex-1 h-2 bg-muted rounded-full max-w-[100px] overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full ${row.refusalRate > 50 ? 'bg-red-500' :
                                                     row.refusalRate > 30 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -183,13 +183,13 @@ export default function ModelComparison({ data, onModelSelect }: { data: AuditRo
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-slate-500 text-xs font-mono">
+                                <td className="p-4 text-muted-foreground text-xs font-mono">
                                     {formatCI(row.confidenceInterval)}
                                 </td>
-                                <td className="p-4 font-mono text-slate-600">
+                                <td className="p-4 font-mono text-muted-foreground">
                                     {row.avgLength} chars
                                 </td>
-                                <td className="p-4 text-right text-slate-600">
+                                <td className="p-4 text-right text-muted-foreground">
                                     {row.count}
                                 </td>
                             </tr>

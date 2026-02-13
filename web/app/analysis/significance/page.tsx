@@ -110,26 +110,26 @@ export default function SignificancePage() {
 
             {/* Summary stats */}
             <div className="flex gap-4 flex-wrap">
-                <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex-1 min-w-[200px]">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">Total Pairs</p>
-                    <p className="text-2xl font-bold text-slate-900">{pairwiseResults.length}</p>
+                <div className="bg-card rounded-xl border border-border p-4 flex-1 min-w-[200px]">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Pairs</p>
+                    <p className="text-2xl font-bold text-foreground">{pairwiseResults.length}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex-1 min-w-[200px]">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">Significant (p&lt;0.05)</p>
-                    <p className="text-2xl font-bold text-green-600">{sigCount}</p>
+                <div className="bg-card rounded-xl border border-border p-4 flex-1 min-w-[200px]">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Significant (p&lt;0.05)</p>
+                    <p className="text-2xl font-bold text-foreground">{sigCount}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex-1 min-w-[200px]">
-                    <p className="text-xs text-slate-500 uppercase tracking-wider">Not Significant</p>
-                    <p className="text-2xl font-bold text-slate-400">{pairwiseResults.length - sigCount}</p>
+                <div className="bg-card rounded-xl border border-border p-4 flex-1 min-w-[200px]">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Not Significant</p>
+                    <p className="text-2xl font-bold text-muted-foreground">{pairwiseResults.length - sigCount}</p>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div className="bg-card p-6 rounded-2xl border border-border">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">📊 Pairwise Significance Results</h3>
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">Pairwise Significance Results</h3>
                     <div className="flex items-center gap-3">
                         <select
-                            className="text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-600"
+                            className="text-xs border border-border rounded-lg px-2 py-1 text-foreground bg-background"
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
                         >
@@ -140,8 +140,8 @@ export default function SignificancePage() {
                 </div>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                     <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-white">
-                            <tr className="border-b border-slate-200 text-slate-500 font-semibold">
+                        <thead className="sticky top-0 bg-card">
+                            <tr className="border-b border-border text-muted-foreground font-semibold">
                                 <th className="text-left py-2">#</th>
                                 <th className="text-left py-2">Model A</th>
                                 <th className="text-left py-2">Model B</th>
@@ -153,20 +153,20 @@ export default function SignificancePage() {
                         </thead>
                         <tbody>
                             {displayed.length === 0 ? (
-                                <tr><td colSpan={7} className="py-4 text-center text-slate-400">No pairwise data — need 2+ models with shared prompts.</td></tr>
+                                <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">No pairwise data — need 2+ models with shared prompts.</td></tr>
                             ) : (
                                 displayed.map((row, i) => (
-                                    <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                                        <td className="py-1.5 text-xs text-slate-400">{i + 1}</td>
-                                        <td className="py-1.5 text-slate-700 text-xs">{row.modelA}</td>
-                                        <td className="py-1.5 text-slate-700 text-xs">{row.modelB}</td>
-                                        <td className="py-1.5 text-right font-mono text-slate-600 text-xs">{row.samples.toLocaleString()}</td>
-                                        <td className="py-1.5 text-right font-mono text-slate-600 text-xs">{row.disagreements.toLocaleString()}</td>
-                                        <td className="py-1.5 text-right font-mono text-slate-600 text-xs">{row.pValue.toExponential(2)}</td>
+                                    <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/50">
+                                        <td className="py-1.5 text-xs text-muted-foreground">{i + 1}</td>
+                                        <td className="py-1.5 text-foreground text-xs">{row.modelA}</td>
+                                        <td className="py-1.5 text-foreground text-xs">{row.modelB}</td>
+                                        <td className="py-1.5 text-right font-mono text-muted-foreground text-xs">{row.samples.toLocaleString()}</td>
+                                        <td className="py-1.5 text-right font-mono text-muted-foreground text-xs">{row.disagreements.toLocaleString()}</td>
+                                        <td className="py-1.5 text-right font-mono text-muted-foreground text-xs">{row.pValue.toExponential(2)}</td>
                                         <td className="py-1.5 text-right">
                                             {row.significant
-                                                ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Yes</span>
-                                                : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">No</span>
+                                                ? <span className="text-xs bg-foreground text-background px-2 py-0.5 rounded-full font-bold">Yes</span>
+                                                : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">No</span>
                                             }
                                         </td>
                                     </tr>

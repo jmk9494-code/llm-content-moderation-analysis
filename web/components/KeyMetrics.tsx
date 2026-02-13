@@ -12,26 +12,26 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, icon, description, trend }: MetricCardProps) {
     const trendColors = {
-        up: 'text-green-600',
-        down: 'text-red-600',
-        neutral: 'text-slate-600'
+        up: 'text-foreground',
+        down: 'text-foreground',
+        neutral: 'text-muted-foreground'
     };
 
     return (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-xl p-6 border border-border hover:bg-accent/50 transition-colors">
             <div className="flex items-start justify-between">
                 <div className="flex-1">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                         {label}
                     </p>
-                    <p className={`text-3xl font-bold ${trend ? trendColors[trend] : 'text-slate-900'}`}>
+                    <p className={`text-3xl font-bold ${trend ? trendColors[trend] : 'text-foreground'}`}>
                         {value}
                     </p>
                     {description && (
-                        <p className="text-xs text-slate-500 mt-2">{description}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{description}</p>
                     )}
                 </div>
-                <div className="ml-4 p-3 bg-indigo-50 rounded-lg">
+                <div className="ml-4 p-3 bg-primary/10 rounded-lg">
                     {icon}
                 </div>
             </div>
@@ -66,10 +66,10 @@ export default function KeyMetrics({
     return (
         <div className="mb-8">
             <div className="mb-4">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    📊 Key Metrics
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    Key Metrics
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     High-level overview of the analysis dataset
                 </p>
             </div>
@@ -78,7 +78,7 @@ export default function KeyMetrics({
                 <MetricCard
                     label="Test Cases"
                     value={formatNumber(totalCases)}
-                    icon={<BarChart3 className="w-6 h-6 text-indigo-600" />}
+                    icon={<BarChart3 className="w-6 h-6 text-foreground" />}
                     description="Unique moderation scenarios"
                     trend="neutral"
                 />
@@ -86,7 +86,7 @@ export default function KeyMetrics({
                 <MetricCard
                     label="Models Tested"
                     value={modelsCount.toString()}
-                    icon={<Users className="w-6 h-6 text-indigo-600" />}
+                    icon={<Users className="w-6 h-6 text-foreground" />}
                     description="AI moderation models"
                     trend="neutral"
                 />
@@ -94,7 +94,7 @@ export default function KeyMetrics({
                 <MetricCard
                     label="Total Assessments"
                     value={formatNumber(totalEvaluations)}
-                    icon={<BarChart3 className="w-6 h-6 text-indigo-600" />}
+                    icon={<BarChart3 className="w-6 h-6 text-foreground" />}
                     description="Total model evaluations"
                     trend="neutral"
                 />
@@ -102,7 +102,7 @@ export default function KeyMetrics({
                 <MetricCard
                     label="Last Updated"
                     value={lastUpdated}
-                    icon={<Calendar className="w-6 h-6 text-indigo-600" />}
+                    icon={<Calendar className="w-6 h-6 text-foreground" />}
                     description="Most recent data point"
                     trend="neutral"
                 />
@@ -110,7 +110,7 @@ export default function KeyMetrics({
                 <MetricCard
                     label="Analysis Period"
                     value={dateRange}
-                    icon={<Calendar className="w-6 h-6 text-indigo-600" />}
+                    icon={<Calendar className="w-6 h-6 text-foreground" />}
                     description="Data collection timeframe"
                     trend="neutral"
                 />

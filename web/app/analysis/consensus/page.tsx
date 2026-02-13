@@ -100,7 +100,7 @@ export default function ConsensusPage() {
                         "Inter-Judge Reliability: Consistency across the council"
                     ]}
                 />
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-400">
+                <div className="bg-card p-6 rounded-2xl border border-border text-center text-muted-foreground">
                     Not enough multi-model data to compute consensus.
                 </div>
             </div>
@@ -121,42 +121,39 @@ export default function ConsensusPage() {
             />
 
             {/* Per-model agreement rates */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
-                    🤝 Model Agreement with Majority
+            <div className="bg-card p-6 rounded-2xl border border-border">
+                <h3 className="text-lg font-bold text-foreground mb-1 flex items-center gap-2">
+                    Model Agreement with Majority
                 </h3>
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                     How often each model agrees with the majority verdict across {consensusStats.totalPrompts.toLocaleString()} prompts evaluated by multiple models
                 </p>
                 <div className="space-y-2">
                     {consensusStats.perModel.map((m, i) => (
-                        <div key={m.model} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
-                            <span className="text-xs text-slate-400 w-5 font-mono">{i + 1}</span>
+                        <div key={m.model} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                            <span className="text-xs text-muted-foreground w-5 font-mono">{i + 1}</span>
                             <img
                                 src={m.logo}
                                 alt={m.provider}
                                 className="w-5 h-5 rounded"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
-                            <span className="text-sm font-medium text-slate-700 w-48 truncate" title={m.model}>
+                            <span className="text-sm font-medium text-foreground w-48 truncate" title={m.model}>
                                 {m.shortName}
                             </span>
-                            <div className="flex-1 h-6 bg-slate-100 rounded-full overflow-hidden relative">
+                            <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden relative">
                                 <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{
                                         width: `${m.agreementRate}%`,
-                                        backgroundColor: m.agreementRate >= 90 ? '#10b981'
-                                            : m.agreementRate >= 75 ? '#6366f1'
-                                                : m.agreementRate >= 60 ? '#f59e0b'
-                                                    : '#ef4444'
+                                        backgroundColor: 'hsl(var(--foreground))'
                                     }}
                                 />
-                                <span className="absolute inset-0 flex items-center justify-end pr-3 text-xs font-semibold text-slate-700">
+                                <span className="absolute inset-0 flex items-center justify-end pr-3 text-xs font-semibold text-foreground">
                                     {m.agreementRate.toFixed(1)}%
                                 </span>
                             </div>
-                            <span className="text-xs text-slate-400 w-20 text-right">
+                            <span className="text-xs text-muted-foreground w-20 text-right">
                                 {m.total.toLocaleString()} prompts
                             </span>
                         </div>
@@ -165,9 +162,9 @@ export default function ConsensusPage() {
             </div>
 
             {/* Agreement Distribution Pie */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">Agreement Distribution</h3>
-                <p className="text-sm text-slate-500 mb-4">
+            <div className="bg-card p-6 rounded-2xl border border-border">
+                <h3 className="text-lg font-bold text-foreground mb-1">Agreement Distribution</h3>
+                <p className="text-sm text-muted-foreground mb-4">
                     How often all models fully agreed, had a majority, or were split
                 </p>
                 <div className="h-[350px]">

@@ -7,9 +7,9 @@ import { Box, LayoutDashboard, FileBarChart, BarChart3, ArrowRightLeft, Settings
 import { cn } from '@/lib/utils';
 
 const navItems = [
-    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, emoji: '📊' },
-    { name: 'Compare', href: '/compare', icon: ArrowRightLeft, emoji: '⚔️' },
-    { name: 'Deep Dive', href: '/analysis', icon: Brain, emoji: '🧠' },
+    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Compare', href: '/compare', icon: ArrowRightLeft },
+    { name: 'Deep Dive', href: '/analysis', icon: Brain },
 ];
 
 export function NavBar() {

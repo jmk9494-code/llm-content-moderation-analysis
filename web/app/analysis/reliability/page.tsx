@@ -58,11 +58,11 @@ export default function ReliabilityPage() {
     if (!stats) return <div className="p-8 text-center text-slate-500">No data available for reliability analysis.</div>;
 
     const getScoreColor = (s: number) => {
-        if (s >= 0.81) return 'text-emerald-600';
-        if (s >= 0.61) return 'text-blue-600';
-        if (s >= 0.41) return 'text-amber-600';
-        if (s >= 0.21) return 'text-orange-600';
-        return 'text-red-600';
+        if (s >= 0.81) return 'text-foreground';
+        if (s >= 0.61) return 'text-foreground/80';
+        if (s >= 0.41) return 'text-foreground/60';
+        if (s >= 0.21) return 'text-foreground/40';
+        return 'text-foreground/20';
     };
 
     const getScoreLabel = (s: number) => {
@@ -74,11 +74,9 @@ export default function ReliabilityPage() {
     };
 
     const getBgColor = (s: number) => {
-        if (s >= 0.81) return 'bg-emerald-50 border-emerald-200';
-        if (s >= 0.61) return 'bg-blue-50 border-blue-200';
-        if (s >= 0.41) return 'bg-amber-50 border-amber-200';
-        if (s >= 0.21) return 'bg-orange-50 border-orange-200';
-        return 'bg-red-50 border-red-200';
+        if (s >= 0.81) return 'bg-foreground/10 border-foreground/20';
+        if (s >= 0.61) return 'bg-foreground/5 border-foreground/10';
+        return 'bg-muted border-border';
     };
 
     return (
@@ -95,8 +93,8 @@ export default function ReliabilityPage() {
             />
 
             {/* Global Kappa Score */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">All Models Combined</h3>
+            <div className="bg-card p-6 rounded-2xl border border-border">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">All Models Combined</h3>
                 <div className="flex items-baseline gap-4">
                     <span className={`text-5xl font-black ${getScoreColor(stats.reliability.score)}`}>
                         {stats.reliability.score.toFixed(3)}
@@ -105,25 +103,25 @@ export default function ReliabilityPage() {
                         {stats.reliability.interpretation}
                     </span>
                 </div>
-                <p className="text-sm text-slate-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                     Fleiss&apos; Kappa across {stats.models.length} models and {stats.prompts.length} prompts
                 </p>
             </div>
 
             {/* Per-Model Scores */}
             {perModelKappa.length > 0 && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Per-Model Agreement with Consensus</h3>
-                    <p className="text-xs text-slate-400 mb-6">How often each model agrees with the majority verdict across all prompts</p>
+                <div className="bg-card p-6 rounded-2xl border border-border">
+                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Per-Model Agreement with Consensus</h3>
+                    <p className="text-xs text-muted-foreground mb-6">How often each model agrees with the majority verdict across all prompts</p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {perModelKappa.map((m) => (
                             <div
                                 key={m.model}
-                                className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors bg-white"
+                                className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors bg-card"
                             >
                                 {/* Provider Logo */}
-                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-muted/30 border border-border flex items-center justify-center overflow-hidden">
                                     <img
                                         src={getLogoUrl(m.model)}
                                         alt={getProviderName(m.model)}
@@ -134,10 +132,10 @@ export default function ReliabilityPage() {
 
                                 {/* Model info */}
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-sm text-slate-800 truncate">
+                                    <h3 className="font-semibold text-sm text-foreground truncate">
                                         {m.displayName}
                                     </h3>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="text-xs text-muted-foreground">
                                         {getProviderName(m.model)}
                                     </p>
                                 </div>

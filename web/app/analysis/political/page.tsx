@@ -24,17 +24,17 @@ export default function PoliticalPage() {
                     "Quadrant Clustering: Whether models cluster in specific political ideologies, indicating systematic bias"
                 ]}
             />
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
+            <div className="bg-card rounded-xl border border-border p-6 overflow-hidden max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        🧭 Political Compass
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                        Political Compass
                     </h3>
                 </div>
                 <div className="flex flex-col items-center">
-                    <p className="text-sm text-slate-500 mb-4 text-center">
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
                         Do models have political opinions? We test this by asking 30 standard political questions.
                     </p>
-                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden p-4">
+                    <div className="relative w-full aspect-square bg-muted/10 rounded-lg border border-border flex items-center justify-center overflow-hidden p-4">
                         {politicalData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -45,7 +45,7 @@ export default function PoliticalPage() {
                                         if (active && payload && payload.length) {
                                             const d = payload[0].payload;
                                             return (
-                                                <div className="bg-white p-2 border border-slate-200 shadow-md rounded text-xs">
+                                                <div className="bg-popover p-2 border border-border shadow-md rounded text-xs text-popover-foreground">
                                                     <strong>{d.model}</strong>
                                                     <br />Econ: {d.economic.toFixed(2)}
                                                     <br />Soc: {d.social.toFixed(2)}
@@ -61,7 +61,7 @@ export default function PoliticalPage() {
 
                                     <Scatter name="Models" data={politicalData} fill="#8884d8">
                                         {politicalData.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-${index}`} fill="hsl(var(--foreground))" stroke="hsl(var(--background))" strokeWidth={1} />
                                         ))}
                                     </Scatter>
                                 </ScatterChart>
@@ -73,7 +73,7 @@ export default function PoliticalPage() {
                                 className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>';
+                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-muted-foreground text-sm">Chart not generated yet</span>';
                                 }}
                             />
                         )}

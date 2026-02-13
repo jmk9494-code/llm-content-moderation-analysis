@@ -22,28 +22,28 @@ export default function TriggersPage() {
                     "Context Independence: Whether words trigger refusal regardless of surrounding context"
                 ]}
             />
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900">Top Trigger Words</h3>
+            <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+                <h3 className="text-lg font-bold text-foreground">Top Trigger Words</h3>
                 <div className="h-[500px]">
                     {triggerData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={triggerData.slice(0, 20)} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" />
-                                <YAxis dataKey="word" type="category" width={110} tick={{ fontSize: 11 }} />
-                                <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                <Bar dataKey="count" fill="#ef4444" name="Occurrences" radius={[0, 4, 4, 0]} />
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                                <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                                <YAxis dataKey="word" type="category" width={110} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                                <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--popover-foreground))' }} />
+                                <Bar dataKey="count" fill="hsl(var(--foreground))" name="Occurrences" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="h-[500px] flex items-center justify-center bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                        <div className="h-[500px] flex items-center justify-center bg-muted/10 rounded-lg border border-border overflow-hidden">
                             <img
                                 src="/assets/wordcloud.png"
                                 alt="Top Trigger Words Word Cloud"
                                 className="object-contain w-full h-full hover:scale-105 transition-transform duration-500"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
-                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-center p-8"><p class="text-slate-400 mb-2">Word cloud not available</p><p class="text-xs text-slate-300">Run analysis/trigger_extraction.py to generate.</p></div>';
+                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-center p-8"><p class="text-muted-foreground mb-2">Word cloud not available</p><p class="text-xs text-muted-foreground">Run analysis/trigger_extraction.py to generate.</p></div>';
                                 }}
                             />
                         </div>

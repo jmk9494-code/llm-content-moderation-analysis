@@ -7,7 +7,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 
 import AnalysisOverview from '@/components/AnalysisOverview';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
+// Monochrome shades for lines
+const MONO_SHADES = ['#000000', '#333333', '#666666', '#999999', '#AAAAAA', '#CCCCCC'];
 
 export default function LongitudinalPage() {
     const { filteredAuditData, dateRange, loading } = useAnalysis();
@@ -52,13 +53,13 @@ export default function LongitudinalPage() {
                 ]}
             />
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-[500px]">
+            <div className="bg-card p-6 rounded-2xl shadow-sm border border-border h-[500px]">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <h3 className="text-lg font-bold text-slate-900">Refusal Rate Over Time</h3>
+                    <h3 className="text-lg font-bold text-foreground">Refusal Rate Over Time</h3>
                     <div className="flex items-center gap-2 text-sm">
-                        <span className="text-slate-500 font-medium uppercase text-xs">Filter by Date:</span>
+                        <span className="text-muted-foreground font-medium uppercase text-xs">Filter by Date:</span>
                         {(dateRange.start || dateRange.end) && (
-                            <span className="text-xs text-slate-400 italic">Global filtered applied via Dashboard Header</span>
+                            <span className="text-xs text-muted-foreground italic">Global filtered applied via Dashboard Header</span>
                         )}
                     </div>
                 </div>
@@ -70,7 +71,7 @@ export default function LongitudinalPage() {
                         <RechartsTooltip />
                         <Legend />
                         {longitudinalData.activeModels.map((m, i) => (
-                            <Line key={m} type="monotone" dataKey={m} stroke={COLORS[i % COLORS.length]} strokeWidth={2} connectNulls />
+                            <Line key={m} type="monotone" dataKey={m} stroke={MONO_SHADES[i % MONO_SHADES.length]} strokeWidth={2} dot={false} connectNulls />
                         ))}
                     </LineChart>
                 </ResponsiveContainer>

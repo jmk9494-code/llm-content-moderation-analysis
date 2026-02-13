@@ -111,7 +111,7 @@ export function DataTable<TData, TValue>({
             <div className="flex flex-wrap items-center justify-between gap-4">
                 {searchKey && (
                     <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <input
                             data-search-input
                             placeholder="Search... (Press /)"
@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
                             onChange={(event) =>
                                 table.getColumn(searchKey)?.setFilterValue(event.target.value)
                             }
-                            className="pl-9 h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            className="pl-9 h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
                         />
                     </div>
                 )}
@@ -129,7 +129,7 @@ export function DataTable<TData, TValue>({
                     <div className="relative">
                         <button
                             onClick={() => setShowColumnMenu(!showColumnMenu)}
-                            className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                            className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-md border border-border bg-background hover:bg-muted/50 text-foreground"
                             aria-label="Toggle columns"
                         >
                             <Columns className="h-4 w-4" />
@@ -141,20 +141,20 @@ export function DataTable<TData, TValue>({
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute right-0 top-12 z-10 w-48 rounded-md border border-slate-200 bg-white shadow-lg p-2"
+                                    className="absolute right-0 top-12 z-10 w-48 rounded-md border border-border bg-popover shadow-lg p-2 text-popover-foreground"
                                 >
                                     {table.getAllColumns()
                                         .filter(col => col.getCanHide())
                                         .map(col => (
                                             <label
                                                 key={col.id}
-                                                className="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 rounded cursor-pointer"
+                                                className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted/50 rounded cursor-pointer"
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={col.getIsVisible()}
                                                     onChange={col.getToggleVisibilityHandler()}
-                                                    className="rounded border-slate-300"
+                                                    className="rounded border-border bg-background"
                                                 />
                                                 {col.id}
                                             </label>
@@ -167,7 +167,7 @@ export function DataTable<TData, TValue>({
                     {/* Export Button */}
                     <button
                         onClick={handleExport}
-                        className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-md bg-primary hover:bg-primary/90 text-primary-foreground"
                         aria-label="Export to CSV"
                     >
                         <Download className="h-4 w-4" />
@@ -177,12 +177,12 @@ export function DataTable<TData, TValue>({
             </div>
 
             {/* Table */}
-            <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden text-card-foreground">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-medium">
+                        <thead className="bg-muted/50 text-muted-foreground font-medium">
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <tr key={headerGroup.id} className="border-b border-slate-200">
+                                <tr key={headerGroup.id} className="border-b border-border">
                                     {renderExpanded && <th className="w-10 px-2" />}
                                     {headerGroup.headers.map((header) => (
                                         <th key={header.id} className="h-12 px-4 align-middle whitespace-nowrap">
@@ -200,8 +200,8 @@ export function DataTable<TData, TValue>({
                                     <Fragment key={row.id}>
                                         <tr
                                             data-state={row.getIsSelected() && 'selected'}
-                                            className={`border-b border-slate-100 transition-colors hover:bg-slate-50 ${renderExpanded ? 'cursor-pointer' : ''
-                                                } ${row.getIsExpanded() ? 'bg-slate-50' : ''}`}
+                                            className={`border-b border-border transition-colors hover:bg-muted/50 ${renderExpanded ? 'cursor-pointer' : ''
+                                                } ${row.getIsExpanded() ? 'bg-muted/50' : ''}`}
                                             onClick={() => renderExpanded && row.toggleExpanded()}
                                         >
                                             {renderExpanded && (
@@ -210,12 +210,12 @@ export function DataTable<TData, TValue>({
                                                         animate={{ rotate: row.getIsExpanded() ? 90 : 0 }}
                                                         transition={{ duration: 0.2 }}
                                                     >
-                                                        <ExpandIcon className="h-4 w-4 text-slate-400" />
+                                                        <ExpandIcon className="h-4 w-4 text-muted-foreground" />
                                                     </motion.div>
                                                 </td>
                                             )}
                                             {row.getVisibleCells().map((cell) => (
-                                                <td key={cell.id} className="p-4 align-middle">
+                                                <td key={cell.id} className="p-4 align-middle text-foreground">
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </td>
                                             ))}
@@ -232,7 +232,7 @@ export function DataTable<TData, TValue>({
                                                             transition={{ duration: 0.2 }}
                                                             className="overflow-hidden"
                                                         >
-                                                            <div className="p-4 bg-slate-50 border-b border-slate-200">
+                                                            <div className="p-4 bg-muted/30 border-b border-border text-foreground">
                                                                 {renderExpanded(row.original)}
                                                             </div>
                                                         </motion.div>
@@ -244,7 +244,7 @@ export function DataTable<TData, TValue>({
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={columns.length + (renderExpanded ? 1 : 0)} className="h-24 text-center text-slate-500">
+                                    <td colSpan={columns.length + (renderExpanded ? 1 : 0)} className="h-24 text-center text-muted-foreground">
                                         No results.
                                     </td>
                                 </tr>
@@ -255,8 +255,8 @@ export function DataTable<TData, TValue>({
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between flex-wrap gap-4 py-4">
-                <div className="text-sm text-slate-500">
+            <div className="flex items-center justify-between flex-wrap gap-4 py-4 text-muted-foreground">
+                <div className="text-sm">
                     Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} results
                     {table.getFilteredRowModel().rows.length !== data.length && (
                         <span className="ml-1">(filtered from {data.length} total)</span>
@@ -264,7 +264,7 @@ export function DataTable<TData, TValue>({
                 </div>
                 <div className="flex items-center gap-1">
                     <button
-                        className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
                         onClick={() => table.setPageIndex(0)}
                         disabled={!table.getCanPreviousPage()}
                         aria-label="First page"
@@ -272,18 +272,18 @@ export function DataTable<TData, TValue>({
                         <ChevronsLeft className="h-4 w-4" />
                     </button>
                     <button
-                        className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                         aria-label="Previous page"
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </button>
-                    <span className="px-3 text-sm text-slate-600">
+                    <span className="px-3 text-sm text-muted-foreground">
                         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                     </span>
                     <button
-                        className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                         aria-label="Next page"
@@ -291,7 +291,7 @@ export function DataTable<TData, TValue>({
                         <ChevronRight className="h-4 w-4" />
                     </button>
                     <button
-                        className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
                         onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         disabled={!table.getCanNextPage()}
                         aria-label="Last page"
@@ -309,7 +309,7 @@ export function SortableHeader({ column, title }: { column: any; title: string }
     return (
         <button
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex items-center hover:text-slate-900 focus:outline-none"
+            className="flex items-center hover:text-foreground focus:outline-none"
             aria-label={`Sort by ${title}`}
         >
             {title}
@@ -318,7 +318,7 @@ export function SortableHeader({ column, title }: { column: any; title: string }
             ) : column.getIsSorted() === 'desc' ? (
                 <ChevronDown className="ml-2 h-4 w-4" />
             ) : (
-                <ChevronsUpDown className="ml-2 h-4 w-4 text-slate-400" />
+                <ChevronsUpDown className="ml-2 h-4 w-4 text-muted-foreground" />
             )}
         </button>
     );

@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import JsonLd from "@/components/JsonLd";
+import { SidebarProvider } from "@/components/providers/SidebarProvider";
+import { MainContentWrapper } from "@/components/layout/MainContentWrapper";
 
 
 const geistSans = Geist({
@@ -75,22 +77,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased flex min-h-screen bg-white text-slate-900 overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased flex min-h-screen bg-background text-foreground overflow-x-hidden`}
       >
-        <ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <ToastProvider>
-            <JsonLd />
-            <CommandPalette />
-            <SkipLink />
-            <GlobalSidebar />
-            <div className="flex flex-col flex-1 lg:ml-72">
-              <main id="main-content" className="flex-1">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <SidebarProvider>
+              <JsonLd />
+              <SkipLink />
+              <GlobalSidebar />
+              <MainContentWrapper>
+                <main id="main-content" className="flex-1 min-h-screen px-4 py-8 md:px-8 lg:px-12">
+                  {children}
+                </main>
+                <Footer />
+              </MainContentWrapper>
+            </SidebarProvider>
             <Analytics />
             <SpeedInsights />
           </ToastProvider>

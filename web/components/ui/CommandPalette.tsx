@@ -9,7 +9,8 @@ import {
     BarChart3,
     Settings,
     ArrowRight,
-    Beaker
+    Beaker,
+    Shield
 } from 'lucide-react';
 
 interface CommandItem {
@@ -29,9 +30,10 @@ export function CommandPalette() {
     const router = useRouter();
 
     const commands: CommandItem[] = [
+        // Overview
         {
             id: 'dashboard',
-            title: 'Go to Overview',
+            title: 'Dashboard Overview',
             description: 'View moderation metrics and audit log',
             icon: <LayoutDashboard className="h-4 w-4" />,
             action: () => router.push('/dashboard'),
@@ -45,13 +47,64 @@ export function CommandPalette() {
             action: () => router.push('/compare'),
             keywords: ['diff', 'versus', 'vs']
         },
+        // Reliability
         {
-            id: 'analysis',
-            title: 'Deep Dive Analysis',
-            description: 'Statistical analysis, clusterings, and bias compass',
+            id: 'reliability',
+            title: 'Reliability Analysis',
+            description: "Fleiss' Kappa and internal consistency scores",
+            icon: <Shield className="h-4 w-4" />,
+            action: () => router.push('/analysis/reliability'),
+            keywords: ['reliability', 'kappa', 'consistency', 'stability']
+        },
+        {
+            id: 'drift',
+            title: 'Model Stability',
+            description: 'Longitudinal stability tracking over time',
+            icon: <Settings className="h-4 w-4" />,
+            action: () => router.push('/analysis/drift'),
+            keywords: ['drift', 'change', 'history', 'time', 'longitudinal']
+        },
+        {
+            id: 'significance',
+            title: 'Statistical Significance',
+            description: "McNemar's test and p-values",
             icon: <BarChart3 className="h-4 w-4" />,
-            action: () => router.push('/analysis'),
-            keywords: ['stats', 'statistics', 'data', 'deep', 'bias']
+            action: () => router.push('/analysis/significance'),
+            keywords: ['stats', 'p-value', 'significance', 'math']
+        },
+        // Bias
+        {
+            id: 'political',
+            title: 'Political Compass',
+            description: 'Analyze political leanings of models',
+            icon: <LayoutDashboard className="h-4 w-4" />,
+            action: () => router.push('/analysis/political'),
+            keywords: ['politics', 'bias', 'left', 'right', 'compass']
+        },
+        {
+            id: 'paternalism',
+            title: 'Paternalism Audit',
+            description: 'Refusal differentials across user personas',
+            icon: <Shield className="h-4 w-4" />,
+            action: () => router.push('/analysis/paternalism'),
+            keywords: ['paternalism', 'persona', 'discrimination', 'bias']
+        },
+        // Technical
+        {
+            id: 'clusters',
+            title: 'Semantic Clusters',
+            description: 'Topic modeling of refused prompts',
+            icon: <BarChart3 className="h-4 w-4" />,
+            action: () => router.push('/analysis/clusters'),
+            keywords: ['topics', 'clusters', 'semantic', 'grouping']
+        },
+        {
+            id: 'consensus',
+            title: 'Council Consensus',
+            description: 'Multi-model agreement analysis',
+            icon: <LayoutDashboard className="h-4 w-4" />,
+            action: () => router.push('/analysis/consensus'),
+            keywords: ['council', 'agreement', 'consensus', 'jury']
         },
     ];
 
@@ -110,14 +163,14 @@ export function CommandPalette() {
 
     return (
         <>
-            {/* Trigger hint - shown in navbar area */}
+            {/* Trigger hint - shown in sidebar */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-slate-500 bg-slate-100 rounded-lg border border-slate-200 hover:bg-slate-200 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground bg-accent/50 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
             >
-                <Search className="h-3.5 w-3.5" />
-                <span>Search...</span>
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs font-mono bg-white rounded border border-slate-300">
+                <Search className="h-4 w-4" />
+                <span className="flex-1 text-left">Search...</span>
+                <kbd className="px-1.5 py-0.5 text-xs font-mono bg-background rounded border border-border text-muted-foreground">
                     ⌘K
                 </kbd>
             </button>

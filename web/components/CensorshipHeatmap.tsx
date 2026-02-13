@@ -94,12 +94,12 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
 
     // Helper for color scale
     const getColor = (rate: number) => {
-        if (rate === 0) return 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100';
-        if (rate < 0.2) return 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200';
-        if (rate < 0.4) return 'bg-yellow-100 text-yellow-900 hover:bg-yellow-200';
-        if (rate < 0.6) return 'bg-orange-100 text-orange-900 hover:bg-orange-200';
-        if (rate < 0.8) return 'bg-red-100 text-red-900 hover:bg-red-200';
-        return 'bg-red-200 text-red-900 font-bold hover:bg-red-300';
+        if (rate === 0) return 'bg-muted text-muted-foreground hover:bg-muted/80';
+        if (rate < 0.2) return 'bg-foreground/10 text-foreground hover:bg-foreground/20';
+        if (rate < 0.4) return 'bg-foreground/30 text-foreground hover:bg-foreground/40';
+        if (rate < 0.6) return 'bg-foreground/50 text-white hover:bg-foreground/60';
+        if (rate < 0.8) return 'bg-foreground/70 text-white hover:bg-foreground/80';
+        return 'bg-foreground text-white font-bold hover:bg-foreground/90';
     };
 
     const handleCellClick = (model: string, category: string) => {
@@ -124,18 +124,18 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
     if (matrix.models.length === 0 || matrix.categories.length === 0) return null;
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border p-6 overflow-hidden">
             <div className="mb-6">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <span>🔥</span> {title}
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    {title}
                 </h3>
                 {description && (
-                    <p className="text-sm text-slate-500 mt-1 max-w-3xl">
+                    <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
                         {description}
                     </p>
                 )}
-                <p className="text-xs text-slate-400 mt-2 hidden md:block">Click any cell to see details</p>
-                <p className="text-xs text-slate-400 mt-2 md:hidden">Tap a model to view details</p>
+                <p className="text-xs text-muted-foreground mt-2 hidden md:block">Click any cell to see details</p>
+                <p className="text-xs text-muted-foreground mt-2 md:hidden">Tap a model to view details</p>
             </div>
 
             {/* Desktop View: Table */}
@@ -143,11 +143,11 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                 <table className="w-full text-sm text-left">
                     <thead>
                         <tr>
-                            <th className="p-1.5 bg-slate-50 border-b border-slate-200 min-w-[100px] sticky left-0 z-10 text-xs">
+                            <th className="p-1.5 bg-muted/50 border-b border-border min-w-[100px] sticky left-0 z-10 text-xs text-muted-foreground">
                                 Model
                             </th>
                             {matrix.categories.map(c => (
-                                <th key={c} className="p-1.5 bg-slate-50 border-b border-slate-200 font-semibold text-slate-700 min-w-[60px] text-center text-[10px] leading-tight">
+                                <th key={c} className="p-1.5 bg-muted/50 border-b border-border font-semibold text-muted-foreground min-w-[60px] text-center text-[10px] leading-tight">
                                     {sanitizeCategory(c)}
                                 </th>
                             ))}
@@ -155,15 +155,15 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                     </thead>
                     <tbody>
                         {matrix.models.map(m => (
-                            <tr key={m} className="border-b border-slate-100 last:border-0">
-                                <td className="p-1.5 font-medium text-slate-700 sticky left-0 bg-white z-10 w-[100px] truncate text-xs" title={m}>
+                            <tr key={m} className="border-b border-border last:border-0">
+                                <td className="p-1.5 font-medium text-foreground sticky left-0 bg-card z-10 w-[100px] truncate text-xs" title={m}>
                                     {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                 </td>
                                 {matrix.categories.map(c => {
                                     const cell = matrix.stats[m][c];
                                     if (!cell || cell.total === 0) {
                                         return (
-                                            <td key={c} className="p-1.5 text-center text-slate-300 bg-slate-50/20 text-xs">
+                                            <td key={c} className="p-1.5 text-center text-muted-foreground/30 bg-muted/10 text-xs">
                                                 -
                                             </td>
                                         );
@@ -203,24 +203,24 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                     const isExpanded = expandedModel === m;
 
                     return (
-                        <div key={m} className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div key={m} className="border border-border rounded-lg overflow-hidden">
                             <div
-                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${isExpanded ? 'bg-slate-50' : 'bg-white'}`}
+                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${isExpanded ? 'bg-muted/50' : 'bg-card'}`}
                                 onClick={() => toggleModel(m)}
                             >
                                 <div>
-                                    <p className="font-semibold text-slate-800">
+                                    <p className="font-semibold text-foreground">
                                         {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                     </p>
-                                    <p className="text-xs text-slate-500">
-                                        Avg Refusal: <span className={avgRate > 0.5 ? 'text-red-600 font-bold' : 'text-slate-700'}>{(avgRate * 100).toFixed(1)}%</span>
+                                    <p className="text-xs text-muted-foreground">
+                                        Avg Refusal: <span className={avgRate > 0.5 ? 'text-red-600 font-bold' : 'text-foreground'}>{(avgRate * 100).toFixed(1)}%</span>
                                     </p>
                                 </div>
-                                {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                                {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
                             </div>
 
                             {isExpanded && (
-                                <div className="border-t border-slate-200 bg-slate-50/50 p-2 grid grid-cols-2 gap-2 text-xs">
+                                <div className="border-t border-border bg-muted/20 p-2 grid grid-cols-2 gap-2 text-xs">
                                     {matrix.categories.map(c => {
                                         const cell = matrix.stats[m][c];
                                         if (!cell || cell.total === 0) return null;
@@ -243,28 +243,28 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                 })}
             </div>
 
-            <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 justify-end">
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-100 rounded"></div> 0-20%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-100 rounded"></div> 20-40%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-orange-100 rounded"></div> 40-60%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-200 rounded"></div> 80%+</div>
+            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground justify-end">
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/10 rounded"></div> 0-20%</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/30 rounded"></div> 20-40%</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/50 rounded"></div> 40-60%</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground rounded"></div> 80%+</div>
             </div>
 
             {/* Modal for cell details */}
             {showModal && selectedCell && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl flex flex-col" onClick={e => e.stopPropagation()}>
+                    <div className="bg-background rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl flex flex-col border border-border" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                            <h4 className="text-lg font-bold truncate pr-4">
+                            <h4 className="text-lg font-bold truncate pr-4 text-foreground">
                                 {selectedCell.model && typeof selectedCell.model === 'string'
                                     ? (selectedCell.model.split('/').pop() || selectedCell.model)
                                     : 'Unknown'} × {selectedCell.category}
                             </h4>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+                            <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground text-2xl">×</button>
                         </div>
 
                         <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                            <p className="text-sm text-slate-500">{modalEntries.length} entries</p>
+                            <p className="text-sm text-muted-foreground">{modalEntries.length} entries</p>
                             {isLoadingFull && (
                                 <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full animate-pulse">
                                     <Loader2 className="w-3 h-3 animate-spin" /> Loading full text details...
@@ -274,36 +274,36 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
 
                         <div className="space-y-3 overflow-y-auto flex-grow">
                             {modalEntries.slice(0, 50).map((entry, idx) => (
-                                <div key={idx} className={`p-3 rounded-lg border ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                                <div key={idx} className={`p-3 rounded-lg border ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'border-border bg-muted/20' : 'border-foreground/20 bg-foreground/5'}`}>
                                     <div className="flex justify-between text-xs mb-2">
-                                        <span className={`font-bold ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'text-green-700' : 'text-red-700'}`}>
+                                        <span className={`font-bold ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'text-foreground/70' : 'text-foreground font-black'}`}>
                                             {entry.verdict}
                                         </span>
-                                        <span className="text-slate-500">{entry.case_id}</span>
+                                        <span className="text-muted-foreground">{entry.case_id}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {/* Progressive Loading Text */}
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-600 mb-1">Prompt:</p>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Prompt:</p>
                                             {entry.prompt ? (
-                                                <p className="text-sm text-slate-700 line-clamp-3 font-mono">{entry.prompt}</p>
+                                                <p className="text-sm text-foreground line-clamp-3 font-mono">{entry.prompt}</p>
                                             ) : (
-                                                <div className="h-10 bg-slate-200/50 rounded animate-pulse w-full"></div>
+                                                <div className="h-10 bg-muted rounded animate-pulse w-full"></div>
                                             )}
                                         </div>
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-600 mb-1">Response:</p>
+                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Response:</p>
                                             {entry.response ? (
-                                                <p className="text-sm text-slate-700 line-clamp-4">{entry.response}</p>
+                                                <p className="text-sm text-foreground line-clamp-4">{entry.response}</p>
                                             ) : (
-                                                <div className="h-12 bg-slate-200/50 rounded animate-pulse w-full"></div>
+                                                <div className="h-12 bg-muted rounded animate-pulse w-full"></div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             {modalEntries.length > 50 && (
-                                <p className="text-center text-slate-400 text-sm">...and {modalEntries.length - 50} more</p>
+                                <p className="text-center text-muted-foreground text-sm">...and {modalEntries.length - 50} more</p>
                             )}
                         </div>
                     </div>

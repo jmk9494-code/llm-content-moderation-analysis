@@ -5,13 +5,13 @@ import { Linkedin } from 'lucide-react';
 
 export function Footer() {
     return (
-        <footer className="bg-white border-t border-slate-200 mt-12 print:hidden">
+        <footer className="bg-card border-t border-border mt-12 print:hidden">
             <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
 
                 {/* Left: Author Info */}
                 <div className="flex items-center gap-4">
-                    <div className="text-sm text-slate-500 font-medium">
-                        Research by <span className="text-slate-900 font-bold">Jacob Kandel</span>
+                    <div className="text-sm text-muted-foreground font-medium">
+                        Research by <span className="text-foreground font-bold">Jacob Kandel</span>
                     </div>
                     <a
                         href="https://www.linkedin.com/in/jacob-kandel"
@@ -27,7 +27,7 @@ export function Footer() {
 
                 {/* Right: University Logo */}
                 <div className="flex items-center gap-4 group">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right leading-tight hidden md:block border-r border-slate-200 pr-4">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right leading-tight hidden md:block border-r border-border pr-4">
                         Academic<br />Research
                     </span>
                     <a href="https://www.uchicago.edu/" target="_blank" rel="noopener noreferrer" className="block">

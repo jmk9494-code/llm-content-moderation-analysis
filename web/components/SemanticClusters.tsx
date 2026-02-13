@@ -4,7 +4,8 @@ import React from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import type { Cluster } from '@/app/analysis/AnalysisContext';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#84cc16'];
+// Monochrome shades for clusters
+const MONO_SHADES = ['#000000', '#333333', '#666666', '#999999', '#AAAAAA', '#CCCCCC'];
 
 export function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
     if (clusters.length === 0) return <div className="p-8 text-center text-slate-500">No cluster data available.</div>;
@@ -12,17 +13,17 @@ export function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 border-l-4 border-indigo-500 p-4 rounded-r-lg shadow-sm text-sm text-slate-700 leading-relaxed">
+            <div className="bg-muted border-l-4 border-foreground p-4 rounded-r-lg shadow-sm text-sm text-foreground leading-relaxed">
                 <strong>Semantic Clusters.</strong> Groups common refusal themes.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 className="text-lg font-bold mb-4">Themes</h2>
+                <div className="bg-card p-6 rounded-2xl border border-border">
+                    <h2 className="text-lg font-bold mb-4 text-foreground">Themes</h2>
                     <div className="h-64">
                         <ResponsiveContainer>
                             <PieChart>
                                 <Pie data={pieData} innerRadius={60} outerRadius={80} dataKey="value">
-                                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                    {pieData.map((_, i) => <Cell key={i} fill={MONO_SHADES[i % MONO_SHADES.length]} />)}
                                 </Pie>
                                 <RechartsTooltip />
                                 <Legend />
@@ -39,12 +40,12 @@ export function SemanticClustersView({ clusters }: { clusters: Cluster[] }) {
                             : c.exemplar;
 
                         return (
-                            <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex gap-4">
-                                <div className="w-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                            <div key={idx} className="bg-card p-4 rounded-xl border border-border flex gap-4 hover:bg-accent/50 transition-colors">
+                                <div className="w-2 rounded-full" style={{ backgroundColor: MONO_SHADES[idx % MONO_SHADES.length] }}></div>
                                 <div>
-                                    <h3 className="font-bold">Cluster {idx + 1} ({c.size} cases)</h3>
-                                    <p className="text-xs text-slate-500 mb-2">{c.keywords.slice(0, 5).join(', ')}</p>
-                                    <p className="text-sm italic text-slate-600 bg-slate-50 p-2 rounded">
+                                    <h3 className="font-bold text-foreground">Cluster {idx + 1} ({c.size} cases)</h3>
+                                    <p className="text-xs text-muted-foreground mb-2">{c.keywords.slice(0, 5).join(', ')}</p>
+                                    <p className="text-sm italic text-muted-foreground bg-muted/30 p-2 rounded">
                                         "{displayExemplar}"
                                     </p>
                                 </div>

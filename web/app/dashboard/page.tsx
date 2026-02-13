@@ -152,7 +152,7 @@ export default function DashboardPage() {
   }, [validData]);
 
   return (
-    <main className="min-h-screen bg-[#0B0C15]">
+    <main className="min-h-screen bg-background">
       {loading ? (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
           <div className="space-y-6 max-w-4xl w-full px-8">
@@ -190,29 +190,24 @@ export default function DashboardPage() {
           />
 
           {/* FINAL CTA: Direct users to Deep Dive for interactive exploration */}
-          <section className="bg-gradient-to-b from-[#0B0C15] via-indigo-950/30 to-[#0B0C15] text-white py-32 relative overflow-hidden">
-            {/* Background decorations */}
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-            <div className="absolute top-1/4 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl"></div>
-
-            <div className="max-w-4xl mx-auto px-4 md:px-8 text-center relative z-10">
-              <div className="inline-flex items-center justify-center p-4 bg-indigo-500/20 rounded-full mb-6 backdrop-blur-sm">
-                <Brain className="h-8 w-8 text-indigo-300" />
+          <section className="bg-background py-20 md:py-32">
+            <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
+              <div className="inline-flex items-center justify-center p-4 bg-foreground/10 rounded-full mb-6">
+                <Brain className="h-8 w-8 text-foreground" />
               </div>
 
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-foreground">
                 Ready to Dig Deeper?
               </h2>
 
-              <p className="text-xl md:text-2xl text-indigo-200 mb-12 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
                 Explore the full dataset with interactive filters, charts, and advanced analytics in our Deep Dive section.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/analysis/summary"
-                  className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-500 transition-all duration-200 hover:scale-105 hover:shadow-2xl shadow-lg"
+                  className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-background bg-foreground rounded-full hover:bg-foreground/90 transition-all duration-200 hover:scale-105 shadow-md"
                 >
                   <BarChart3 className="mr-2 h-5 w-5" />
                   Explore Deep Dive
@@ -221,15 +216,15 @@ export default function DashboardPage() {
 
                 <Link
                   href="/compare"
-                  className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all duration-200 hover:scale-105 backdrop-blur-sm"
+                  className="group inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-foreground border-2 border-border rounded-full hover:bg-accent transition-all duration-200 hover:scale-105"
                 >
                   <ArrowRightLeft className="mr-2 h-5 w-5" />
                   Compare Models
                 </Link>
               </div>
 
-              <div className="mt-16 pt-8 border-t border-white/10">
-                <p className="text-sm text-slate-400">
+              <div className="mt-16 pt-8">
+                <p className="text-sm text-muted-foreground">
                   {stats.totalAudits.toLocaleString()} audit records • {stats.uniqueModels} models tested • Updated {stats.efficiencyTier.daysSince}d ago
                 </p>
               </div>
@@ -327,75 +322,74 @@ function HighlightsSection({
 
   const cards = [
     kappaStats && {
-      emoji: '📐', title: "Fleiss' Kappa", href: '/analysis/reliability',
+      title: "Fleiss' Kappa", href: '/analysis/reliability',
       value: kappaStats.kappa.toFixed(3),
       subtitle: kappaStats.kappa >= 0.8 ? 'Strong agreement' : kappaStats.kappa >= 0.6 ? 'Substantial agreement' : kappaStats.kappa >= 0.4 ? 'Moderate agreement' : 'Fair agreement',
       detail: `${kappaStats.models} models × ${kappaStats.prompts.toLocaleString()} prompts`,
-      accent: 'text-indigo-400',
+      accent: 'text-foreground',
     },
     drift && {
-      emoji: '📉', title: 'Model Stability', href: '/analysis/drift',
+      title: 'Model Stability', href: '/analysis/drift',
       value: `${drift.drifted}/${drift.total}`,
       subtitle: drift.drifted > 0 ? 'Policy changes detected' : 'All models consistent',
       detail: `${drift.stable} stable models`,
-      accent: 'text-amber-400',
+      accent: 'text-foreground',
     },
     political && {
-      emoji: '🧭', title: 'Political Compass', href: '/analysis/political',
+      title: 'Political Compass', href: '/analysis/political',
       value: `${political.avgEcon.toFixed(1)} / ${political.avgSocial.toFixed(1)}`,
       subtitle: `${political.avgEcon < 0 ? 'Left' : 'Right'}-${political.avgSocial > 0 ? 'Authoritarian' : 'Libertarian'} avg`,
       detail: `${political.total} models plotted`,
-      accent: 'text-purple-400',
+      accent: 'text-foreground',
     },
     paternalism && {
-      emoji: '🛡️', title: 'Paternalism', href: '/analysis/paternalism',
+      title: 'Paternalism', href: '/analysis/paternalism',
       value: `${(paternalism.avg * 100).toFixed(0)}%`,
       subtitle: 'avg refusal across personas',
       detail: `Most restrictive: ${paternalism.maxModel} (${(paternalism.maxRate * 100).toFixed(0)}%)`,
-      accent: 'text-rose-400',
+      accent: 'text-foreground',
     },
     clusters && {
-      emoji: '🧠', title: 'Semantic Clusters', href: '/analysis/clusters',
+      title: 'Semantic Clusters', href: '/analysis/clusters',
       value: String(clusters.count),
       subtitle: `${clusters.totalSize.toLocaleString()} items clustered`,
       detail: `Top: ${clusters.topKeywords}`,
-      accent: 'text-teal-400',
+      accent: 'text-foreground',
     },
     significance.pairs > 0 && {
-      emoji: '📊', title: 'Significance Testing', href: '/analysis/significance',
+      title: 'Significance Testing', href: '/analysis/significance',
       value: String(significance.pairs),
       subtitle: "pairwise comparisons (McNemar's)",
       detail: `${significance.models} models compared`,
-      accent: 'text-emerald-400',
+      accent: 'text-foreground',
     },
   ].filter(Boolean) as any[];
 
   if (cards.length === 0) return null;
 
   return (
-    <section className="min-h-[60vh] bg-[#0B0C15] py-20 md:py-32 border-t border-white/5">
+    <section className="min-h-[60vh] bg-background py-20 md:py-32">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3 text-center">
           🔬 Key Findings at a Glance
         </h2>
-        <p className="text-lg text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
           Summary metrics from our deep dive analyses — click any card to explore the full analysis
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map((card, i) => (
             <Link key={i} href={card.href} className="group block h-full">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:border-white/20 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full backdrop-blur-sm flex flex-col justify-between min-w-0">
+              <div className="bg-card border border-border rounded-xl p-6 hover:bg-accent/50 transition-colors h-full flex flex-col justify-between min-w-0">
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl">{card.emoji}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 transition-colors shrink-0 ml-2" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0 ml-auto" />
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2 truncate">{card.title}</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2 truncate">{card.title}</h3>
                   <p className={`text-3xl font-black ${card.accent} mb-1 truncate`}>{card.value}</p>
-                  <p className="text-sm text-slate-400 mb-2 line-clamp-2">{card.subtitle}</p>
+                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{card.subtitle}</p>
                 </div>
-                <p className="text-xs text-slate-500 mt-auto pt-2 border-t border-white/5 truncate">{card.detail}</p>
+                <p className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border truncate">{card.detail}</p>
               </div>
             </Link>
           ))}

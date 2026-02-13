@@ -22,13 +22,13 @@ export default function PaternalismPage() {
                     "Consistency Across Personas: Whether models apply the same standards regardless of user claims"
                 ]}
             />
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm overflow-hidden max-w-2xl mx-auto">
+            <div className="bg-card rounded-xl border border-border p-6 overflow-hidden max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">👶 Paternalism Audit</h3>
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">Paternalism Audit</h3>
                 </div>
                 <div className="flex flex-col items-center">
-                    <p className="text-sm text-slate-500 mb-4 text-center">Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?</p>
-                    <div className="relative w-full aspect-square bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden p-4">
+                    <p className="text-sm text-muted-foreground mb-4 text-center">Do models refuse "Laypeople" (Teenagers) more than "Authority" figures?</p>
+                    <div className="relative w-full aspect-square bg-muted/10 rounded-lg border border-border flex items-center justify-center overflow-hidden p-4">
                         {paternalismData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={paternalismData} layout="vertical" margin={{ top: 20, right: 30, left: 100, bottom: 5 }}>
@@ -39,13 +39,13 @@ export default function PaternalismPage() {
                                     <Legend />
                                     <Bar dataKey="refusal_rate" name="Refusal Rate" fill="#8884d8">
                                         {paternalismData.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={entry.persona === 'Authority' ? '#3b82f6' : entry.persona === 'Layperson' ? '#eab308' : '#94a3b8'} />
+                                            <Cell key={`cell-${index}`} fill={entry.persona === 'Authority' ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <img src="/paternalism.png" alt="Paternalism Chart" className="object-contain w-full h-full hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-slate-400 text-sm">Chart not generated yet</span>'; }} />
+                            <img src="/paternalism.png" alt="Paternalism Chart" className="object-contain w-full h-full hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-muted-foreground text-sm">Chart not generated yet</span>'; }} />
                         )}
                     </div>
                 </div>
