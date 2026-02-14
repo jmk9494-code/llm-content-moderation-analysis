@@ -92,14 +92,20 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
         return matrix.stats[selectedCell.model]?.[selectedCell.category]?.entries || [];
     }, [selectedCell, matrix]);
 
-    // Helper for color scale - Improved for better understanding (Green -> Red)
+    // Helper for color scale - Using UChicago Brand Colors
     const getColor = (rate: number) => {
-        if (rate === 0) return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 hover:bg-emerald-200 dark:hover:bg-emerald-900/50';
-        if (rate < 0.2) return 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/30';
-        if (rate < 0.4) return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/50';
-        if (rate < 0.6) return 'bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100 hover:bg-orange-200 dark:hover:bg-orange-900/50';
-        if (rate < 0.8) return 'bg-red-300 dark:bg-red-900/60 text-red-950 dark:text-red-50 hover:bg-red-400 dark:hover:bg-red-900/80';
-        return 'bg-[#800000] text-white font-bold hover:bg-[#A00000]';
+        // UChicago Green: #00843D
+        if (rate === 0) return 'bg-[#00843D]/10 text-[#00843D] dark:text-[#00843D] hover:bg-[#00843D]/20';
+        // UChicago Green (More opaque)
+        if (rate < 0.2) return 'bg-[#00843D]/30 text-[#006429] dark:text-[#4CBF80] hover:bg-[#00843D]/40';
+        // UChicago Gold: #FFC72C
+        if (rate < 0.4) return 'bg-[#FFC72C]/30 text-[#8F6B00] dark:text-[#FFD966] hover:bg-[#FFC72C]/40';
+        // UChicago Orange: #FF671F
+        if (rate < 0.6) return 'bg-[#FF671F]/40 text-[#A33600] dark:text-[#FF9E66] hover:bg-[#FF671F]/50';
+        // UChicago Brick: #A4343A
+        if (rate < 0.8) return 'bg-[#A4343A]/80 text-white hover:bg-[#A4343A]';
+        // UChicago Maroon: #800000
+        return 'bg-[#800000] text-white font-bold hover:bg-[#600000]';
     };
 
     const handleCellClick = (model: string, category: string) => {
@@ -213,7 +219,7 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                                         {m && typeof m === 'string' ? (m.split('/').pop() || m) : 'Unknown'}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Avg Refusal: <span className={avgRate > 0.5 ? 'text-red-600 font-bold' : 'text-foreground'}>{(avgRate * 100).toFixed(1)}%</span>
+                                        Avg Refusal: <span className={avgRate > 0.5 ? 'text-[#800000] font-bold' : 'text-foreground'}>{(avgRate * 100).toFixed(1)}%</span>
                                     </p>
                                 </div>
                                 {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
@@ -244,9 +250,10 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
             </div>
 
             <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground justify-end flex-wrap">
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-100 dark:bg-emerald-900/30 rounded border border-emerald-200 dark:border-emerald-800"></div> Low Interest</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900/30 rounded border border-yellow-200 dark:border-yellow-800"></div> Moderate</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-300 dark:bg-red-900/60 rounded border border-red-400 dark:border-red-800"></div> High Refusal</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#00843D]/30 rounded border border-[#00843D]"></div> Safe</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#FFC72C]/30 rounded border border-[#FFC72C]"></div> Low</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#FF671F]/40 rounded border border-[#FF671F]"></div> Medium</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#A4343A]/80 rounded border border-[#A4343A]"></div> High</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#800000] rounded"></div> Critical</div>
             </div>
 
