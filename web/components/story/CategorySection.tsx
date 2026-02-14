@@ -104,7 +104,7 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
                             <motion.p
                                 initial={{ opacity: 0 }}
                                 whileInView={{ opacity: 1 }}
-                                whileInView={{ opacity: 1 }}
+
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.6, duration: 0.8 }}
                                 className="mt-8 text-muted-foreground italic"
