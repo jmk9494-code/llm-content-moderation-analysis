@@ -23,109 +23,97 @@ function normalizeCategory(cat: string): string {
 
 
 export async function fetchAuditData(useRecent = false, lite = false): Promise<AuditRow[]> {
-    // Client-side optimization: Use Web Worker
-    if (typeof window !== 'undefined' && window.Worker) {
-        return new Promise((resolve, reject) => {
-            console.log("🚀 Spawning Worker for Audit Data...");
-            const worker = new Worker(new URL('./data.worker.ts', import.meta.url), {
-                type: 'module'
-            });
-
-            worker.onmessage = (event) => {
-                const { type, data, error } = event.data;
-                if (type === 'SUCCESS') {
-                    console.log(`✅ Worker returned ${data.length} rows`);
-                    resolve(data);
-                } else {
-                    console.error("❌ Worker failed:", error);
-                    // Fallbback to main thread if worker explicitly errors? 
-                    // For now, reject to trigger retry or error state.
-                    reject(new Error(error));
-                }
-                worker.terminate();
-            };
-
-            worker.onerror = (err) => {
-                console.error("❌ Worker error:", err);
-                reject(err);
-                worker.terminate();
-            };
-
-            worker.postMessage({ useRecent, lite });
-        });
-    }
-
-    // SSR / Fallback: Main Thread execution (e.g. during build)
-    return fetchAuditDataMainThread(useRecent, lite);
-}
-
-// Original Logic moved here
-async function fetchAuditDataMainThread(useRecent = false, lite = false): Promise<AuditRow[]> {
+    // Priority 1: audit_log.csv.gz (Compressed ~5.8MB vs 48MB)
+    // We use compressed to significantly reduce data transfer.
+    // 'lite' version drops heavy text columns (~1MB vs ~6MB compressed)
     const version = lite ? 'Lite' : 'Full';
-    console.log(`Fetching Audit Data (Main Thread - ${version})...`);
+    console.log(`Fetching Audit Data (v5 - Compressed GZIP - ${version})...`);
 
     const fileBase = useRecent ? '/audit_recent' : '/audit_log';
     const timestamp = Date.now();
 
+    // Vercel Blob URL for the main audit log
     const blobName = lite ? 'audit_log_lite.csv.gz' : 'audit_log.csv.gz';
     let BLOB_URL = `https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/${blobName}`;
 
+    // Use local file in development
     if (process.env.NODE_ENV === 'development') {
         BLOB_URL = `/${blobName}`;
     }
 
+    // Try compressed first
+    // If not using recent data, use the Blob URL (with cache busting)
     const gzFile = useRecent
-        ? `/audit_recent.csv.gz?t=${timestamp}`
-        : `${BLOB_URL}?t=${timestamp}`;
+        ? `/audit_recent.csv.gz?t=${timestamp}` // Local recent (unlikely lite)
+        : `${BLOB_URL}?t=${timestamp}`; // Blob URL
 
+    // Fallback for uncompressed
     const csvFile = useRecent ? `/audit_recent.csv?t=${timestamp}` : `/audit_log.csv?t=${timestamp}`;
 
     let csvText = '';
-    let blocklist = ['yi-34b', 'mistral-medium', 'gpt-audio'];
+    let blocklist = ['yi-34b', 'mistral-medium', 'gpt-audio']; // Default fallback
 
     try {
+        console.log(`Attempting to fetch ${gzFile}...`);
+
+        // Fetch data and blocklist in parallel
         const [dataResponse, blocklistResponse] = await Promise.all([
             fetch(gzFile),
-            fetch('/api/blocklist').catch(e => null)
+            fetch('/api/blocklist').catch(e => {
+                console.warn("Failed to fetch blocklist, using default", e);
+                return null;
+            })
         ]);
 
+        // Process Blocklist
         if (blocklistResponse && blocklistResponse.ok) {
             try {
                 const dynamicBlocklist = await blocklistResponse.json();
-                if (Array.isArray(dynamicBlocklist)) blocklist = dynamicBlocklist;
+                if (Array.isArray(dynamicBlocklist)) {
+                    blocklist = dynamicBlocklist;
+                    console.log("Loaded dynamic blocklist:", blocklist);
+                }
             } catch (e) {
                 console.warn("Failed to parse blocklist JSON", e);
             }
         }
 
         if (dataResponse.ok) {
+            // Load full buffer first to avoid stream truncation issues
             const buffer = await dataResponse.arrayBuffer();
             try {
+                // Decompress using the browser's native DecompressionStream
                 const ds = new DecompressionStream('gzip');
                 const writer = ds.writable.getWriter();
                 writer.write(buffer);
                 writer.close();
                 csvText = await new Response(ds.readable).text();
+                console.log("Successfully decompressed GZIP data");
             } catch (e) {
+                // Fallback: The browser might have already decompressed it transparently
+                // or it was plain text to begin with.
                 console.warn("Manual decompression failed, trying plain text decode", e);
                 csvText = new TextDecoder().decode(buffer);
             }
         } else {
-            // Fallback
-            const response = await fetch(csvFile);
-            if (response.ok) csvText = await response.text();
+            throw new Error(`GZIP fetch failed: ${dataResponse.status}`);
         }
     } catch (e) {
-        console.warn("Data load failed", e);
+        console.warn("Compressed data loading failed, falling back to uncompressed", e);
         try {
+            console.log(`Fallback: fetching ${csvFile}...`);
             const response = await fetch(csvFile);
-            if (response.ok) csvText = await response.text();
+            if (response.ok) {
+                csvText = await response.text();
+            }
         } catch (e2) {
-            console.error("Critical: Data fetch failed", e2);
+            console.error("Critical: Both compressed and uncompressed data fetch failed", e2);
         }
     }
 
-    if (!csvText) return [];
+    if (!csvText) {
+        return [];
+    }
 
     return new Promise((resolve, reject) => {
         Papa.parse(csvText, {
@@ -133,8 +121,12 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
             skipEmptyLines: true,
             complete: (results: any) => {
                 if (!results.data) { resolve([]); return; }
+                // Map CSV data
+                // Dynamically find indices based on actual header names (handling potential quotes)
                 const headers = results.meta.fields || [];
                 const colMap = new Map<string, string>();
+
+                // Create normalized map
                 headers.forEach((h: string) => {
                     const norm = h.replace(/^["']|["']$/g, '').trim();
                     colMap.set(norm, h);
@@ -144,6 +136,7 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
                 const refusals = new Map<string, number>();
                 const data: AuditRow[] = [];
 
+                // First pass: count models and refusals
                 results.data.forEach((row: any) => {
                     const m = String(row.model || row.model_id || '');
                     if (!m) return;
@@ -154,25 +147,38 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
                     }
                 });
 
+                // User Blocklist: Use the dynamic blocklist fetched earlier
                 const BLOCKLIST = blocklist;
 
+
+                // Second pass: map and filter
                 results.data.forEach((row: any) => {
                     const modelName = String(row.model || row.model_id || '');
                     const count = counts.get(modelName) || 0;
                     const refusalCount = refusals.get(modelName) || 0;
 
                     if (!modelName) return;
-                    if (count < 50) return;
-                    if (refusalCount === 0 && BLOCKLIST.some(b => modelName.toLowerCase().includes(b))) return;
+                    if (count < 50) return; // Filter noise
+
+                    // If exact match or partial match in blocklist, AND 0 refusals -> skip
+                    if (refusalCount === 0 && BLOCKLIST.some(b => modelName.toLowerCase().includes(b))) {
+                        return;
+                    }
 
                     const category = normalizeCategory(String(row.category || ''));
-                    if (['EdgeCase', 'Jailbreak', 'Multilingual', 'Roleplay'].includes(category)) return;
+                    // Filter out requested categories
+                    if (['EdgeCase', 'Jailbreak', 'Multilingual', 'Roleplay'].includes(category)) {
+                        return;
+                    }
 
+                    // Helper to get value ignoring quotes in key
                     const getValue = (key: string) => {
                         const exact = row[key];
                         if (exact !== undefined) return exact;
+                        // Try finding mapped key
                         const mapped = colMap.get(key);
                         if (mapped) return row[mapped];
+                        // scan keys?
                         return undefined;
                     };
 
@@ -190,7 +196,7 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
                         prompt_id: String(row.prompt_id || row.case_id || ''),
                     });
                 });
-                console.log(`Loaded ${data.length} rows (Main Thread)`);
+                console.log(`Loaded ${data.length} rows from CSV (filtered noise and 0% refusals)`);
                 resolve(data);
             },
             error: (err: any) => reject(err)

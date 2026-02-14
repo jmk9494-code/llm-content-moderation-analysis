@@ -79,7 +79,7 @@ export function NavBar() {
                                             </button>
 
                                             <div className="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left z-50">
-                                                <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-xl p-1">
+                                                <div className="bg-white dark:bg-zinc-950 border border-border rounded-md shadow-md p-1">
                                                     {item.dropdown.map(sub => (
                                                         <Link
                                                             key={sub.href}

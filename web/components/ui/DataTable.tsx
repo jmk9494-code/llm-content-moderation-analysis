@@ -15,8 +15,7 @@ import {
     ExpandedState,
     Row,
 } from '@tanstack/react-table';
-import { useState, useEffect, useCallback, Fragment, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import {
     ChevronDown,
     ChevronUp,
@@ -106,17 +105,6 @@ export function DataTable<TData, TValue>({
         link.click();
     }, [table, exportFilename]);
 
-    // Virtualization
-    const { rows } = table.getRowModel();
-    const parentRef = useRef<HTMLDivElement>(null);
-
-    const virtualizer = useVirtualizer({
-        count: rows.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 50,
-        overscan: 20,
-    });
-
     return (
         <div className="space-y-4">
             {/* Toolbar */}
@@ -188,77 +176,128 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
 
-            {/* Virtualized Table Container */}
-            <div
-                ref={parentRef}
-                className="rounded-lg border border-border bg-card shadow-sm overflow-auto text-card-foreground h-[700px] relative"
-            >
-                <div
-                    style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        width: '100%',
-                        position: 'relative',
-                    }}
-                >
-                    <table className="w-full text-sm text-left absolute top-0 left-0" style={{ transform: `translateY(${virtualizer.getVirtualItems()[0]?.start ?? 0}px)` }}>
-                        <thead className="bg-muted/50 text-muted-foreground font-medium flex w-full sticky top-0 z-10">
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <tr key={headerGroup.id} className="flex w-full border-b border-border">
-                                    {renderExpanded && <th className="w-10 px-2 shrink-0 bg-muted/50" />}
-                                    {headerGroup.headers.map(header => (
-                                        <th key={header.id} className="h-12 px-4 flex items-center shrink-0 grow basis-0 bg-muted/50" style={{ width: header.getSize() }}>
-                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+            {/* Table */}
+            <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden text-card-foreground">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/50 text-muted-foreground font-medium">
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id} className="border-b border-border">
+                                    {renderExpanded && <th className="w-10 px-2" />}
+                                    {headerGroup.headers.map((header) => (
+                                        <th key={header.id} className="h-12 px-4 align-middle whitespace-nowrap">
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(header.column.columnDef.header, header.getContext())}
                                         </th>
                                     ))}
                                 </tr>
                             ))}
                         </thead>
-
-                        <tbody className="block">
-                            {virtualizer.getVirtualItems().map((virtualRow) => {
-                                const row = rows[virtualRow.index];
-                                return (
+                        <tbody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
                                     <Fragment key={row.id}>
                                         <tr
-                                            data-index={virtualRow.index}
-                                            ref={virtualizer.measureElement}
                                             data-state={row.getIsSelected() && 'selected'}
-                                            className={`flex w-full border-b border-border transition-colors hover:bg-muted/50 ${renderExpanded ? 'cursor-pointer' : ''} ${row.getIsExpanded() ? 'bg-muted/50' : ''}`}
+                                            className={`border-b border-border transition-colors hover:bg-muted/50 ${renderExpanded ? 'cursor-pointer' : ''
+                                                } ${row.getIsExpanded() ? 'bg-muted/50' : ''}`}
                                             onClick={() => renderExpanded && row.toggleExpanded()}
                                         >
                                             {renderExpanded && (
-                                                <td className="w-10 px-2 shrink-0 flex items-center justify-center">
-                                                    <motion.div animate={{ rotate: row.getIsExpanded() ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                                                <td className="px-2">
+                                                    <motion.div
+                                                        animate={{ rotate: row.getIsExpanded() ? 90 : 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
                                                         <ExpandIcon className="h-4 w-4 text-muted-foreground" />
                                                     </motion.div>
                                                 </td>
                                             )}
-                                            {row.getVisibleCells().map(cell => (
-                                                <td key={cell.id} className="p-4 flex items-center shrink-0 grow basis-0" style={{ width: cell.column.getSize() }}>
+                                            {row.getVisibleCells().map((cell) => (
+                                                <td key={cell.id} className="p-4 align-middle text-foreground">
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </td>
                                             ))}
                                         </tr>
-                                        {row.getIsExpanded() && renderExpanded && (
-                                            <tr className="flex w-full">
-                                                <td className="w-full p-0 block">
-                                                    <div className="p-4 bg-muted/30 border-b border-border text-foreground">
-                                                        {renderExpanded(row.original)}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
+                                        {/* Expanded Row */}
+                                        <AnimatePresence>
+                                            {row.getIsExpanded() && renderExpanded && (
+                                                <tr>
+                                                    <td colSpan={columns.length + 1} className="p-0">
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="p-4 bg-muted/30 border-b border-border text-foreground">
+                                                                {renderExpanded(row.original)}
+                                                            </div>
+                                                        </motion.div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </AnimatePresence>
                                     </Fragment>
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={columns.length + (renderExpanded ? 1 : 0)} className="h-24 text-center text-muted-foreground">
+                                        No results.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div className="flex items-center justify-between py-4 text-muted-foreground">
+            {/* Pagination */}
+            <div className="flex items-center justify-between flex-wrap gap-4 py-4 text-muted-foreground">
                 <div className="text-sm">
-                    Showing {rows.length} records (Scroll for more)
+                    Showing {table.getRowModel().rows.length} of {table.getFilteredRowModel().rows.length} results
+                    {table.getFilteredRowModel().rows.length !== data.length && (
+                        <span className="ml-1">(filtered from {data.length} total)</span>
+                    )}
+                </div>
+                <div className="flex items-center gap-1">
+                    <button
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
+                        onClick={() => table.setPageIndex(0)}
+                        disabled={!table.getCanPreviousPage()}
+                        aria-label="First page"
+                    >
+                        <ChevronsLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                        aria-label="Previous page"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="px-3 text-sm text-muted-foreground">
+                        Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                    </span>
+                    <button
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                        aria-label="Next page"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </button>
+                    <button
+                        className="h-9 w-9 flex items-center justify-center rounded-md border border-border hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed text-foreground"
+                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                        disabled={!table.getCanNextPage()}
+                        aria-label="Last page"
+                    >
+                        <ChevronsRight className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
         </div>
