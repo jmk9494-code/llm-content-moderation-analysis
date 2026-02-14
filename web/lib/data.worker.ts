@@ -1,6 +1,8 @@
+/* eslint-disable no-restricted-globals */
 import Papa from 'papaparse';
 
-export type AuditRow = {
+// Define types locally since sharing types with worker can be tricky without shared file
+type AuditRow = {
     timestamp: string;
     model: string;
     case_id: string;
@@ -11,9 +13,20 @@ export type AuditRow = {
     cost: number;
     tokens_used: number;
     latency_ms: number;
-    prompt_id?: string; // Analysis page legacy compatibility
+    prompt_id?: string;
 };
 
+// Listen for messages from the main thread
+self.onmessage = async (e: MessageEvent) => {
+    const { useRecent, lite } = e.data;
+
+    try {
+        const data = await fetchAndParseData(useRecent, lite);
+        self.postMessage({ type: 'SUCCESS', data });
+    } catch (error) {
+        self.postMessage({ type: 'ERROR', error: String(error) });
+    }
+};
 
 /** Normalize category names so Sexual and Explicit Content are always merged */
 function normalizeCategory(cat: string): string {
@@ -21,56 +34,26 @@ function normalizeCategory(cat: string): string {
     return cat;
 }
 
-
-export async function fetchAuditData(useRecent = false, lite = false): Promise<AuditRow[]> {
-    // Client-side optimization: Use Web Worker
-    if (typeof window !== 'undefined' && window.Worker) {
-        return new Promise((resolve, reject) => {
-            console.log("🚀 Spawning Worker for Audit Data...");
-            const worker = new Worker(new URL('./data.worker.ts', import.meta.url), {
-                type: 'module'
-            });
-
-            worker.onmessage = (event) => {
-                const { type, data, error } = event.data;
-                if (type === 'SUCCESS') {
-                    console.log(`✅ Worker returned ${data.length} rows`);
-                    resolve(data);
-                } else {
-                    console.error("❌ Worker failed:", error);
-                    // Fallbback to main thread if worker explicitly errors? 
-                    // For now, reject to trigger retry or error state.
-                    reject(new Error(error));
-                }
-                worker.terminate();
-            };
-
-            worker.onerror = (err) => {
-                console.error("❌ Worker error:", err);
-                reject(err);
-                worker.terminate();
-            };
-
-            worker.postMessage({ useRecent, lite });
-        });
-    }
-
-    // SSR / Fallback: Main Thread execution (e.g. during build)
-    return fetchAuditDataMainThread(useRecent, lite);
-}
-
-// Original Logic moved here
-async function fetchAuditDataMainThread(useRecent = false, lite = false): Promise<AuditRow[]> {
+async function fetchAndParseData(useRecent: boolean, lite: boolean): Promise<AuditRow[]> {
     const version = lite ? 'Lite' : 'Full';
-    console.log(`Fetching Audit Data (Main Thread - ${version})...`);
+    console.log(`[Worker] Fetching Audit Data (v5 - Compressed GZIP - ${version})...`);
 
-    const fileBase = useRecent ? '/audit_recent' : '/audit_log';
     const timestamp = Date.now();
-
     const blobName = lite ? 'audit_log_lite.csv.gz' : 'audit_log.csv.gz';
-    let BLOB_URL = `https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/${blobName}`;
+    // Use the public blob URL directly here to avoid passing env vars complexities if possible, 
+    // or pass it from main thread. For now, hardcode or pass via message.
+    // Assuming prod URL for simplicity or relative if on same origin.
+    // Actually, worker origin might be different? 
+    // Let's use relative path for local dev fallback and absolute for prod.
 
-    if (process.env.NODE_ENV === 'development') {
+    // We can use the same logic:
+    // But process.env might not be available in worker in same way depending on bundler.
+    // Let's rely on the URL passed from main thread? 
+    // Or just use the hardcoded logic which seems to use relative paths in dev.
+
+    // Hardcoded logic for now:
+    let BLOB_URL = `https://oeqbf51ent3zxva1.public.blob.vercel-storage.com/data/${blobName}`;
+    if (self.location.hostname === 'localhost') {
         BLOB_URL = `/${blobName}`;
     }
 
@@ -84,20 +67,19 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
     let blocklist = ['yi-34b', 'mistral-medium', 'gpt-audio'];
 
     try {
-        const [dataResponse, blocklistResponse] = await Promise.all([
-            fetch(gzFile),
-            fetch('/api/blocklist').catch(e => null)
-        ]);
-
-        if (blocklistResponse && blocklistResponse.ok) {
-            try {
+        // Fetch blocklist first (or we could pass it from main thread)
+        // Let's try fetching it here.
+        try {
+            const blocklistResponse = await fetch('/api/blocklist');
+            if (blocklistResponse.ok) {
                 const dynamicBlocklist = await blocklistResponse.json();
                 if (Array.isArray(dynamicBlocklist)) blocklist = dynamicBlocklist;
-            } catch (e) {
-                console.warn("Failed to parse blocklist JSON", e);
             }
+        } catch (e) {
+            console.warn("[Worker] Failed to fetch blocklist", e);
         }
 
+        const dataResponse = await fetch(gzFile);
         if (dataResponse.ok) {
             const buffer = await dataResponse.arrayBuffer();
             try {
@@ -107,22 +89,18 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
                 writer.close();
                 csvText = await new Response(ds.readable).text();
             } catch (e) {
-                console.warn("Manual decompression failed, trying plain text decode", e);
+                console.warn("[Worker] Manual decompression failed, trying plain text decode", e);
                 csvText = new TextDecoder().decode(buffer);
             }
         } else {
             // Fallback
+            console.warn("[Worker] GZIP fetch failed, trying uncompressed");
             const response = await fetch(csvFile);
             if (response.ok) csvText = await response.text();
         }
     } catch (e) {
-        console.warn("Data load failed", e);
-        try {
-            const response = await fetch(csvFile);
-            if (response.ok) csvText = await response.text();
-        } catch (e2) {
-            console.error("Critical: Data fetch failed", e2);
-        }
+        console.error("[Worker] Data load failed", e);
+        throw e;
     }
 
     if (!csvText) return [];
@@ -133,6 +111,7 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
             skipEmptyLines: true,
             complete: (results: any) => {
                 if (!results.data) { resolve([]); return; }
+
                 const headers = results.meta.fields || [];
                 const colMap = new Map<string, string>();
                 headers.forEach((h: string) => {
@@ -190,7 +169,7 @@ async function fetchAuditDataMainThread(useRecent = false, lite = false): Promis
                         prompt_id: String(row.prompt_id || row.case_id || ''),
                     });
                 });
-                console.log(`Loaded ${data.length} rows (Main Thread)`);
+
                 resolve(data);
             },
             error: (err: any) => reject(err)

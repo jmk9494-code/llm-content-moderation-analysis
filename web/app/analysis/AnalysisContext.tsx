@@ -225,7 +225,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
 
         const models = Array.from(uniqueModels);
         const prompts = Array.from(uniquePrompts);
-        const rawReliability = calculateFleissKappa(filteredAuditData, models, prompts);
+
+        // Optimization: Pass the already built map to avoid re-looping
+        const rawReliability = calculateFleissKappa(promptMap, models, prompts);
 
         const reliability = {
             score: (rawReliability && !isNaN(rawReliability.score) && isFinite(rawReliability.score))

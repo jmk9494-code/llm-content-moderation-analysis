@@ -27,3 +27,5 @@ celery>=5.3.0     # Background job queue
 redis>=5.0.0      # Celery broker
 seaborn
 matplotlib
+huggingface_hub   # For syncing datasets
+datasets          # For creating Parquet datasets
