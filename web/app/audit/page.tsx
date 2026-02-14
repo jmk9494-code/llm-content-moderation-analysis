@@ -47,7 +47,7 @@ export default function AuditPage() {
             accessorKey: 'prompt',
             header: 'Prompt',
             cell: ({ row }) => (
-                <div className="max-w-[120px] md:max-w-[300px] truncate" title={row.getValue('prompt')}>
+                <div className="max-w-[120px] lg:max-w-[200px] truncate" title={row.getValue('prompt')}>
                     {row.getValue('prompt')}
                 </div>
             )
@@ -56,7 +56,7 @@ export default function AuditPage() {
             accessorKey: 'response',
             header: () => <span className="hidden sm:inline">Response</span>,
             cell: ({ row }) => (
-                <div className="hidden sm:block max-w-[200px] md:max-w-[300px] truncate" title={row.getValue('response')}>
+                <div className="hidden sm:block max-w-[150px] lg:max-w-[200px] truncate" title={row.getValue('response')}>
                     {row.getValue('response')}
                 </div>
             )
