@@ -300,13 +300,13 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                                     </div>
                                     <div className="space-y-2.5">
                                         <div>
-                                            <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1">Prompt</p>
+                                            <p className="text-[10px] uppercase tracking-wide font-bold text-muted-foreground/80 mb-1">Prompt</p>
                                             <p className="text-foreground leading-relaxed font-medium">{entry.prompt || <span className="italic text-muted-foreground">No prompt text available</span>}</p>
                                         </div>
                                         {entry.response && (
                                             <div className="pt-2 border-t border-border/50">
-                                                <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1">Response</p>
-                                                <p className="text-foreground/80 leading-relaxed text-xs">{entry.response}</p>
+                                                <p className="text-[10px] uppercase tracking-wide font-bold text-muted-foreground/80 mb-1">Response</p>
+                                                <p className="text-foreground leading-relaxed text-xs">{entry.response}</p>
                                             </div>
                                         )}
                                     </div>

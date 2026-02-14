@@ -78,19 +78,20 @@ export function NavBar() {
                                                 <ChevronDown className="h-3 w-3 opacity-50" />
                                             </button>
 
-                                            {/* Dropdown */}
                                             <div className="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left z-50">
-                                                <div className="bg-white dark:bg-zinc-800 border border-border rounded-md shadow-md p-1">
+                                                <div className="bg-popover border border-border rounded-md shadow-md p-1">
                                                     {item.dropdown.map(sub => (
                                                         <Link
                                                             key={sub.href}
                                                             href={sub.href}
                                                             className={cn(
                                                                 "flex items-center gap-2 px-3 py-2 text-sm rounded-sm transition-colors",
-                                                                pathname === sub.href ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                                                                pathname === sub.href
+                                                                    ? "bg-accent text-accent-foreground font-medium"
+                                                                    : "text-foreground/80 hover:text-foreground hover:bg-accent"
                                                             )}
                                                         >
-                                                            <sub.icon className="h-4 w-4 text-muted-foreground" />
+                                                            <sub.icon className={cn("h-4 w-4", pathname === sub.href ? "text-accent-foreground" : "text-muted-foreground")} />
                                                             {sub.title}
                                                         </Link>
                                                     ))}
