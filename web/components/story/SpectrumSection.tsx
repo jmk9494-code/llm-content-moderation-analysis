@@ -54,8 +54,8 @@ export function SpectrumSection({ modelData }: SpectrumSectionProps) {
                 <div className="mb-20">
                     <div className="relative h-3 bg-muted rounded-full overflow-hidden border border-border">
                         <motion.div
-                            className="absolute inset-0 bg-foreground origin-right"
-                            style={{ scaleX: useTransform(scaleX, [0, 1], [1, 0]) }}
+                            className="absolute inset-0 bg-foreground origin-left"
+                            style={{ scaleX: useTransform(scaleX, [0, 1], [0, 1]) }}
                         />
                     </div>
                     <div className="flex justify-between mt-3 text-sm font-medium">

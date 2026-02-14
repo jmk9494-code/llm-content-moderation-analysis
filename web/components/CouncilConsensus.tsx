@@ -9,7 +9,7 @@ interface CouncilConsensusProps {
     data?: any[];
 }
 
-const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#e0d5fc', '#f1f0ff'];
+const COLORS = ['#800000', '#737373', '#EAAA00', '#A4343A', '#007396', '#275D38'];
 
 export function CouncilConsensus({ data = [] }: CouncilConsensusProps) {
     // Aggregate data by consensus_leaning (the actual useful dimension)
@@ -67,7 +67,7 @@ export function CouncilConsensus({ data = [] }: CouncilConsensusProps) {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Scale className="h-5 w-5 text-indigo-500" />
+                        <Scale className="h-5 w-5 text-primary" />
                         Consensus by Leaning
                     </CardTitle>
                     <CardDescription>
@@ -87,7 +87,7 @@ export function CouncilConsensus({ data = [] }: CouncilConsensusProps) {
                                     return [value, name];
                                 }}
                             />
-                            <Bar dataKey="count" fill="#6366f1" name="count" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="count" fill="#800000" name="count" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>

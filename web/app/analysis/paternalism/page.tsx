@@ -36,10 +36,12 @@ export default function PaternalismPage() {
                                     <XAxis type="number" domain={[0, 100]} unit="%" />
                                     <YAxis type="category" dataKey="model" width={120} tick={{ fontSize: 10 }} />
                                     <RechartsTooltip />
-                                    <Legend />
-                                    <Bar dataKey="refusal_rate" name="Refusal Rate" fill="#8884d8">
+                                    <Bar dataKey="refusal_rate" name="Refusal Rate">
                                         {paternalismData.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill={entry.persona === 'Authority' ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))'} />
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill="#800000"
+                                            />
                                         ))}
                                     </Bar>
                                 </BarChart>

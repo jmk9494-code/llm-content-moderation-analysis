@@ -10,7 +10,7 @@ import {
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-const PIE_COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+const PIE_COLORS = ['#800000', '#767676', '#D6D6CE']; // Maroon, Dark Gray, Light Gray
 
 export default function ConsensusPage() {
     const { filteredAuditData, loading } = useAnalysis();
@@ -51,25 +51,50 @@ export default function ConsensusPage() {
             else if (agreementRatio >= 0.6) majorityAgree++;
             else split++;
 
-            // Track each model's agreement with majority
+            // Track each model's agreement matrix for Kappa
             verdicts.forEach(([model, isUns]) => {
-                if (!modelAgreement.has(model)) modelAgreement.set(model, { agree: 0, total: 0 });
+                if (!modelAgreement.has(model)) {
+                    modelAgreement.set(model, {
+                        agree: 0,
+                        total: 0,
+                        modelUnsafe: 0,
+                        majorityUnsafe: 0
+                    });
+                }
                 const m = modelAgreement.get(model)!;
                 m.total++;
                 if (isUns === majority) m.agree++;
+                if (isUns) m.modelUnsafe++;
+                if (majority) m.majorityUnsafe++;
             });
         });
 
-        // Per-model agreement rate
+        // Per-model agreement rate and Kappa
         const perModel = Array.from(modelAgreement.entries())
-            .map(([model, { agree, total }]) => ({
-                model,
-                shortName: model.split('/').pop() || model,
-                provider: getProviderName(model),
-                logo: getLogoUrl(model),
-                agreementRate: (agree / total) * 100,
-                total,
-            }))
+            .map(([model, stats]) => {
+                // Cohen's Kappa Calculation
+                const po = stats.agree / stats.total; // Observed agreement
+
+                const pModelUnsafe = stats.modelUnsafe / stats.total;
+                const pModelSafe = 1 - pModelUnsafe;
+
+                const pMajUnsafe = stats.majorityUnsafe / stats.total;
+                const pMajSafe = 1 - pMajUnsafe;
+
+                const pe = (pModelUnsafe * pMajUnsafe) + (pModelSafe * pMajSafe); // Expected agreement
+
+                const kappa = (1 - pe) === 0 ? 0 : (po - pe) / (1 - pe);
+
+                return {
+                    model,
+                    shortName: model.split('/').pop() || model,
+                    provider: getProviderName(model),
+                    logo: getLogoUrl(model),
+                    agreementRate: (stats.agree / stats.total) * 100,
+                    kappa: kappa,
+                    total: stats.total,
+                };
+            })
             .sort((a, b) => b.agreementRate - a.agreementRate);
 
         const distribution = [
@@ -115,8 +140,8 @@ export default function ConsensusPage() {
                 importance="Council consensus is essential for internet openness because it distinguishes between universally agreed-upon boundaries and arbitrary, model-specific censorship. When all models refuse a prompt (high consensus), it likely contains genuinely harmful content. But when models disagree (low consensus), it indicates that one model is being uniquely restrictive—revealing bias in that specific model's training or policy."
                 metrics={[
                     "Agreement Rate: Percentage of prompts where all judges reach the same verdict (refuse or allow)",
-                    "Consensus Categories: 'Full Agreement,' 'Majority,' or 'Split Decision' based on judge alignment",
-                    "Inter-Judge Reliability: Statistical measure (e.g., Fleiss' Kappa) of consistency across the council"
+                    "Cohen's Kappa (CAPP): Measure of inter-rater reliability accounting for chance agreement",
+                    "Consensus Categories: 'Full Agreement,' 'Majority,' or 'Split Decision'"
                 ]}
             />
 
@@ -138,21 +163,28 @@ export default function ConsensusPage() {
                                 className="w-5 h-5 rounded"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
-                            <span className="text-sm font-medium text-foreground w-48 truncate" title={m.model}>
-                                {m.shortName}
-                            </span>
-                            <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden relative">
+                            <div className="w-48 truncate flex flex-col justify-center">
+                                <span className="text-sm font-medium text-foreground" title={m.model}>
+                                    {m.shortName}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono">
+                                    CAPP: {m.kappa.toFixed(2)}
+                                </span>
+                            </div>
+
+                            <div className="flex-1 h-6 bg-muted/10 rounded-full overflow-hidden">
                                 <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{
                                         width: `${m.agreementRate}%`,
-                                        backgroundColor: 'hsl(var(--foreground))'
+                                        backgroundColor: '#800000'
                                     }}
                                 />
-                                <span className="absolute inset-0 flex items-center justify-end pr-3 text-xs font-semibold text-foreground">
-                                    {m.agreementRate.toFixed(1)}%
-                                </span>
                             </div>
+
+                            <span className="text-xs font-semibold text-foreground w-12 text-right">
+                                {m.agreementRate.toFixed(1)}%
+                            </span>
                             <span className="text-xs text-muted-foreground w-20 text-right">
                                 {m.total.toLocaleString()} prompts
                             </span>
@@ -190,6 +222,6 @@ export default function ConsensusPage() {
                     </ResponsiveContainer>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

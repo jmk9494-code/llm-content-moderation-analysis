@@ -81,16 +81,16 @@ export function AuditWizard({ data }: AuditWizardProps) {
     if (step === 'start') {
         return (
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
-                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-muted text-primary rounded-full flex items-center justify-center mx-auto mb-4">
                     <Play className="w-8 h-8 ml-1" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Start Human Audit</h3>
-                <p className="text-slate-500 mb-6 max-w-md mx-auto">
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                     Audit 20 random model responses to calculate your agreement score (Cohen's Kappa) with the AI systems.
                 </p>
                 <button
                     onClick={startAudit}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2 mx-auto"
+                    className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2 mx-auto"
                 >
                     Start Session
                 </button>
@@ -101,47 +101,47 @@ export function AuditWizard({ data }: AuditWizardProps) {
     if (step === 'auditing' && currentItem) {
         return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex justify-between items-center">
-                    <span className="font-mono text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <div className="bg-muted/30 px-6 py-3 border-b border-border flex justify-between items-center">
+                    <span className="font-mono text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         Audit Progress
                     </span>
-                    <span className="font-bold text-indigo-600 text-sm">
+                    <span className="font-bold text-primary text-sm">
                         {currentIndex + 1} / {sample.length}
                     </span>
                 </div>
                 <div className="p-6 md:p-8 space-y-6">
                     <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Prompt</h4>
-                        <div className="bg-slate-50 p-4 rounded-lg text-slate-800 text-sm leading-relaxed border border-slate-100">
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Prompt</h4>
+                        <div className="bg-muted/30 p-4 rounded-lg text-foreground text-sm leading-relaxed border border-border">
                             {currentItem.prompt}
                         </div>
                     </div>
                     <div>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Model Response ({currentItem.model?.split('/').pop()})</h4>
-                        <div className="bg-slate-50 p-4 rounded-lg text-slate-600 text-sm leading-relaxed italic border border-slate-100">
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Model Response ({currentItem.model?.split('/').pop()})</h4>
+                        <div className="bg-muted/30 p-4 rounded-lg text-muted-foreground text-sm leading-relaxed italic border border-border">
                             {currentItem.verdict === 'REFUSAL' || currentItem.verdict === 'hard refusal' ?
-                                <span className="flex items-center gap-2 text-red-500 not-italic font-medium"><XCircle className="w-4 h-4" /> Model Refused</span> :
-                                <span className="flex items-center gap-2 text-green-600 not-italic font-medium"><CheckCircle className="w-4 h-4" /> Model Complied</span>
+                                <span className="flex items-center gap-2 text-[#A4343A] not-italic font-medium"><XCircle className="w-4 h-4" /> Model Refused</span> :
+                                <span className="flex items-center gap-2 text-[#275D38] not-italic font-medium"><CheckCircle className="w-4 h-4" /> Model Complied</span>
                             }
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-slate-100 flex flex-col items-center gap-4">
-                        <h4 className="font-bold text-slate-900">How would you rate this?</h4>
+                    <div className="pt-6 border-t border-border flex flex-col items-center gap-4">
+                        <h4 className="font-bold text-foreground">How would you rate this?</h4>
                         <div className="flex gap-4 w-full max-w-md">
                             <button
                                 onClick={() => handleVote('unsafe')}
-                                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-100 hover:border-red-200 hover:bg-red-50 transition-all group"
+                                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-border hover:border-[#A4343A]/30 hover:bg-[#A4343A]/5 transition-all group"
                             >
-                                <XCircle className="w-8 h-8 text-slate-300 group-hover:text-red-500 transition-colors" />
-                                <span className="font-bold text-slate-600 group-hover:text-red-700">Unsafe / Refuse</span>
+                                <XCircle className="w-8 h-8 text-muted-foreground group-hover:text-[#A4343A] transition-colors" />
+                                <span className="font-bold text-muted-foreground group-hover:text-[#A4343A]">Unsafe / Refuse</span>
                             </button>
                             <button
                                 onClick={() => handleVote('safe')}
-                                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-100 hover:border-green-200 hover:bg-green-50 transition-all group"
+                                className="flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-border hover:border-[#275D38]/30 hover:bg-[#275D38]/5 transition-all group"
                             >
-                                <CheckCircle className="w-8 h-8 text-slate-300 group-hover:text-green-500 transition-colors" />
-                                <span className="font-bold text-slate-600 group-hover:text-green-700">Safe / Allow</span>
+                                <CheckCircle className="w-8 h-8 text-muted-foreground group-hover:text-[#275D38] transition-colors" />
+                                <span className="font-bold text-muted-foreground group-hover:text-[#275D38]">Safe / Allow</span>
                             </button>
                         </div>
                     </div>
@@ -176,7 +176,7 @@ export function AuditWizard({ data }: AuditWizardProps) {
 
                 <button
                     onClick={startAudit}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center gap-2 mx-auto"
+                    className="text-primary hover:text-primary/80 font-medium flex items-center justify-center gap-2 mx-auto"
                 >
                     <RotateCcw className="w-4 h-4" /> Start New Session
                 </button>

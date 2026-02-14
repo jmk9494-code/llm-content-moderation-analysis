@@ -36,7 +36,7 @@ export default function ExportButton({
             }
 
             const canvas = await html2canvas(element, {
-                backgroundColor: '#f8fafc', // slate-50
+                backgroundColor: '#ffffff', // UChicago White
                 scale: 2, // Higher quality
                 useCORS: true,
                 logging: false,
@@ -90,7 +90,7 @@ export default function ExportButton({
             <button
                 onClick={() => setShowMenu(!showMenu)}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isExporting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -108,7 +108,7 @@ export default function ExportButton({
                         onClick={exportToPNG}
                         className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-3 text-slate-700"
                     >
-                        <Image className="h-4 w-4 text-indigo-500" />
+                        <Image className="h-4 w-4 text-primary" />
                         <div>
                             <div className="font-medium">Export as PNG</div>
                             <div className="text-xs text-slate-400">Dashboard screenshot</div>
@@ -118,7 +118,7 @@ export default function ExportButton({
                         onClick={exportToCSV}
                         className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-3 text-slate-700"
                     >
-                        <FileText className="h-4 w-4 text-emerald-500" />
+                        <FileText className="h-4 w-4 text-[#275D38]" />
                         <div>
                             <div className="font-medium">Export as CSV</div>
                             <div className="text-xs text-slate-400">Raw audit data</div>

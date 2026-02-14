@@ -44,14 +44,14 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
         if (passRate >= 90) {
             results.push({
                 type: 'success',
-                icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+                icon: <CheckCircle className="h-5 w-5 text-[#275D38]" />,
                 title: 'Excellent Safety Rate',
                 description: `${passRate.toFixed(1)}% of prompts are passing moderation across all models.`
             });
         } else if (passRate < 70) {
             results.push({
                 type: 'warning',
-                icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+                icon: <AlertTriangle className="h-5 w-5 text-[#EAAA00]" />,
                 title: 'Safety Concerns Detected',
                 description: `Only ${passRate.toFixed(1)}% of prompts passing. Consider reviewing flagged content.`
             });
@@ -79,7 +79,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             const best = modelRates[0];
             results.push({
                 type: 'success',
-                icon: <TrendingUp className="h-5 w-5 text-green-500" />,
+                icon: <TrendingUp className="h-5 w-5 text-[#275D38]" />,
                 title: `Top Performer: ${best.model}`,
                 description: `${best.rate.toFixed(1)}% pass rate across ${best.total} tests.`
             });
@@ -89,7 +89,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             if (worst.rate < 70 && worst.model !== best.model) {
                 results.push({
                     type: 'warning',
-                    icon: <TrendingDown className="h-5 w-5 text-red-500" />,
+                    icon: <TrendingDown className="h-5 w-5 text-[#A4343A]" />,
                     title: `Needs Attention: ${worst.model}`,
                     description: `Only ${worst.rate.toFixed(1)}% pass rate. May require policy adjustments.`
                 });
@@ -122,7 +122,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             const worst = problemCategories[0];
             results.push({
                 type: 'info',
-                icon: <Lightbulb className="h-5 w-5 text-blue-500" />,
+                icon: <Lightbulb className="h-5 w-5 text-[#007396]" />, // Lake
                 title: `Category Alert: ${worst.category}`,
                 description: `This category has a ${worst.rate.toFixed(0)}% pass rate. Consider reviewing test cases.`
             });
@@ -134,7 +134,7 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
             const avgCost = totalCost / data.length;
             results.push({
                 type: 'info',
-                icon: <Sparkles className="h-5 w-5 text-purple-500" />,
+                icon: <Sparkles className="h-5 w-5 text-[#8F3931]" />, // Violet
                 title: 'Cost Overview',
                 description: `Total spend: $${totalCost.toFixed(4)}. Average per test: $${avgCost.toFixed(6)}.`
             });
@@ -148,10 +148,10 @@ export function InsightsSummary({ data }: InsightsSummaryProps) {
     }
 
     return (
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 p-6 shadow-sm">
+        <div className="bg-gradient-to-br from-primary/5 to-muted dark:from-primary/10 dark:to-muted/10 rounded-xl border border-border p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-                <div className="p-1.5 bg-indigo-100 dark:bg-indigo-800 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+                <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-primary dark:text-primary/80" />
                 </div>
                 <div>
                     <h3 className="font-bold text-slate-900 dark:text-white">AI Insights</h3>

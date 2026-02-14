@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, X } from 'lucide-react';
 import { useAnalysis } from '@/app/analysis/AnalysisContext';
 
 type HeatmapProps = {
@@ -92,14 +92,14 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
         return matrix.stats[selectedCell.model]?.[selectedCell.category]?.entries || [];
     }, [selectedCell, matrix]);
 
-    // Helper for color scale
+    // Helper for color scale - Improved for better understanding (Green -> Red)
     const getColor = (rate: number) => {
-        if (rate === 0) return 'bg-muted text-muted-foreground hover:bg-muted/80';
-        if (rate < 0.2) return 'bg-foreground/10 text-foreground hover:bg-foreground/20';
-        if (rate < 0.4) return 'bg-foreground/30 text-foreground hover:bg-foreground/40';
-        if (rate < 0.6) return 'bg-foreground/50 text-white hover:bg-foreground/60';
-        if (rate < 0.8) return 'bg-foreground/70 text-white hover:bg-foreground/80';
-        return 'bg-foreground text-white font-bold hover:bg-foreground/90';
+        if (rate === 0) return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100 hover:bg-emerald-200 dark:hover:bg-emerald-900/50';
+        if (rate < 0.2) return 'bg-emerald-50 dark:bg-emerald-900/10 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/30';
+        if (rate < 0.4) return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-200 dark:hover:bg-yellow-900/50';
+        if (rate < 0.6) return 'bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-100 hover:bg-orange-200 dark:hover:bg-orange-900/50';
+        if (rate < 0.8) return 'bg-red-300 dark:bg-red-900/60 text-red-950 dark:text-red-50 hover:bg-red-400 dark:hover:bg-red-900/80';
+        return 'bg-[#800000] text-white font-bold hover:bg-[#A00000]';
     };
 
     const handleCellClick = (model: string, category: string) => {
@@ -243,67 +243,72 @@ export function CensorshipHeatmap({ data, title = "Refusal Heatmap", description
                 })}
             </div>
 
-            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground justify-end">
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/10 rounded"></div> 0-20%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/30 rounded"></div> 20-40%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground/50 rounded"></div> 40-60%</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-foreground rounded"></div> 80%+</div>
+            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground justify-end flex-wrap">
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-100 dark:bg-emerald-900/30 rounded border border-emerald-200 dark:border-emerald-800"></div> Low Interest</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900/30 rounded border border-yellow-200 dark:border-yellow-800"></div> Moderate</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-300 dark:bg-red-900/60 rounded border border-red-400 dark:border-red-800"></div> High Refusal</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 bg-[#800000] rounded"></div> Critical</div>
             </div>
 
             {/* Modal for cell details */}
             {showModal && selectedCell && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-background rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-xl flex flex-col border border-border" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-                            <h4 className="text-lg font-bold truncate pr-4 text-foreground">
-                                {selectedCell.model && typeof selectedCell.model === 'string'
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 transition-opacity" onClick={() => setShowModal(false)}>
+                    <div className="bg-background rounded-xl p-4 md:p-6 w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col border border-border animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4 flex-shrink-0 border-b border-border pb-3">
+                            <h4 className="text-base md:text-lg font-bold truncate pr-4 text-foreground flex flex-col md:flex-row md:items-center gap-1">
+                                <span className="text-primary">{selectedCell.model && typeof selectedCell.model === 'string'
                                     ? (selectedCell.model.split('/').pop() || selectedCell.model)
-                                    : 'Unknown'} × {selectedCell.category}
+                                    : 'Unknown'}</span>
+                                <span className="hidden md:inline text-muted-foreground">×</span>
+                                <span className="text-muted-foreground md:text-foreground">{selectedCell.category}</span>
                             </h4>
-                            <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground text-2xl">×</button>
+                            <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted">
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
 
-                        <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                            <p className="text-sm text-muted-foreground">{modalEntries.length} entries</p>
+                        <div className="flex items-center justify-between mb-3 flex-shrink-0 px-1">
+                            <p className="text-sm text-muted-foreground font-medium">{modalEntries.length} entries found</p>
                             {isLoadingFull && (
-                                <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full animate-pulse">
-                                    <Loader2 className="w-3 h-3 animate-spin" /> Loading full text details...
+                                <div className="flex items-center gap-2 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full animate-pulse">
+                                    <Loader2 className="w-3 h-3 animate-spin" /> Loading full text...
                                 </div>
                             )}
                         </div>
 
-                        <div className="space-y-3 overflow-y-auto flex-grow">
+                        <div className="space-y-3 overflow-y-auto flex-grow pr-1 custom-scrollbar">
                             {modalEntries.slice(0, 50).map((entry, idx) => (
-                                <div key={idx} className={`p-3 rounded-lg border ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'border-border bg-muted/20' : 'border-foreground/20 bg-foreground/5'}`}>
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className={`font-bold ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict) ? 'text-foreground/70' : 'text-foreground font-black'}`}>
+                                <div key={idx} className={`p-3 rounded-lg border text-sm ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict)
+                                    ? 'border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20'
+                                    : 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20'
+                                    }`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${['safe', 'ALLOWED', 'Authorized'].includes(entry.verdict)
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
+                                            : 'bg-[#800000] text-white'
+                                            }`}>
                                             {entry.verdict}
                                         </span>
-                                        <span className="text-muted-foreground">{entry.case_id}</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">{entry.case_id}</span>
                                     </div>
-                                    <div className="space-y-2">
-                                        {/* Progressive Loading Text */}
+                                    <div className="space-y-2.5">
                                         <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Prompt:</p>
-                                            {entry.prompt ? (
-                                                <p className="text-sm text-foreground line-clamp-3 font-mono">{entry.prompt}</p>
-                                            ) : (
-                                                <div className="h-10 bg-muted rounded animate-pulse w-full"></div>
-                                            )}
+                                            <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1">Prompt</p>
+                                            <p className="text-foreground leading-relaxed font-medium">{entry.prompt || <span className="italic text-muted-foreground">No prompt text available</span>}</p>
                                         </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-muted-foreground mb-1">Response:</p>
-                                            {entry.response ? (
-                                                <p className="text-sm text-foreground line-clamp-4">{entry.response}</p>
-                                            ) : (
-                                                <div className="h-12 bg-muted rounded animate-pulse w-full"></div>
-                                            )}
-                                        </div>
+                                        {entry.response && (
+                                            <div className="pt-2 border-t border-border/50">
+                                                <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1">Response</p>
+                                                <p className="text-foreground/80 leading-relaxed text-xs">{entry.response}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                             {modalEntries.length > 50 && (
-                                <p className="text-center text-muted-foreground text-sm">...and {modalEntries.length - 50} more</p>
+                                <div className="py-4 text-center">
+                                    <p className="text-muted-foreground text-sm">...and {modalEntries.length - 50} more entries</p>
+                                </div>
                             )}
                         </div>
                     </div>

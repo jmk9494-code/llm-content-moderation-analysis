@@ -32,7 +32,7 @@ export default function TriggersPage() {
                                 <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                                 <YAxis dataKey="word" type="category" width={110} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                                 <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }} contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--popover-foreground))' }} />
-                                <Bar dataKey="count" fill="hsl(var(--foreground))" name="Occurrences" radius={[0, 4, 4, 0]} />
+                                <Bar dataKey="count" fill="#800000" name="Occurrences" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (

@@ -78,11 +78,17 @@ export default function AlignmentPage() {
                                 <Label value="Refusal Rate (%)" angle={-90} position="insideLeft" offset={-10} style={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                             </YAxis>
                             <RechartsTooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
-                            <Scatter name="Models" data={efficiencyData} fill="hsl(var(--foreground))">
-                                {efficiencyData.map((e: any, index: number) => (
-                                    <Cell key={`cell-${index}`} fill="hsl(var(--foreground))" stroke="hsl(var(--background))" strokeWidth={1} r={7} />
-                                ))
-                                }
+                            <Scatter name="Models" data={efficiencyData}>
+                                {efficiencyData.map((e: any, index: number) => {
+                                    // Maroon scale based on Refusal Rate
+                                    let color = '#D6D6CE'; // Low refusal -> Light Gray
+                                    if (e.refusalRate > 20) color = '#800000'; // High -> Maroon
+                                    else if (e.refusalRate > 10) color = '#A4343A'; // Med-High -> Brick
+                                    else if (e.refusalRate > 5) color = '#C16622'; // Med -> Dark Orange/Rust (Complimentary) or just Light Maroon
+                                    else color = '#767676'; // Low -> Dark Gray
+
+                                    return <Cell key={`cell-${index}`} fill={color} stroke="hsl(var(--background))" strokeWidth={1} r={7} />;
+                                })}
                             </Scatter>
                         </ScatterChart>
                     </ResponsiveContainer>

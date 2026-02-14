@@ -46,23 +46,21 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
     return (
         <section
             ref={ref}
-            className="min-h-screen bg-gradient-to-b from-indigo-100 via-purple-100 to-background dark:from-indigo-950 dark:via-purple-950 dark:to-background flex items-center justify-center text-foreground relative overflow-hidden transition-colors duration-500"
+            className="min-h-screen bg-white dark:bg-[#222222] flex items-center justify-center text-foreground relative overflow-hidden transition-colors duration-500"
         >
-            {/* Animated background grid */}
-            <div className="absolute inset-0 opacity-20 dark:opacity-30">
+            {/* Animated background grid - subtle */}
+            <div className="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none">
                 <div className="absolute inset-0" style={{
                     backgroundImage: `
             linear-gradient(to right, currentColor 1px, transparent 1px),
             linear-gradient(to bottom, currentColor 1px, transparent 1px)
           `,
                     backgroundSize: '50px 50px',
-                    color: 'rgba(99, 102, 241, 0.1)'
+                    color: 'rgba(128, 0, 0, 0.05)'
                 }} />
             </div>
 
-            {/* Gradient orbs for visual interest - darker for dark mode */}
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            {/* No Orbs - Clean solid look */}
 
             {/* Main content */}
             <div className="relative z-10 text-center max-w-5xl px-8">
@@ -74,7 +72,7 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                 >
                     We Tested Every Major AI Model
                     <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400 inline-block">for Content Moderation Bias</span>
+                    <span className="text-[#800000] dark:text-[#A4343A] inline-block">for Content Moderation Bias</span>
                 </motion.h1>
 
                 {/* Giant animated number */}
@@ -84,7 +82,7 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                     transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
                     className="my-12 md:my-16"
                 >
-                    <div className="text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 drop-shadow-2xl break-all sm:break-normal leading-none tracking-tighter">
+                    <div className="text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black text-[#800000] dark:text-[#A4343A] drop-shadow-sm break-all sm:break-normal leading-none tracking-tighter">
                         {count.toLocaleString()}
                     </div>
                     <p className="text-xl md:text-2xl text-muted-foreground mt-4">
@@ -102,7 +100,7 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                     <p className="text-lg md:text-xl text-muted-foreground/80 max-w-3xl mx-auto leading-relaxed">
                         Discover how AI companies moderate content — and who draws the line where.
                     </p>
-                    <p className="text-sm md:text-base text-indigo-500 dark:text-indigo-300">
+                    <p className="text-sm md:text-base text-primary dark:text-primary/80">
                         Scroll to explore the findings
                     </p>
                 </motion.div>
@@ -115,9 +113,9 @@ export function HeroSection({ totalAudits, uniqueModels }: HeroSectionProps) {
                 transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
                 className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
             >
-                <div className="w-6 h-10 border-2 border-indigo-300/30 rounded-full flex justify-center pt-2">
+                <div className="w-6 h-10 border-2 border-gray-400/50 rounded-full flex justify-center pt-2">
                     <motion.div
-                        className="w-1 h-2 bg-indigo-400 rounded-full"
+                        className="w-1 h-2 bg-gray-500 rounded-full"
                         animate={{ y: [0, 16, 0] }}
                         transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
                     />

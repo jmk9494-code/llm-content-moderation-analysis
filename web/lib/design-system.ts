@@ -19,39 +19,39 @@ export const typography = {
     labelLarge: "text-sm font-semibold text-slate-600 uppercase tracking-wide",
 
     // Metrics/Numbers
-    metricLarge: "text-5xl font-black text-indigo-600",
+    metricLarge: "text-5xl font-black text-primary",
     metricMedium: "text-3xl font-bold text-slate-900",
     metricSmall: "text-2xl font-bold text-slate-700",
 };
 
 export const colors = {
     // Primary
-    primary: "indigo-600",
-    primaryLight: "indigo-50",
-    primaryDark: "indigo-700",
+    primary: "primary",
+    primaryLight: "primary/10",
+    primaryDark: "primary/90",
 
     // Success/Safe
-    success: "green-600",
-    successLight: "green-100",
-    successText: "green-700",
+    success: "[#275D38]", // Forest
+    successLight: "[#275D38]/10",
+    successText: "[#275D38]",
 
     // Error/Unsafe
-    error: "red-600",
-    errorLight: "red-100",
-    errorText: "red-700",
+    error: "[#A4343A]", // Brick
+    errorLight: "[#A4343A]/10",
+    errorText: "[#A4343A]",
 
     // Warning
-    warning: "amber-500",
-    warningLight: "amber-100",
-    warningText: "amber-700",
+    warning: "[#EAAA00]", // Goldenrod
+    warningLight: "[#EAAA00]/10",
+    warningText: "[#CC8A00]", // Darker Goldenrod
 
     // Neutral
-    textPrimary: "slate-900",
-    textSecondary: "slate-600",
-    textTertiary: "slate-500",
-    bgPrimary: "white",
-    bgSecondary: "slate-50",
-    border: "slate-200",
+    textPrimary: "foreground",
+    textSecondary: "muted-foreground",
+    textTertiary: "muted-foreground",
+    bgPrimary: "background",
+    bgSecondary: "muted",
+    border: "border",
 };
 
 export const spacing = {
@@ -69,7 +69,7 @@ export const components = {
     infoBox: "bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg shadow-sm",
 
     // Buttons
-    buttonPrimary: "px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm",
+    buttonPrimary: "px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm",
     buttonSecondary: "px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm",
 };
 

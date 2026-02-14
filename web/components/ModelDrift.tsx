@@ -14,7 +14,7 @@ export function ModelDrift({ data = [] }: ModelDriftProps) {
         <Card className="h-full">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-rose-500" />
+                    <Activity className="h-5 w-5 text-primary" />
                     Model Stability (Drift)
                 </CardTitle>
                 <CardDescription>
@@ -29,7 +29,7 @@ export function ModelDrift({ data = [] }: ModelDriftProps) {
                             <XAxis type="number" domain={[-20, 20]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                             <YAxis dataKey="model" type="category" width={100} fontSize={11} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                             <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--popover-foreground))' }} />
-                            <Bar dataKey="rate_change" fill="#f43f5e" name="Rate Change (%)">
+                            <Bar dataKey="rate_change" fill="#A4343A" name="Rate Change (%)">
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} radius={(entry.rate_change > 0 ? [0, 4, 4, 0] : [4, 0, 0, 4]) as any} />
                                 ))}

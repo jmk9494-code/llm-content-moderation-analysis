@@ -180,14 +180,7 @@ export default function DashboardPage() {
             topCategories={stats.topCategories}
           />
 
-          {/* Deep Dive Highlights */}
-          <HighlightsSection
-            data={validData}
-            driftData={driftData}
-            politicalData={politicalData}
-            paternalismData={paternalismData}
-            clustersData={clustersData}
-          />
+
 
           {/* FINAL CTA: Direct users to Deep Dive for interactive exploration */}
           <section className="bg-background py-20 md:py-32">

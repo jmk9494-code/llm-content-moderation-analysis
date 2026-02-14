@@ -27,35 +27,36 @@ export default function AuditPage() {
     const columns = useMemo<ColumnDef<AuditRow>[]>(() => [
         {
             accessorKey: 'timestamp',
-            header: 'Date',
+            header: () => <span className="hidden md:inline">Date</span>,
             cell: ({ row }) => {
                 const date = new Date(row.getValue('timestamp'));
-                return date.toLocaleDateString();
+                return <span className="hidden md:inline">{date.toLocaleDateString()}</span>;
             }
         },
         {
             accessorKey: 'model',
             header: 'Model',
-            cell: ({ row }) => <span className="font-medium">{row.getValue('model')}</span>
+            cell: ({ row }) => <span className="font-medium text-xs md:text-sm">{row.getValue('model')}</span>
         },
         {
             accessorKey: 'category',
-            header: 'Category',
+            header: () => <span className="hidden lg:inline">Category</span>,
+            cell: ({ row }) => <span className="hidden lg:inline">{row.getValue('category')}</span>
         },
         {
             accessorKey: 'prompt',
             header: 'Prompt',
             cell: ({ row }) => (
-                <div className="max-w-[300px] truncate" title={row.getValue('prompt')}>
+                <div className="max-w-[120px] md:max-w-[300px] truncate" title={row.getValue('prompt')}>
                     {row.getValue('prompt')}
                 </div>
             )
         },
         {
             accessorKey: 'response',
-            header: 'Response',
+            header: () => <span className="hidden sm:inline">Response</span>,
             cell: ({ row }) => (
-                <div className="max-w-[300px] truncate" title={row.getValue('response')}>
+                <div className="hidden sm:block max-w-[200px] md:max-w-[300px] truncate" title={row.getValue('response')}>
                     {row.getValue('response')}
                 </div>
             )
@@ -67,7 +68,9 @@ export default function AuditPage() {
                 const verdict = String(row.getValue('verdict'));
                 const isRefusal = ['REFUSAL', 'REMOVED', 'unsafe', 'Hard Refusal'].includes(verdict);
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${isRefusal ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold font-sans border ${isRefusal
+                        ? 'bg-[#800000] text-white border-[#800000]'
+                        : 'bg-zinc-100 text-zinc-700 border-zinc-200'
                         }`}>
                         {verdict}
                     </span>
@@ -78,7 +81,7 @@ export default function AuditPage() {
 
     return (
         <main className="min-h-screen bg-background p-6 md:p-8 lg:p-12">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="w-full max-w-[95vw] mx-auto space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Global Audit Log</h1>
@@ -86,7 +89,7 @@ export default function AuditPage() {
                     </div>
                 </div>
 
-                <div className="bg-card rounded-xl border border-border shadow-sm">
+                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                     {loading ? (
                         <div className="p-12 text-center text-muted-foreground flex flex-col items-center gap-3">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />

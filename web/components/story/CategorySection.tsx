@@ -25,8 +25,25 @@ interface CategorySectionProps {
 export function CategorySection({ topCategories }: CategorySectionProps) {
     const top5 = topCategories.slice(0, 5);
 
+    // Academic palette based on UChicago + complements
+    const CATEGORY_COLORS = [
+        '#800000', // Maroon
+        '#D9534F', // Soft Red (High Alert)
+        '#EAAA00', // Gold
+        '#275D38', // Forest Green
+        '#A4343A', // Brick
+        '#404040', // Dark Gray
+        '#0076A8', // Steel Blue
+        '#5D5D5D', // Medium Gray
+    ];
+
     const getColors = (index: number) => {
-        return { border: 'border-foreground', bg: 'bg-foreground', text: 'text-foreground' };
+        const color = CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+        return {
+            borderColor: color,
+            bgColor: color,
+            textColor: color
+        };
     };
 
     return (
@@ -53,7 +70,7 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
                             {/* Top 5 callouts */}
                             <div className="space-y-6">
                                 {top5.map((cat, idx) => {
-                                    const colors = getColors(idx);
+                                    const { borderColor, bgColor, textColor } = getColors(idx);
                                     return (
                                         <motion.div
                                             key={cat.name}
@@ -61,16 +78,20 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
                                             whileInView={{ opacity: 1, x: 0 }}
                                             viewport={{ once: true }}
                                             transition={{ delay: idx * 0.15, duration: 0.5 }}
-                                            className={`relative pl-6 border-l-4 ${colors.border}`}
+                                            className="relative pl-6 border-l-4"
+                                            style={{ borderColor: borderColor }}
                                         >
-                                            <div className={`absolute -left-3 top-0 w-6 h-6 ${colors.bg} text-white rounded-full flex items-center justify-center text-sm font-bold`}>
+                                            <div
+                                                className="absolute -left-3 top-0 w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold"
+                                                style={{ backgroundColor: bgColor }}
+                                            >
                                                 {idx + 1}
                                             </div>
                                             <div className="font-bold text-lg text-foreground mb-1">
                                                 {cat.name}
                                             </div>
                                             <div className="text-muted-foreground">
-                                                <span className={`font-semibold ${colors.text}`}>{cat.value}%</span> refusal rate
+                                                <span className="font-semibold" style={{ color: textColor }}>{cat.value}%</span> refusal rate
                                             </div>
                                             <div className="text-sm text-muted-foreground mt-1">
                                                 {cat.count} refused out of {cat.total} test cases
@@ -82,6 +103,7 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
 
                             <motion.p
                                 initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
                                 whileInView={{ opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.6, duration: 0.8 }}
@@ -116,7 +138,7 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
                                         dataKey="name"
                                         type="category"
                                         width={150}
-                                        tick={{ fontSize: 13, fontWeight: 600, fill: '#94a3b8' }}
+                                        tick={{ fontSize: 13, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }}
                                     />
                                     <Tooltip
                                         cursor={{ fill: 'rgba(255,255,255,0.05)' }}
@@ -136,7 +158,11 @@ export function CategorySection({ topCategories }: CategorySectionProps) {
                                             return null;
                                         }}
                                     />
-                                    <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={35} fill="hsl(var(--foreground))" />
+                                    <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={35}>
+                                        {topCategories.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

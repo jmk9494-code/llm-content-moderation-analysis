@@ -178,7 +178,7 @@ export default function SignificancePage() {
                 {!showAll && pairwiseResults.length > 50 && (
                     <button
                         onClick={() => setShowAll(true)}
-                        className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        className="mt-4 text-sm text-primary hover:text-primary/80 font-medium"
                     >
                         Show all {pairwiseResults.length} pairs →
                     </button>
@@ -186,7 +186,7 @@ export default function SignificancePage() {
                 {showAll && pairwiseResults.length > 50 && (
                     <button
                         onClick={() => setShowAll(false)}
-                        className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        className="mt-4 text-sm text-primary hover:text-primary/80 font-medium"
                     >
                         Show top 50 only
                     </button>

@@ -59,9 +59,9 @@ export default function PoliticalPage() {
                                     <ReferenceLine x={0} stroke="#000" />
                                     <ReferenceLine y={0} stroke="#000" />
 
-                                    <Scatter name="Models" data={politicalData} fill="#8884d8">
+                                    <Scatter name="Models" data={politicalData} fill="#800000">
                                         {politicalData.map((entry: any, index: number) => (
-                                            <Cell key={`cell-${index}`} fill="hsl(var(--foreground))" stroke="hsl(var(--background))" strokeWidth={1} />
+                                            <Cell key={`cell-${index}`} fill="#800000" stroke="hsl(var(--background))" strokeWidth={1} />
                                         ))}
                                     </Scatter>
                                 </ScatterChart>

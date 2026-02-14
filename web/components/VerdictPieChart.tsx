@@ -9,10 +9,10 @@ type VerdictData = {
 };
 
 const COLORS = {
-    safe: '#10b981',      // green
-    unsafe: '#ef4444',    // red
-    unclear: '#f59e0b',   // amber
-    error: '#6b7280',     // gray
+    safe: '#275D38',      // Forest
+    unsafe: '#800000',    // Maroon
+    unclear: '#EAAA00',   // Goldenrod
+    error: '#737373',     // Dark Greystone
 };
 
 const RADIAN = Math.PI / 180;
@@ -83,7 +83,7 @@ export default function VerdictPieChart({ data, title = 'Verdict Distribution' }
                             label={renderCustomizedLabel}
                             outerRadius={100}
                             innerRadius={50}
-                            fill="#8884d8"
+                            fill="#800000"
                             dataKey="value"
                             animationBegin={0}
                             animationDuration={800}
@@ -91,7 +91,7 @@ export default function VerdictPieChart({ data, title = 'Verdict Distribution' }
                             {chartData.map((entry, index) => (
                                 <Cell
                                     key={`cell-${index}`}
-                                    fill={COLORS[entry.name as keyof typeof COLORS] || '#6366f1'}
+                                    fill={COLORS[entry.name as keyof typeof COLORS] || '#800000'}
                                 />
                             ))}
                         </Pie>
@@ -106,13 +106,13 @@ export default function VerdictPieChart({ data, title = 'Verdict Distribution' }
                             contentStyle={{
                                 borderRadius: '8px',
                                 border: 'none',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                                 backgroundColor: 'var(--background, #fff)',
                                 color: 'var(--foreground, #000)'
                             }}
                         />
                         <Legend
-                            formatter={(value) => <span className="text-sm text-slate-600 dark:text-slate-300 capitalize">{value}</span>}
+                            formatter={(value) => <span className="text-sm text-muted-foreground capitalize">{value}</span>}
                         />
                     </PieChart>
                 </ResponsiveContainer>

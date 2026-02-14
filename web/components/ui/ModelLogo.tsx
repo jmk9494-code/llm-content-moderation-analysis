@@ -15,49 +15,49 @@ export function ModelLogo({ modelId, className }: ModelLogoProps) {
     // Define provider styles
     const styles: Record<string, { bg: string; text: string; icon: any; initial: string }> = {
         openai: {
-            bg: 'bg-emerald-100',
-            text: 'text-emerald-700',
+            bg: 'bg-[#9CAF88]', // Light Forest
+            text: 'text-[#275D38]', // Forest
             icon: Zap,
             initial: 'O'
         },
         google: {
-            bg: 'bg-blue-100',
-            text: 'text-blue-700',
+            bg: 'bg-[#3EB1C8]', // Light Lake
+            text: 'text-[#007396]', // Lake
             icon: Globe,
             initial: 'G'
         },
         anthropic: {
-            bg: 'bg-amber-100',
-            text: 'text-amber-700',
+            bg: 'bg-[#F3D03E]', // Light Goldenrod
+            text: 'text-[#CC8A00]', // Dark Goldenrod
             icon: Bot,
             initial: 'A'
         },
         meta: {
-            bg: 'bg-sky-100',
-            text: 'text-sky-700',
+            bg: 'bg-[#3EB1C8]', // Light Lake (reuse or distinct?) Lake works well.
+            text: 'text-[#002A3A]', // Dark Lake
             icon: Cpu,
             initial: 'M'
         },
         mistralai: {
-            bg: 'bg-violet-100',
-            text: 'text-violet-700',
+            bg: 'bg-[#86647A]', // Light Violet
+            text: 'text-[#59315F]', // Violet
             icon: Zap,
             initial: 'M'
         },
         'x-ai': {
-            bg: 'bg-slate-900',
+            bg: 'bg-[#737373]', // Dark Greystone
             text: 'text-white',
             icon: Bot,
             initial: 'X'
         },
         deepseek: {
-            bg: 'bg-blue-900',
+            bg: 'bg-[#002A3A]', // Dark Lake
             text: 'text-white',
             icon: Globe,
             initial: 'D'
         },
         qwen: {
-            bg: 'bg-indigo-900',
+            bg: 'bg-[#41273B]', // Dark Violet
             text: 'text-white',
             icon: Cpu,
             initial: 'Q'
@@ -65,8 +65,8 @@ export function ModelLogo({ modelId, className }: ModelLogoProps) {
     };
 
     const style = styles[provider] || {
-        bg: 'bg-slate-100',
-        text: 'text-slate-600',
+        bg: 'bg-[#D9D9D9]', // Light Greystone
+        text: 'text-[#737373]', // Dark Greystone
         icon: Bot,
         initial: provider.charAt(0).toUpperCase()
     };

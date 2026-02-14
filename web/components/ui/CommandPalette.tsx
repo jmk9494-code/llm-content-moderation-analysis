@@ -230,27 +230,27 @@ export function CommandPalette() {
                                                 }}
                                                 onMouseEnter={() => setSelectedIndex(index)}
                                                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${index === selectedIndex
-                                                    ? 'bg-indigo-50'
-                                                    : 'hover:bg-slate-50'
+                                                    ? 'bg-muted'
+                                                    : 'hover:bg-muted/50'
                                                     }`}
                                             >
                                                 <div className={`p-2 rounded-lg ${index === selectedIndex
-                                                    ? 'bg-indigo-100 text-indigo-600'
-                                                    : 'bg-slate-100 text-slate-500'
+                                                    ? 'bg-background text-primary'
+                                                    : 'bg-muted text-muted-foreground'
                                                     }`}>
                                                     {cmd.icon}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-medium text-slate-900">
+                                                    <div className="font-medium text-foreground">
                                                         {cmd.title}
                                                     </div>
                                                     {cmd.description && (
-                                                        <div className="text-sm text-slate-500 truncate">
+                                                        <div className="text-sm text-muted-foreground truncate">
                                                             {cmd.description}
                                                         </div>
                                                     )}
                                                 </div>
-                                                <ArrowRight className={`h-4 w-4 ${index === selectedIndex ? 'text-indigo-500' : 'text-slate-300'
+                                                <ArrowRight className={`h-4 w-4 ${index === selectedIndex ? 'text-primary' : 'text-muted-foreground'
                                                     }`} />
                                             </button>
                                         ))

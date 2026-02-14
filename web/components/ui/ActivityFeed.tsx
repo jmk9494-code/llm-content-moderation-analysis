@@ -19,7 +19,7 @@ interface ActivityFeedProps {
 const verdictConfig = {
     safe: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
     unsafe: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' },
-    unclear: { icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+    unclear: { icon: AlertCircle, color: 'text-[#EAAA00]', bg: 'bg-[#EAAA00]/10 dark:bg-[#EAAA00]/20' },
     error: { icon: AlertCircle, color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-900/20' },
 };
 
@@ -45,7 +45,7 @@ export function ActivityFeed({ data, maxItems = 10 }: ActivityFeedProps) {
         return (
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
-                    <Activity className="h-5 w-5 text-indigo-500" />
+                    <Activity className="h-5 w-5 text-primary" />
                     <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
@@ -59,7 +59,7 @@ export function ActivityFeed({ data, maxItems = 10 }: ActivityFeedProps) {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-indigo-500" />
+                    <Activity className="h-5 w-5 text-primary" />
                     <h3 className="font-bold text-slate-800 dark:text-white">Recent Activity</h3>
                 </div>
                 <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">

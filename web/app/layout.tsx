@@ -10,6 +10,8 @@ import { CommandPalette } from "@/components/ui/CommandPalette";
 import JsonLd from "@/components/JsonLd";
 import { SidebarProvider } from "@/components/providers/SidebarProvider";
 import { MainContentWrapper } from "@/components/layout/MainContentWrapper";
+import { BrandBar } from "@/components/layout/BrandBar";
+import { NavBar } from "@/components/layout/NavBar";
 
 
 const geistSans = Geist({
@@ -91,9 +93,10 @@ export default function RootLayout({
             <SidebarProvider>
               <JsonLd />
               <SkipLink />
-              <GlobalSidebar />
-              <MainContentWrapper>
-                <main id="main-content" className="flex-1 min-h-screen px-4 py-8 md:px-8 lg:px-12">
+              <MainContentWrapper className="flex flex-col min-h-screen">
+                <BrandBar />
+                <NavBar />
+                <main id="main-content" className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 md:px-8 lg:px-12">
                   {children}
                 </main>
                 <Footer />
