@@ -37,7 +37,7 @@ export default function ConsensusPage() {
         // Agreement categories
         let fullAgree = 0, majorityAgree = 0, split = 0;
         // Per-model: how often does each model agree with the majority?
-        const modelAgreement = new Map<string, { agree: number; total: number }>();
+        const modelAgreement = new Map<string, { agree: number; total: number; modelUnsafe: number; majorityUnsafe: number }>();
 
         multiModelPrompts.forEach(([, modelVerdicts]) => {
             const verdicts = Array.from(modelVerdicts.entries());
