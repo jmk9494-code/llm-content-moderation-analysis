@@ -12,6 +12,8 @@ export function BrandBar() {
 
             <div className="flex items-center gap-6 text-sm font-medium uppercase tracking-wide text-white/90">
                 <nav className="hidden md:flex items-center gap-6">
+                    <Link href="https://x.com/jmk9494" target="_blank" className="hover:text-white transition-colors">X (Twitter)</Link>
+                    <Link href="https://www.linkedin.com/in/jacobkandel" target="_blank" className="hover:text-white transition-colors">LinkedIn</Link>
                     <Link href="https://github.com/jacobkandel" target="_blank" className="hover:text-white transition-colors">GitHub</Link>
                 </nav>
             </div>
